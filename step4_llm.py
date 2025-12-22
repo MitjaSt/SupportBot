@@ -91,7 +91,8 @@ def log_prompt_response(query, prompt, response, chunks, start_time, end_time):
 def generate_answer(query, chunks, start_time):
     """Generate answer using Ollama API."""
     context = "\n".join(chunks)
-    prompt = f"""You are a question-answering assistant.
+    prompt = f"""
+You are a question-answering assistant, speak like a human would over the phone. Be polite and friendly.
 Keep your answers concise, as short as possible and to the point - you are answering on a phone.
 When referring to the "caller" use "you".
 
