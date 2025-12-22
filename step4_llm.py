@@ -21,6 +21,7 @@ load_dotenv()
 
 OLLAMA_URL = os.environ["OLLAMA_URL"]
 OLLAMA_MODEL = os.environ["OLLAMA_MODEL"]
+OLLAMA_TIMEOUT = int(os.environ["OLLAMA_TIMEOUT"])
 CACHE_DIR_PROMPTS = os.environ["CACHE_DIR_PROMPTS"]
 
 # --- EMBEDDING MODEL ---
@@ -98,7 +99,7 @@ Use ONLY the context below to answer.
 Do NOT attempt to provide any information outside the context. Do not guess.
 Give a single concise answer, no repetition, no rephrasing.
 
-If the answer is not in the context, say:
+If the answer is not in the context or you are not sure, say:
 "I do not have information about that. Can I help you with something else?"
 
 Context:
@@ -110,7 +111,7 @@ Question:
 
     data = {"model": OLLAMA_MODEL, "stream": False, "prompt": prompt}
 
-    response = requests.post(f"{OLLAMA_URL}/api/generate", json=data)
+    response = requests.post(f"{OLLAMA_URL}/api/generate", json=data, timeout=OLLAMA_TIMEOUT)
     response_text = response.json()["response"]
     print(response_text)
     print("\n")
