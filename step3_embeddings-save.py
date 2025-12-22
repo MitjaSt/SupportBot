@@ -1,21 +1,19 @@
-import os
 import json
-from tqdm import tqdm
-import numpy as np
-from sentence_transformers import SentenceTransformer
-from qdrant_client import QdrantClient
-from qdrant_client.models import VectorParams, Distance
-from typing import List
-from qdrant_client.models import PointStruct
-import hashlib
+import os
 import uuid
-from nltk.tokenize import sent_tokenize
-
-from shared import EMBED_MODEL, VECTOR_SIZE, QDRANT_COLLECTION_NAME
 
 # Download NLTK data if needed (run once)
-# import nltk
-# nltk.download('punkt_tab')
+import nltk
+import numpy as np
+from nltk.tokenize import sent_tokenize
+from qdrant_client import QdrantClient
+from qdrant_client.models import Distance, PointStruct, VectorParams
+from sentence_transformers import SentenceTransformer
+from tqdm import tqdm
+
+from shared import EMBED_MODEL, QDRANT_COLLECTION_NAME, VECTOR_SIZE
+
+nltk.download("punkt_tab")
 
 # ------------------------
 # Config
@@ -26,8 +24,8 @@ EMBEDDINGS_CACHE_DIR = "cache/embeddings"
 
 TOP_K = 5
 
-CHUNK_SIZE_TOKENS = 512 # max tokens per chunk
-OVERLAP_TOKENS = 100    # overlap between chunks
+CHUNK_SIZE_TOKENS = 512  # max tokens per chunk
+OVERLAP_TOKENS = 100  # overlap between chunks
 
 os.makedirs(os.environ["CACHE_DIR_EMBEDDINGS"], exist_ok=True)
 
@@ -47,13 +45,14 @@ if qdrant.collection_exists(QDRANT_COLLECTION_NAME):
 
 qdrant.create_collection(
     collection_name=QDRANT_COLLECTION_NAME,
-    vectors_config=VectorParams(size=VECTOR_SIZE, distance=Distance.COSINE)
+    vectors_config=VectorParams(size=VECTOR_SIZE, distance=Distance.COSINE),
 )
+
 
 # ------------------------
 # Token-based chunking
 # ------------------------
-def chunk_text(text: str, max_tokens=512, overlap_tokens=100) -> List[str]:
+def chunk_text(text: str, max_tokens=512, overlap_tokens=100) -> list[str]:
     """
     Chunk text into max_tokens with overlap.
     """
@@ -93,25 +92,30 @@ def chunk_text(text: str, max_tokens=512, overlap_tokens=100) -> List[str]:
 # Process files
 # ------------------------
 def process_file(filepath: str):
-    with open(filepath, "r", encoding="utf-8") as f:
+    with open(filepath, encoding="utf-8") as f:
         text = f.read()
 
     # Chunk
     chunks = chunk_text(text, max_tokens=CHUNK_SIZE_TOKENS, overlap_tokens=OVERLAP_TOKENS)
 
     # Save JSONL
-    jsonl_path = os.path.join(CHUNKS_CACHE_DIR, os.path.basename(filepath).replace(".txt", ".jsonl"))
+    jsonl_path = os.path.join(
+        CHUNKS_CACHE_DIR, os.path.basename(filepath).replace(".txt", ".jsonl")
+    )
     with open(jsonl_path, "w", encoding="utf-8") as jf:
         for idx, chunk in enumerate(chunks):
-            jf.write(json.dumps({
-                "text": chunk,
-                "source": os.path.basename(filepath),
-                "chunk_index": idx
-            }) + "\n")
+            jf.write(
+                json.dumps(
+                    {"text": chunk, "source": os.path.basename(filepath), "chunk_index": idx}
+                )
+                + "\n"
+            )
 
     # Embed chunks
     embeddings = model.encode(chunks, show_progress_bar=True)
-    embeddings_path = os.path.join(EMBEDDINGS_CACHE_DIR, os.path.basename(filepath).replace(".txt", ".npy"))
+    embeddings_path = os.path.join(
+        EMBEDDINGS_CACHE_DIR, os.path.basename(filepath).replace(".txt", ".npy")
+    )
     np.save(embeddings_path, embeddings)
 
     # Upsert into Qdrant
@@ -119,18 +123,15 @@ def process_file(filepath: str):
         PointStruct(
             id=str(uuid.uuid7()),
             vector=emb.tolist(),
-            payload={
-                "text": chunk,
-                "source": os.path.basename(filepath),
-                "chunk_index": i
-            }
+            payload={"text": chunk, "source": os.path.basename(filepath), "chunk_index": i},
         )
-        for i, (chunk, emb) in enumerate(zip(chunks, embeddings))
+        for i, (chunk, emb) in enumerate(zip(chunks, embeddings, strict=False))
     ]
 
     qdrant.upsert(collection_name=QDRANT_COLLECTION_NAME, points=points_struct)
 
     print(f"Processed {filepath}: {len(chunks)} chunks, embeddings saved, upserted to Qdrant.")
+
 
 # ------------------------
 # Main
@@ -141,5 +142,9 @@ def main():
         filepath = os.path.join(FLAT_CACHE_DIR, filename)
         process_file(filepath)
 
+
 if __name__ == "__main__":
     main()
+    print(
+        "\nAll files processed and embeddings saved to Qdrant. View via Qdrant UI: http://localhost:6333/dashboard#/collections"
+    )

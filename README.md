@@ -13,6 +13,8 @@ pip freeze > requirements.txt
   Whats the monthly cost that is acceptable?
   typos
   Pricing - 100 eur for 500mins roughly
+  Stopping mid sentence?
+
 
 # Test questions
 * Do I have “wet” or “dry” macular degeneration? Does it affect both eyes?

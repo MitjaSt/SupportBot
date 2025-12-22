@@ -1,23 +1,27 @@
-import torch, os, sys, requests, threading, json
-from qdrant_client import QdrantClient
-from transformers import BitsAndBytesConfig
-from sentence_transformers import SentenceTransformer
-from transformers import AutoModelForCausalLM, AutoTokenizer, TextIteratorStreamer
-from shared import EMBED_MODEL, LLM_MODEL, QDRANT_COLLECTION_NAME, TOP_K, MAX_TOKENS, SCORE_THRESHOLD
-from transformers import GenerationConfig
+import json
+import os
+import re
+import sys
+import time
 from datetime import datetime
 
+import requests
 from dotenv import load_dotenv
+from qdrant_client import QdrantClient
+from sentence_transformers import SentenceTransformer
+
+from shared import (
+    EMBED_MODEL,
+    QDRANT_COLLECTION_NAME,
+    SCORE_THRESHOLD,
+    TOP_K,
+)
 
 load_dotenv()
 
-OLLAMA_URL = os.getenv("OLLAMA_URL")
-CACHE_DIR_PROMPTS = os.getenv("CACHE_DIR_PROMPTS", "cache/prompts")
-
-# --- CONFIG ---
-MAX_NEW_TOKENS = 300
-
-OLLAMA = True
+OLLAMA_URL = os.environ["OLLAMA_URL"]
+OLLAMA_MODEL = os.environ["OLLAMA_MODEL"]
+CACHE_DIR_PROMPTS = os.environ["CACHE_DIR_PROMPTS"]
 
 # --- EMBEDDING MODEL ---
 embed_model = SentenceTransformer(EMBED_MODEL)
@@ -25,26 +29,11 @@ embed_model = SentenceTransformer(EMBED_MODEL)
 # --- QDRANT CLIENT ---
 qdrant = QdrantClient(host="localhost", port=6333)
 
-if OLLAMA == False:
-    # --- LOCAL LLM ---
-    tokenizer = AutoTokenizer.from_pretrained(LLM_MODEL)
-    bnb_config = BitsAndBytesConfig(
-        load_in_4bit=True,
-        bnb_4bit_use_double_quant=True,
-        bnb_4bit_compute_dtype=torch.float16,
-        bnb_4bit_quant_type="nf4"
-    )
-    llm_model = AutoModelForCausalLM.from_pretrained(
-        LLM_MODEL,
-        device_map="auto",
-        quantization_config=bnb_config,
-        token=os.getenv("HUGGINGFACE_TOKEN", None)
-    )
-
 
 # --- FUNCTIONS ---
 def embed(text):
     return embed_model.encode([text])[0]
+
 
 def retrieve_chunks(query, top_k=TOP_K, score_threshold=SCORE_THRESHOLD):
     query_vec = embed(query)
@@ -52,24 +41,44 @@ def retrieve_chunks(query, top_k=TOP_K, score_threshold=SCORE_THRESHOLD):
         collection_name=QDRANT_COLLECTION_NAME,
         query=query_vec.tolist(),
         limit=top_k,
-        score_threshold=score_threshold
+        score_threshold=score_threshold,
     )
-    return [hit.payload["text"] for hit in result.points if hit.payload and hit.score >= score_threshold]
+    return [
+        hit.payload["text"] for hit in result.points if hit.payload and hit.score >= score_threshold
+    ]
 
-def log_prompt_response(query, prompt, response, chunks):
+
+def sanitize_filename(text, max_length=50):
+    """Sanitize text for use in filename."""
+    # Replace whitespace with underscores
+    text = re.sub(r"\s+", "_", text)
+    # Remove invalid filename characters
+    text = re.sub(r'[<>:"/\\|?*]', "", text)
+    # Limit length
+    text = text[:max_length]
+    # Remove trailing underscores or dots
+    text = text.rstrip("_.")
+    return text.lower()
+
+
+def log_prompt_response(query, prompt, response, chunks, start_time, end_time):
     """Log prompt and response to cache/prompts directory as JSON."""
     os.makedirs(CACHE_DIR_PROMPTS, exist_ok=True)
 
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-    filename = f"{CACHE_DIR_PROMPTS}/{timestamp}.json"
+    # Create filename from timestamp and sanitized query
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    sanitized_query = sanitize_filename(query)
+    filename = f"{CACHE_DIR_PROMPTS}/{timestamp}_{sanitized_query}.json"
 
     log_data = {
-        "timestamp": datetime.now().isoformat(),
+        "start_time": datetime.fromtimestamp(start_time).isoformat(),
+        "end_time": datetime.fromtimestamp(end_time).isoformat(),
+        "elapsed_seconds": round(end_time - start_time, 2),
         "query": query,
         "prompt": prompt,
         "response": response,
         "chunks": chunks,
-        "model": "mistral" if OLLAMA else LLM_MODEL
+        "model": OLLAMA_MODEL,
     }
 
     with open(filename, "w", encoding="utf-8") as f:
@@ -78,11 +87,12 @@ def log_prompt_response(query, prompt, response, chunks):
     return filename
 
 
-
-def ollama_generate_answer_stream(query, chunks):
+def generate_answer(query, chunks, start_time):
+    """Generate answer using Ollama API."""
     context = "\n".join(chunks)
-    prompt = f"""
-You are a phone question-answering assistant. When referring to the person use "you".
+    prompt = f"""You are a question-answering assistant.
+Keep your answers concise, as short as possible and to the point - you are answering on a phone.
+When referring to the "caller" use "you".
 
 Use ONLY the context below to answer.
 Do NOT attempt to provide any information outside the context. Do not guess.
@@ -92,91 +102,42 @@ If the answer is not in the context, say:
 "I do not have information about that. Can I help you with something else?"
 
 Context:
-{ context }
+{context}
 
 Question:
-{ query }
+{query}
 """
-    data={
-        "model": "mistral",
-        "stream": False,
-        "prompt": prompt
-    }
-    response = requests.post(f"{OLLAMA_URL}/api/generate", json.dumps(data))
+
+    data = {"model": OLLAMA_MODEL, "stream": False, "prompt": prompt}
+
+    response = requests.post(f"{OLLAMA_URL}/api/generate", json=data)
     response_text = response.json()["response"]
     print(response_text)
     print("\n")
 
+    end_time = time.time()
+
     # Log prompt and response
-    log_prompt_response(query, prompt, response_text, chunks)
+    log_prompt_response(query, prompt, response_text, chunks, start_time, end_time)
 
-
-
-def generate_answer_stream(query, chunks):
-    context = "\n".join(chunks)
-    prompt = f"""
-You are a question-answering assistant.
-Keep your answers concise and to the point.
-When referring to the person use "you".
-Try to keep the answer as short as possible.
-
-Use ONLY the context below to answer.
-Do NOT attempt to provide any information outside the context. Do not guess.
-Give a single concise answer, no repetition, no rephrasing.
-
-If the answer is not in the context, say:
-"I do not have information about that. Can I help you with something else?"
-
-Context:
-{ context }
-
-Question:
-{ query }
-"""
-    streamer = TextIteratorStreamer(tokenizer, skip_special_tokens=True)
-    inputs = tokenizer(prompt, return_tensors="pt", padding=False, truncation=True, max_length=MAX_TOKENS).to(llm_model.device)
-    attention_mask = inputs["attention_mask"]
-
-    gen_config = GenerationConfig(
-        max_new_tokens=200,
-        do_sample=False, # Disable sampling - deterministic inference
-        temperature=0.0,
-        repetition_penalty=1.2,
-        eos_token_id=tokenizer.eos_token_id
-    )
-
-    # Threaded streaming generation
-    thread = threading.Thread(target=llm_model.generate, kwargs={
-        "inputs": inputs["input_ids"],
-        "streamer": streamer,
-        "generation_config": gen_config,
-        "attention_mask": attention_mask,
-        "pad_token_id": tokenizer.eos_token_id
-    })
-    thread.start()
-
-    for token in streamer:
-        print(token, end="", flush=True)
-    thread.join()
-    print("\n")
 
 # --- MAIN LOOP ---
 if __name__ == "__main__":
-    print(f"Local RAG assistant ready. Using model: {LLM_MODEL}")
+    print(f"Ollama RAG assistant ready. Using {OLLAMA_MODEL} at {OLLAMA_URL}")
     print("Type 'exit' to quit.")
 
     try:
         query = sys.argv[1]
 
-        print(f"Query {query}")
+        print(f"Query: {query}")
         chunks = retrieve_chunks(query)
 
-        print(f"\n💬 Answer:")
+        print("\n💬 Answer:")
+        start_time = time.time()
+        generate_answer(query, chunks, start_time)
 
-        if OLLAMA == True:
-            ollama_generate_answer_stream(query, chunks)
-        else:
-            generate_answer_stream(query, chunks)
+        elapsed_time = time.time() - start_time
+        print(f"\n⏱️  Response time: {elapsed_time:.2f}s")
 
     except IndexError:
         while True:
@@ -189,9 +150,9 @@ if __name__ == "__main__":
                 print("No relevant chunks found in Qdrant.")
                 continue
 
-            print(f"\n💬 Answer:")
+            print("\n💬 Answer:")
+            start_time = time.time()
+            generate_answer(query, chunks, start_time)
 
-            if OLLAMA == True:
-                ollama_generate_answer_stream(query, chunks)
-            else:
-                generate_answer_stream(query, chunks)
+            elapsed_time = time.time() - start_time
+            print(f"\n⏱️  Response time: {elapsed_time:.2f}s")
