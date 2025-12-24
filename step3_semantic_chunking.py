@@ -91,7 +91,7 @@ def process_file(filepath: Path) -> dict:
                 "chunk_length": len(chunk),
             },
         )
-        for idx, (chunk, emb) in enumerate(zip(chunks, embeddings))
+        for idx, (chunk, emb) in enumerate(zip(chunks, embeddings, strict=True))
     ]
 
     # Upsert to Qdrant

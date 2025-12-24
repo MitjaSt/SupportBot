@@ -12,7 +12,7 @@ def parse_env_file(filepath):
     if not filepath.exists():
         return variables
 
-    with open(filepath, "r", encoding="utf-8") as f:
+    with open(filepath, encoding="utf-8") as f:
         for line in f:
             line = line.strip()
             # Skip empty lines and comments
@@ -78,7 +78,7 @@ def main():
 def find_duplicates(filepath):
     """Find duplicate variable definitions in .env file."""
     var_counts = {}
-    with open(filepath, "r", encoding="utf-8") as f:
+    with open(filepath, encoding="utf-8") as f:
         for line in f:
             line = line.strip()
             if not line or line.startswith("#"):

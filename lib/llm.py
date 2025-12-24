@@ -4,6 +4,7 @@ Used by step4_llm.py and test_batch_queries.py.
 """
 
 import os
+import threading
 import time
 from datetime import datetime
 
@@ -39,8 +40,6 @@ Do NOT attempt to provide any information outside the context. Do not guess.
 """
 
 # Thread-local storage for embedding model (prevents threading issues)
-import threading
-
 _thread_local = threading.local()
 
 
@@ -218,7 +217,7 @@ def process_query(query: str, qdrant_client, verbose: bool = True) -> dict:
         log_prompt_response(query, prompt, response_text, chunks, start_time, end_time)
 
     if verbose:
-        print(f"\n💬 Answer:")
+        print("\n💬 Answer:")
         print(response_text)
         print(f"\n⏱️  Response time: {end_time - start_time:.2f}s")
 
