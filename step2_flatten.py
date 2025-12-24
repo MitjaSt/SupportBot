@@ -19,6 +19,8 @@ EXCLUDED_FILE_PREFIXES = [
     "about--",  # General "about us" pages - not medical/support content
     "unsubscribe",  # Unsubscribe pages - no content value
     "support--support",  # Meta/navigation pages
+    "get-involved--fundraising",  # Fundraising pages - not medical/support content
+    "get-involved--gift-",  # Gift aid pages - not medical/support content
     "support--events",  # Event listings - time-sensitive, low content value
     "support--daily-life",  # Navigation/index pages
     "about--media--news",  # News articles - time-sensitive content

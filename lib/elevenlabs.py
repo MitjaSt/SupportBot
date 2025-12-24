@@ -1,11 +1,13 @@
-import requests
 import os
+
+import requests
 from dotenv import load_dotenv
 
 load_dotenv()
 
 ELEVEN_API_KEY = os.getenv("ELEVENLABS_API_KEY")
 ELEVENLABS_VOICE_ID = os.getenv("ELEVENLABS_VOICE_ID")
+
 
 def list_voices():
     url = "https://api.elevenlabs.io/v1/voices"
@@ -14,10 +16,7 @@ def list_voices():
     if response.status_code != 200:
         raise RuntimeError(response.text)
     voices = response.json()["voices"]
-    result = "\n".join(
-        f"{v['name']} -> {v['voice_id']}"
-        for v in voices
-    )
+    result = "\n".join(f"{v['name']} -> {v['voice_id']}" for v in voices)
     return result
 
 
@@ -26,15 +25,9 @@ def text_to_speech(text: str, output_path: str, voice=ELEVENLABS_VOICE_ID):
 
     url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice}"
 
-    headers = {
-        "xi-api-key": ELEVEN_API_KEY,
-        "Content-Type": "application/json"
-    }
+    headers = {"xi-api-key": ELEVEN_API_KEY, "Content-Type": "application/json"}
 
-    payload = {
-        "text": text,
-        "model": "eleven_monolingual_v2"
-    }
+    payload = {"text": text, "model": "eleven_monolingual_v2"}
 
     response = requests.post(url, headers=headers, json=payload, stream=True)
 
@@ -53,28 +46,18 @@ def text_to_speech(text: str, output_path: str, voice=ELEVENLABS_VOICE_ID):
 def speech_to_text(audio_path):
     url = "https://api.elevenlabs.io/v1/speech-to-text"
 
-    headers = {
-        "xi-api-key": ELEVEN_API_KEY
-    }
+    headers = {"xi-api-key": ELEVEN_API_KEY}
 
     with open(audio_path, "rb") as f:
         files = {
-            "file": f   # 👈 MUST be named "file"
+            "file": f  # 👈 MUST be named "file"
         }
 
-        data = {
-            "model_id": "scribe_v1"
-        }
+        data = {"model_id": "scribe_v1"}
 
-        response = requests.post(
-            url,
-            headers=headers,
-            files=files,
-            data=data
-        )
+        response = requests.post(url, headers=headers, files=files, data=data)
 
     if response.status_code != 200:
         raise RuntimeError(response.text)
 
     return response.json()["text"]
-
