@@ -7,6 +7,7 @@ import os
 import threading
 import time
 from datetime import datetime
+from typing import Optional
 
 import requests
 import yaml
@@ -14,6 +15,9 @@ from dotenv import load_dotenv
 from loguru import logger
 from sentence_transformers import SentenceTransformer
 
+from lib.callback_flow import CallbackFlowManager
+from lib.conversation_state import CollectionState, ConversationStateManager, UserInfo
+from lib.prompt_builder import format_conversation_history, inject_collection_instructions
 from mcp import ToolDispatcher, ToolRegistry
 from mcp.tools import support_email
 from shared import EMBED_MODEL, QDRANT_COLLECTION_NAME, SCORE_THRESHOLD, TOP_K
@@ -97,13 +101,22 @@ def retrieve_chunks(
     ]
 
 
-def generate_answer(query: str, chunks: list[str]) -> tuple[str, str]:
+def generate_answer(
+    query: str,
+    chunks: list[str],
+    conversation_history: str | None = None,
+    collection_instructions: str | None = None,
+    user_info: Optional["UserInfo"] = None,
+) -> tuple[str, str]:
     """
-    Generate answer using Ollama API.
+    Generate answer using Ollama API with conversation context.
 
     Args:
         query: User's question
         chunks: Retrieved context chunks
+        conversation_history: Formatted conversation history (optional)
+        collection_instructions: State-specific collection instructions (optional)
+        user_info: Collected user information for tool calls (optional)
 
     Returns:
         Tuple of (response_text, full_prompt)
@@ -113,14 +126,29 @@ def generate_answer(query: str, chunks: list[str]) -> tuple[str, str]:
 
     tools = registry.get_schemas()
 
+    # Build messages array with enhanced context
+    messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+
+    # Add conversation history if available
+    if conversation_history:
+        messages.append(
+            {"role": "system", "content": f"CONVERSATION HISTORY:\n{conversation_history}"}
+        )
+
+    # Add RAG context
+    messages.append({"role": "system", "content": f"RETRIEVED CONTEXT:\n{rag_context}"})
+
+    # Add collection instructions if in flow
+    if collection_instructions:
+        messages.append({"role": "system", "content": collection_instructions})
+
+    # Add user query
+    messages.append({"role": "user", "content": query})
+
     data = {
         "model": OLLAMA_MODEL,
         "stream": False,
-        "messages": [
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "system", "content": rag_context},
-            {"role": "user", "content": query},
-        ],
+        "messages": messages,
         "tools": tools,
     }
 
@@ -128,7 +156,7 @@ def generate_answer(query: str, chunks: list[str]) -> tuple[str, str]:
     response.raise_for_status()
     response_json = response.json()
 
-    logger.info(f"OLLAMA response JSON: {response_json}")  # Debugging line
+    logger.debug(f"OLLAMA response JSON: {response_json}")  # Debugging line
 
     message = response_json.get("message", {})
     response_text = message.get("content", "")
@@ -142,12 +170,19 @@ def generate_answer(query: str, chunks: list[str]) -> tuple[str, str]:
         formatted_tool_calls = []
         for tool_call in tool_calls:
             if "function" in tool_call:
-                formatted_tool_calls.append(
-                    {
-                        "name": tool_call["function"]["name"],
-                        "arguments": tool_call["function"].get("arguments", {}),
-                    }
-                )
+                tool_name = tool_call["function"]["name"]
+                tool_args = tool_call["function"].get("arguments", {})
+
+                # Inject user info if calling send_support_email
+                if tool_name == "send_support_email" and user_info:
+                    if user_info.phone:
+                        tool_args["phone_number"] = user_info.phone
+                    if user_info.name:
+                        tool_args["name"] = user_info.name
+                    if user_info.preferred_call_time:
+                        tool_args["preferred_contact_time"] = user_info.preferred_call_time
+
+                formatted_tool_calls.append({"name": tool_name, "arguments": tool_args})
 
         # Execute the tools
         if formatted_tool_calls:
@@ -173,16 +208,6 @@ def generate_answer(query: str, chunks: list[str]) -> tuple[str, str]:
 
 
 def sanitize_filename(text: str, max_length: int = 50) -> str:
-    """
-    Sanitize text for use in filename.
-
-    Args:
-        text: Text to sanitize
-        max_length: Maximum length of output
-
-    Returns:
-        Sanitized filename-safe string
-    """
     import re
 
     # Replace whitespace with underscores
@@ -201,14 +226,6 @@ def log_prompt_response(
 ) -> str:
     """
     Log prompt and response to cache/prompts directory as YAML.
-
-    Args:
-        query: User's question
-        prompt: Full prompt sent to LLM
-        response: LLM's response
-        chunks: Retrieved chunks
-        start_time: Query start time (seconds since epoch)
-        end_time: Query end time (seconds since epoch)
 
     Returns:
         Path to saved log file
@@ -237,26 +254,67 @@ def log_prompt_response(
     return filename
 
 
-def process_query(query: str, qdrant_client, verbose: bool = True) -> dict:
+def process_query(
+    query: str,
+    qdrant_client,
+    session_id: str | None = None,
+    state_manager: Optional["ConversationStateManager"] = None,
+    verbose: bool = True,
+) -> dict:
     """
-    Process a complete RAG query: retrieve chunks, generate answer, and optionally log.
-
-    Args:
-        query: User's question
-        qdrant_client: QdrantClient instance
-        verbose: Whether to print output
+    Process a complete RAG query with optional conversation state management.
 
     Returns:
         Dict with query results
     """
     start_time = time.time()
 
+    # Initialize conversation components if session provided
+    session = None
+    callback_flow = None
+    conversation_history_str = None
+    collection_instructions_str = None
+    user_info = None
+
+    if session_id and state_manager:
+        # Get or create session (session_id is guaranteed not None here)
+        session = state_manager.get_session(session_id)
+        if not session:
+            session = state_manager.create_session(session_id)
+
+        # Add user message to history
+        state_manager.add_message(session_id, "user", query)
+
+        # Initialize callback flow manager
+        callback_flow = CallbackFlowManager(state_manager)
+
+        # Get conversation history for context
+        messages = state_manager.get_messages(session_id, limit=5)
+        if messages:
+            conversation_history_str = format_conversation_history(
+                messages[:-1]
+            )  # Exclude current query
+
+        # Get collection instructions if in flow
+        if session.collection_state != CollectionState.IDLE.value:
+            collection_instructions_str = inject_collection_instructions(session.collection_state)
+
+        # Get user info for tool calls
+        user_info = state_manager.get_user_info(session_id)
+
     # Retrieve chunks
     chunks = retrieve_chunks(query, qdrant_client)
 
     if not chunks:
         if verbose:
-            logger.info("No relevant chunks found in Qdrant.")
+            logger.debug("No relevant chunks found in Qdrant.")
+
+        # Still add response to history if in session
+        if session_id and state_manager:
+            state_manager.add_message(
+                session_id, "assistant", "No relevant chunks found in Qdrant."
+            )
+
         return {
             "query": query,
             "answer": "No relevant chunks found in Qdrant.",
@@ -265,16 +323,78 @@ def process_query(query: str, qdrant_client, verbose: bool = True) -> dict:
             "status": "no_chunks",
         }
 
-    # Generate answer
+    # Check if we should offer callback (only if session active)
+    if (
+        session_id
+        and state_manager
+        and session
+        and callback_flow
+        and session.collection_state == CollectionState.IDLE.value
+        and callback_flow.should_offer_callback(query, chunks, session)
+    ):
+        state_manager.update_collection_state(session_id, CollectionState.OFFERING)
+        session = state_manager.get_session(session_id)  # Refresh session
+        assert session is not None, "Session should exist after state update"
+        collection_instructions_str = inject_collection_instructions(session.collection_state)
+        logger.debug(f"Callback offer triggered for session {session_id}")
+
+    # Generate answer with conversation context
     try:
-        response_text, prompt = generate_answer(query, chunks)
+        response_text, prompt = generate_answer(
+            query, chunks, conversation_history_str, collection_instructions_str, user_info
+        )
         status = "success"
     except Exception as e:
         response_text = f"Error: {str(e)}"
         prompt = ""
         status = "error"
 
+    # Process response if in collection flow
+    if (
+        session_id
+        and state_manager
+        and session
+        and callback_flow
+        and session.collection_state != CollectionState.IDLE.value
+    ):
+        result = callback_flow.process_user_response(session, query)
+        action = result.get("action")
+        extracted_data = result.get("extracted_data", {})
+
+        if action == "retry":
+            # Invalid input, ask again
+            error_msg = result.get("error", "Please try again.")
+            response_text = f"{error_msg} {callback_flow.get_next_collection_prompt(session)}"
+        elif action in ["continue", "complete", "cancel", "restart"]:
+            # Advance state machine
+            callback_flow.advance_state(session, extracted_data, action)
+            session = state_manager.get_session(session_id)  # Refresh session
+            assert session is not None, "Session should exist after state update"
+
+            if action == "cancel":
+                response_text = "No problem! Is there anything else I can help you with?"
+            elif action == "restart":
+                response_text = (
+                    result.get("message", "Let's start over.")
+                    + " "
+                    + callback_flow.get_next_collection_prompt(session)
+                )
+            elif session.collection_state == CollectionState.COMPLETE.value:
+                # Collection complete - tool should have been called
+                response_text = "Perfect! Our support team will call you soon."
+                # Reset to IDLE after tool call
+                state_manager.update_collection_state(session_id, CollectionState.IDLE)
+            elif session.collection_state != CollectionState.IDLE.value:
+                # Continue to next step
+                next_prompt = callback_flow.get_next_collection_prompt(session)
+                if next_prompt:
+                    response_text = f"Thank you. {next_prompt}"
+
     end_time = time.time()
+
+    # Add assistant response to history
+    if session_id and state_manager:
+        state_manager.add_message(session_id, "assistant", response_text)
 
     # Log the interaction
     if status == "success":
@@ -293,4 +413,6 @@ def process_query(query: str, qdrant_client, verbose: bool = True) -> dict:
         "status": status,
         "model": OLLAMA_MODEL,
         "embedding_model": EMBED_MODEL,
+        "session_id": session_id if session else None,
+        "collection_state": session.collection_state if session else None,
     }

@@ -1,0 +1,55 @@
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - ./storage/redis:/data
+    command: redis-server --appendonly yes
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  redis-insight:
+    image: redis/redisinsight:latest
+    container_name: redis-insight
+    ports:
+      - "${REDIS_INSIGHT_PORT:-5540}:5540"
+    volumes:
+      - ./storage/redisinsight:/data
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      - "REDIS_HOSTS=local:redis:6379"
+
+  redis-insight-setup:
+    image: curlimages/curl:latest
+    container_name: redis-insight-setup
+    depends_on:
+      - redis-insight
+    environment:
+      - REDIS_INSIGHT_PORT=${REDIS_INSIGHT_PORT:-5540}
+      - REDIS_INSIGHT_DB_NAME=${REDIS_INSIGHT_DB_NAME:-MacularSociety}
+    entrypoint: /bin/sh
+    command:
+      - -c
+      - |
+        echo "Waiting for RedisInsight to be ready..."
+        sleep 20
+        echo "Checking if database exists..."
+        if ! curl -s http://redis-insight:$$REDIS_INSIGHT_PORT/api/databases | grep -q "$$REDIS_INSIGHT_DB_NAME"; then
+          echo "Adding Redis database to RedisInsight..."
+          curl -s -X POST http://redis-insight:$$REDIS_INSIGHT_PORT/api/databases \
+            -H 'Content-Type: application/json' \
+            -d "{\"host\":\"redis\",\"port\":6379,\"name\":\"$$REDIS_INSIGHT_DB_NAME\"}"
+          echo "Database added successfully"
+        else
+          echo "Database already exists"
+        fi
+    restart: "no"

@@ -12,7 +12,7 @@ ELEVENLABS_VOICE_ID = os.getenv("ELEVENLABS_VOICE_ID")
 def list_voices():
     url = "https://api.elevenlabs.io/v1/voices"
     headers = {"xi-api-key": ELEVEN_API_KEY}
-    response = requests.get(url, headers=headers)
+    response = requests.get(url, headers=headers, timeout=2000)
     if response.status_code != 200:
         raise RuntimeError(response.text)
     voices = response.json()["voices"]

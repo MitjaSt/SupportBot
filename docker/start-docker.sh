@@ -5,8 +5,10 @@ PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 
 source $PROJECT_DIR/.env
 
-docker compose up -d --remove-orphans --renew-anon-volumes
-
+docker compose \
+  --file $PROJECT_DIR/docker/docker-compose.yml \
+  --env-file $PROJECT_DIR/.env \
+  up --detach
 
 # Pull model
 curl -X POST http://localhost:11434/api/pull -d '{"name": "'$OLLAMA_MODEL'"}'
