@@ -11,9 +11,19 @@ from datetime import datetime
 import requests
 import yaml
 from dotenv import load_dotenv
+from loguru import logger
 from sentence_transformers import SentenceTransformer
 
+from mcp import ToolDispatcher, ToolRegistry
+from mcp.tools import support_email
 from shared import EMBED_MODEL, QDRANT_COLLECTION_NAME, SCORE_THRESHOLD, TOP_K
+
+# Initialize global tool registry and register tools
+registry = ToolRegistry()
+registry.register(
+    name="send_support_email", schema=support_email.schema(), handler=support_email.handler
+)
+dispatcher = ToolDispatcher(registry)
 
 load_dotenv()
 
@@ -35,11 +45,15 @@ INSTRUCTIONS:
 - Give a single concise answer, no repetition, no rephrasing.
 - If the answer is not in the context or you are not sure, say: "I do not have information about that. Can I help you with something else?"
 
+If the user agrees to being contacted by support, you MUST call the tool send_support_email.
+Do not describe the action in text.
+
 Use ONLY the context below to answer.
 Do NOT attempt to provide any information outside the context. Do not guess.
-"""
+""".strip()
 
 # Thread-local storage for embedding model (prevents threading issues)
+
 _thread_local = threading.local()
 
 
@@ -56,7 +70,9 @@ def embed_query(text: str):
     return model.encode([text])[0]
 
 
-def retrieve_chunks(query: str, qdrant_client, top_k: int = TOP_K, score_threshold: float = SCORE_THRESHOLD) -> list[str]:
+def retrieve_chunks(
+    query: str, qdrant_client, top_k: int = TOP_K, score_threshold: float = SCORE_THRESHOLD
+) -> list[str]:
     """
     Retrieve relevant chunks from Qdrant for a given query.
 
@@ -92,22 +108,68 @@ def generate_answer(query: str, chunks: list[str]) -> tuple[str, str]:
     Returns:
         Tuple of (response_text, full_prompt)
     """
-    context = "\n".join(chunks)
-    prompt = f"""{SYSTEM_PROMPT.strip()}
 
-RETRIEVED CONTEXT:
-{context}
+    rag_context = "\n".join(chunks)
 
-USER QUESTION:
+    tools = registry.get_schemas()
+
+    data = {
+        "model": OLLAMA_MODEL,
+        "stream": False,
+        "messages": [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "system", "content": rag_context},
+            {"role": "user", "content": query},
+        ],
+        "tools": tools,
+    }
+
+    response = requests.post(f"{OLLAMA_URL}/api/chat", json=data, timeout=OLLAMA_TIMEOUT)
+    response.raise_for_status()
+    response_json = response.json()
+
+    logger.info(f"OLLAMA response JSON: {response_json}")  # Debugging line
+
+    message = response_json.get("message", {})
+    response_text = message.get("content", "")
+    tool_calls = message.get("tool_calls", [])
+
+    # Handle tool calls if present
+    if tool_calls:
+        logger.debug(f"Tool calls detected: {tool_calls}")
+
+        # Extract tool calls in the format expected by dispatcher
+        formatted_tool_calls = []
+        for tool_call in tool_calls:
+            if "function" in tool_call:
+                formatted_tool_calls.append(
+                    {
+                        "name": tool_call["function"]["name"],
+                        "arguments": tool_call["function"].get("arguments", {}),
+                    }
+                )
+
+        # Execute the tools
+        if formatted_tool_calls:
+            dispatcher.dispatch(formatted_tool_calls)
+
+            # If there's no content but there are tool calls, provide a response
+            if not response_text:
+                response_text = "I've notified our support team to contact you."
+
+    return (
+        response_text,
+        f"""
+[SYSTEM]
+{SYSTEM_PROMPT}
+
+[RAG_CONTEXT]
+{rag_context}
+
+[USER QUESTION]
 {query}
-"""
-
-    data = {"model": OLLAMA_MODEL, "stream": False, "prompt": prompt}
-
-    response = requests.post(f"{OLLAMA_URL}/api/generate", json=data, timeout=OLLAMA_TIMEOUT)
-    response_text = response.json()["response"]
-
-    return response_text, prompt
+""",
+    )
 
 
 def sanitize_filename(text: str, max_length: int = 50) -> str:
@@ -134,7 +196,9 @@ def sanitize_filename(text: str, max_length: int = 50) -> str:
     return text.lower()
 
 
-def log_prompt_response(query: str, prompt: str, response: str, chunks: list[str], start_time: float, end_time: float) -> str:
+def log_prompt_response(
+    query: str, prompt: str, response: str, chunks: list[str], start_time: float, end_time: float
+) -> str:
     """
     Log prompt and response to cache/prompts directory as YAML.
 
@@ -192,7 +256,7 @@ def process_query(query: str, qdrant_client, verbose: bool = True) -> dict:
 
     if not chunks:
         if verbose:
-            print("No relevant chunks found in Qdrant.")
+            logger.info("No relevant chunks found in Qdrant.")
         return {
             "query": query,
             "answer": "No relevant chunks found in Qdrant.",
@@ -217,9 +281,9 @@ def process_query(query: str, qdrant_client, verbose: bool = True) -> dict:
         log_prompt_response(query, prompt, response_text, chunks, start_time, end_time)
 
     if verbose:
-        print("\n💬 Answer:")
-        print(response_text)
-        print(f"\n⏱️  Response time: {end_time - start_time:.2f}s")
+        logger.info("\n💬 Answer:")
+        logger.info(response_text)
+        logger.info(f"\n⏱️  Response time: {end_time - start_time:.2f}s")
 
     return {
         "query": query,

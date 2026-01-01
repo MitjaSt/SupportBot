@@ -1,13 +1,19 @@
 #!/usr/bin/env bash
 
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+
+source $PROJECT_DIR/.env
+
 docker compose up -d --remove-orphans --renew-anon-volumes
 
+
 # Pull model
-curl -X POST http://localhost:11434/api/pull -d '{"name": "mistral"}'
+curl -X POST http://localhost:11434/api/pull -d '{"name": "'$OLLAMA_MODEL'"}'
 
 # Test model
 RESPONSE=$(curl --fail --insecure --silent --request POST http://localhost:11434/api/generate -d '{
-  "model": "mistral",
+  "model": "'$OLLAMA_MODEL'",
   "stream": false,
   "prompt": "Are you running fine?"
 }')

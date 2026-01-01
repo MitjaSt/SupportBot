@@ -174,7 +174,3 @@ For detailed technical documentation, see [CLAUDE.md](.claude/CLAUDE.md).
 - Qdrant must be running before Steps 3 and 4
 - First run will download embedding models (~1-2GB)
 - Query logs are saved to `cache/prompts/` for debugging
-
-## License
-
-[Your License Here]
