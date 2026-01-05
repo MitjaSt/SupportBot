@@ -1,4 +1,4 @@
-import lib.elevenlabs as elevenlabs
+import src.lib.elevenlabs as elevenlabs
 
 if __name__ == "__main__":
     elevenlabs.text_to_speech(

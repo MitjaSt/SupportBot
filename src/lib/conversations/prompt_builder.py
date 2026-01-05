@@ -3,12 +3,10 @@ Enhanced prompt construction with conversation history.
 Builds prompts that include context from previous turns.
 """
 
-from typing import List, Optional
-
-from lib.conversation_state import CollectionState, Message
+from src.lib.conversations.conversation_state import CollectionState, Message
 
 
-def format_conversation_history(messages: List[Message], max_turns: int = 5) -> str:
+def format_conversation_history(messages: list[Message], max_turns: int = 5) -> str:
     """
     Format conversation history for inclusion in prompts.
 
@@ -33,7 +31,7 @@ def format_conversation_history(messages: List[Message], max_turns: int = 5) -> 
     return "\n".join(lines)
 
 
-def inject_collection_instructions(state: str) -> Optional[str]:
+def inject_collection_instructions(state: str) -> str | None:
     """
     Get state-specific instructions for the LLM.
 
@@ -49,19 +47,19 @@ You are currently offering a callback to the user.
 Ask politely if they would like our support team to call them.
 Keep the offer friendly and not pushy.
 """.strip(),
-        CollectionState.COLLECTING_PHONE.value: """
+        CollectionState.COLLECTING_USER_PHONE.value: """
 You are collecting the user's phone number.
 Ask for their phone number in a friendly way.
 The user should provide a UK phone number.
 If they provide an invalid format, politely ask them to provide it again.
 """.strip(),
-        CollectionState.COLLECTING_NAME.value: """
+        CollectionState.COLLECTING_USER_NAME.value: """
 You are collecting the user's name (optional).
 Ask for their name politely.
 Make it clear they can skip this if they prefer to remain anonymous.
 Accept any reasonable name format.
 """.strip(),
-        CollectionState.COLLECTING_TIME.value: """
+        CollectionState.COLLECTING_USER_TIME.value: """
 You are collecting the user's preferred call time (optional).
 Ask when would be a good time for support to call them.
 Accept flexible descriptions like "morning", "afternoon", "evening", or specific times.
@@ -80,9 +78,9 @@ If they say no or want to change something, you'll restart the collection proces
 
 def build_enhanced_system_prompt(
     base_prompt: str,
-    conversation_history: Optional[str] = None,
-    collection_state: Optional[str] = None,
-    callback_context: Optional[str] = None,
+    conversation_history: str | None = None,
+    collection_state: str | None = None,
+    callback_context: str | None = None,
 ) -> str:
     """
     Build enhanced system prompt with conversation history and collection instructions.

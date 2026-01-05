@@ -7,7 +7,11 @@ import re
 
 from loguru import logger
 
-from lib.conversation_state import CollectionState, ConversationSession, ConversationStateManager
+from src.lib.conversations.conversation_state import (
+    CollectionState,
+    ConversationSession,
+    ConversationStateManager,
+)
 
 
 class CallbackFlowManager:

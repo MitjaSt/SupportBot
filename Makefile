@@ -1,0 +1,207 @@
+.PHONY: help setup clean test lint format docker-start docker-stop docker-restart pipeline query validate
+
+# Colors for output
+BLUE := \033[0;34m
+GREEN := \033[0;32m
+YELLOW := \033[0;33m
+RED := \033[0;31m
+NC := \033[0m # No Color
+
+# Python executable (use venv if available, fallback to system python)
+PYTHON := $(shell if [ -f .venv/bin/python ]; then echo .venv/bin/python; else echo python3; fi)
+
+# Default target
+.DEFAULT_GOAL := help
+
+##@ General
+
+help: ## Display this help message
+	@echo "$(BLUE)Macular Society RAG Pipeline$(NC)"
+	@echo ""
+	@awk 'BEGIN {FS = ":.*##"; printf "Usage:\n  make $(YELLOW)<target>$(NC)\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  $(GREEN)%-20s$(NC) %s\n", $$1, $$2 } /^##@/ { printf "\n$(BLUE)%s$(NC)\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
+
+##@ Setup & Environment
+
+setup: ## Create venv and install all dependencies
+	@echo "$(BLUE)Setting up virtual environment...$(NC)"
+	python3 -m venv .venv
+	@echo "$(GREEN)Virtual environment created!$(NC)"
+	@echo "$(YELLOW)Activate it with: source .venv/bin/activate$(NC)"
+	@echo ""
+	@echo "$(BLUE)Installing dependencies...$(NC)"
+	.venv/bin/pip install --upgrade pip
+	.venv/bin/pip install -r requirements.txt
+	@echo "$(GREEN)Dependencies installed!$(NC)"
+	@echo ""
+	@echo "$(BLUE)Installing Playwright browsers...$(NC)"
+	.venv/bin/playwright install
+	@echo "$(GREEN)Setup complete!$(NC)"
+
+setup-dev: setup ## Setup with development tools
+	@echo "$(BLUE)Installing pre-commit hooks...$(NC)"
+	.venv/bin/pre-commit install
+	@echo "$(GREEN)Pre-commit hooks installed!$(NC)"
+
+clean: ## Remove cache, build artifacts, and Python bytecode
+	@echo "$(BLUE)Cleaning up...$(NC)"
+	rm -rf .venv/ __pycache__ **/__pycache__ .mypy_cache/ .pytest_cache/ .ruff_cache/
+	find . -type f -name "*.pyc" -delete
+	find . -type d -name "__pycache__" -delete
+	@echo "$(GREEN)Cleanup complete!$(NC)"
+
+clean-cache: ## Remove only cache directories (preserves venv)
+	@echo "$(BLUE)Cleaning cache directories...$(NC)"
+	rm -rf cache/json/* cache/flat/* cache/prompts/*
+	@echo "$(GREEN)Cache cleaned!$(NC)"
+
+validate: ## Validate environment variables and dependencies
+	@echo "$(BLUE)Validating environment...$(NC)"
+	$(PYTHON) scripts/validate_env.py
+
+##@ Docker Services
+
+docker-start: ## Start Docker services (Qdrant, Ollama, Redis)
+	@echo "$(BLUE)Starting Docker services...$(NC)"
+	./docker/start-docker.sh
+	@echo "$(GREEN)Docker services started!$(NC)"
+	@echo "$(YELLOW)Qdrant Dashboard: http://localhost:6333/dashboard$(NC)"
+
+docker-stop: ## Stop Docker services
+	@echo "$(BLUE)Stopping Docker services...$(NC)"
+	docker compose --file docker/docker-compose.yml down
+	@echo "$(GREEN)Docker services stopped!$(NC)"
+
+docker-restart: docker-stop docker-start ## Restart Docker services
+
+docker-logs: ## Show Docker logs
+	docker compose --file docker/docker-compose.yml logs -f
+
+docker-status: ## Show Docker service status
+	docker compose --file docker/docker-compose.yml ps
+
+##@ Pipeline Execution
+
+scrape: validate ## Run Step 1: Scrape website
+	@echo "$(BLUE)Running Step 1: Scraping website...$(NC)"
+	$(PYTHON) -m src.pipeline.step1_scrape
+	@echo "$(GREEN)Scraping complete!$(NC)"
+
+flatten: validate ## Run Step 2: Flatten JSON to text
+	@echo "$(BLUE)Running Step 2: Flattening content...$(NC)"
+	$(PYTHON) -m src.pipeline.step2_flatten
+	@echo "$(GREEN)Flattening complete!$(NC)"
+
+embed: validate docker-status ## Run Step 3: Create embeddings and load to Qdrant
+	@echo "$(BLUE)Running Step 3: Creating embeddings...$(NC)"
+	$(PYTHON) -m src.pipeline.step3_semantic_chunking
+	@echo "$(GREEN)Embeddings created and loaded to Qdrant!$(NC)"
+
+query: validate docker-status ## Run Step 4: Interactive query interface
+	@echo "$(BLUE)Starting interactive query interface...$(NC)"
+	@echo "$(YELLOW)Type your questions or 'quit' to exit$(NC)"
+	$(PYTHON) -m src.pipeline.step4_llm
+
+pipeline: scrape flatten embed ## Run complete pipeline (steps 1-3)
+	@echo "$(GREEN)✓ Complete pipeline finished!$(NC)"
+	@echo "$(YELLOW)Run 'make query' to start asking questions$(NC)"
+
+pipeline-full: clean-cache pipeline ## Clean cache and run full pipeline
+
+##@ Testing
+
+test: ## Run all tests
+	@echo "$(BLUE)Running all tests...$(NC)"
+	pytest tests/ -v
+
+test-elevenlabs: ## Run ElevenLabs API tests
+	@echo "$(BLUE)Testing ElevenLabs integration...$(NC)"
+	$(PYTHON) -m tests.test_elevenlabs_list_voices
+	$(PYTHON) -m tests.test_elevenlabs_text2voice
+	$(PYTHON) -m tests.test_elevenlabs_voice2text
+
+test-qdrant: ## Test Qdrant vector search
+	@echo "$(BLUE)Testing Qdrant queries...$(NC)"
+	$(PYTHON) -m tests.test_query_qdrant
+
+test-conversation: ## Test conversation flow
+	@echo "$(BLUE)Testing conversation flow...$(NC)"
+	$(PYTHON) -m tests.test_conversation_flow
+
+test-batch: ## Run batch query tests
+	@echo "$(BLUE)Running batch queries from TESTING.md...$(NC)"
+	$(PYTHON) -m tests.test_batch_queries
+
+##@ Code Quality
+
+lint: ## Run linter (ruff)
+	@echo "$(BLUE)Running linter...$(NC)"
+	@if [ -f .venv/bin/ruff ]; then .venv/bin/ruff check .; else ruff check .; fi
+
+lint-fix: ## Run linter and auto-fix issues
+	@echo "$(BLUE)Running linter with auto-fix...$(NC)"
+	@if [ -f .venv/bin/ruff ]; then .venv/bin/ruff check --fix .; else ruff check --fix .; fi
+
+format: ## Format code (black + isort)
+	@echo "$(BLUE)Formatting code...$(NC)"
+	@if [ -f .venv/bin/black ]; then .venv/bin/black .; else black .; fi
+	@if [ -f .venv/bin/isort ]; then .venv/bin/isort .; else isort .; fi
+	@echo "$(GREEN)Code formatted!$(NC)"
+
+format-check: ## Check code formatting without changes
+	@echo "$(BLUE)Checking code formatting...$(NC)"
+	@if [ -f .venv/bin/black ]; then .venv/bin/black --check .; else black --check .; fi
+	@if [ -f .venv/bin/isort ]; then .venv/bin/isort --check-only .; else isort --check-only .; fi
+
+typecheck: ## Run type checker (mypy)
+	@echo "$(BLUE)Running type checker...$(NC)"
+	@if [ -f .venv/bin/mypy ]; then .venv/bin/mypy .; else mypy .; fi
+
+quality: format lint typecheck ## Run all code quality checks
+
+pre-commit: ## Run pre-commit hooks on all files
+	@echo "$(BLUE)Running pre-commit hooks...$(NC)"
+	@if [ -f .venv/bin/pre-commit ]; then .venv/bin/pre-commit run --all-files; else pre-commit run --all-files; fi
+
+##@ Development
+
+install-hooks: ## Install git pre-commit hooks
+	@echo "$(BLUE)Installing pre-commit hooks...$(NC)"
+	pre-commit install
+	@echo "$(GREEN)Pre-commit hooks installed!$(NC)"
+
+dev-shell: ## Activate development shell with venv
+	@echo "$(YELLOW)Starting development shell...$(NC)"
+	@bash --init-file <(echo ". ~/.bashrc; source .venv/bin/activate; echo 'Development environment activated'")
+
+requirements-update: ## Update requirements.txt from current venv
+	@echo "$(BLUE)Updating requirements.txt...$(NC)"
+	pip freeze > requirements.txt
+	@echo "$(GREEN)Requirements updated!$(NC)"
+
+##@ Utilities
+
+stats: ## Show project statistics
+	@echo "$(BLUE)Project Statistics:$(NC)"
+	@echo ""
+	@echo "$(YELLOW)Python files:$(NC)"
+	@find . -name "*.py" -not -path "./.venv/*" -not -path "./.mypy_cache/*" | wc -l
+	@echo ""
+	@echo "$(YELLOW)Lines of code:$(NC)"
+	@find . -name "*.py" -not -path "./.venv/*" -not -path "./.mypy_cache/*" -exec wc -l {} + | tail -1
+	@echo ""
+	@echo "$(YELLOW)Test files:$(NC)"
+	@find . -name "test_*.py" -not -path "./.venv/*" | wc -l
+	@echo ""
+	@echo "$(YELLOW)Cache size:$(NC)"
+	@du -sh cache/ 2>/dev/null || echo "0B"
+
+open-qdrant: ## Open Qdrant dashboard in browser
+	@echo "$(BLUE)Opening Qdrant dashboard...$(NC)"
+	open http://localhost:6333/dashboard
+
+logs: ## Tail application logs (if any)
+	@echo "$(BLUE)Showing recent logs...$(NC)"
+	@tail -f cache/prompts/*.yaml 2>/dev/null || echo "No logs found"
+
+# Test variables: `make print-FOO`
+print-%: ; @echo $($*)

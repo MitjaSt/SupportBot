@@ -15,12 +15,15 @@ from dotenv import load_dotenv
 from loguru import logger
 from sentence_transformers import SentenceTransformer
 
-from lib.callback_flow import CallbackFlowManager
-from lib.conversation_state import CollectionState, ConversationStateManager, UserInfo
-from lib.prompt_builder import format_conversation_history, inject_collection_instructions
-from mcp import ToolDispatcher, ToolRegistry
-from mcp.tools import support_email
-from shared import EMBED_MODEL, QDRANT_COLLECTION_NAME, SCORE_THRESHOLD, TOP_K
+from src.config import EMBED_MODEL, QDRANT_COLLECTION_NAME, SCORE_THRESHOLD, TOP_K
+from src.lib.conversations.callback_flow import CallbackFlowManager
+from src.lib.conversations.conversation_state import CollectionState, ConversationStateManager, UserInfo
+from src.lib.conversations.prompt_builder import (
+    format_conversation_history,
+    inject_collection_instructions,
+)
+from src.lib.mcp import ToolDispatcher, ToolRegistry
+from src.lib.mcp.tools import support_email
 
 # Initialize global tool registry and register tools
 registry = ToolRegistry()

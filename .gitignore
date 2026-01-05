@@ -1,10 +1,32 @@
-*.pyc
-.DS_Store
-.env
+# Python virtual environments and cache files
 .venv/
 __pycache__/
+.Python
+*.pyc
+
+# macOS system files
+.DS_Store
+
+# Application
+build/
+dist/
+
+# Environment variables
+.env
+
+# Cache directories
 cache/
-cheats
+
+# Docker
 docker/storage/
+
+# Temporary files
 tmp/voice/
+
+# Personal notes
 TODO.md
+cheats
+
+# Project reorganization planning docs (temporary)
+RESTRUCTURE_PLAN.md
+REORGANIZATION_SUMMARY.md

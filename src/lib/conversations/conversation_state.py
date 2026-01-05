@@ -18,9 +18,9 @@ load_dotenv()
 class CollectionState(Enum):
     IDLE = "idle"
     OFFERING = "offering"
-    COLLECTING_PHONE = "collecting_phone"
-    COLLECTING_NAME = "collecting_name"
-    COLLECTING_TIME = "collecting_time"
+    COLLECTING_USER_PHONE = "collecting__user_phone"
+    COLLECTING_USER_NAME = "collecting__user_name"
+    COLLECTING_USER_TIME = "collecting_user_time"
     CONFIRMING = "confirming"
     COMPLETE = "complete"
 
@@ -293,21 +293,3 @@ class ConversationStateManager:
 
         except Exception as e:
             logger.error(f"Error clearing session {session_id}: {e}")
-
-
-def get_redis_client():
-    """Get configured Redis client. Raises exception if connection fails."""
-    import redis
-
-    client = redis.Redis(
-        host=os.getenv("REDIS_HOST", "localhost"),
-        port=int(os.getenv("REDIS_PORT", 6379)),
-        db=int(os.getenv("REDIS_DB", 0)),
-        password=os.getenv("REDIS_PASSWORD") or None,
-        decode_responses=True,
-    )
-
-    # Test connection
-    client.ping()
-    logger.info("Redis connection successful")
-    return client

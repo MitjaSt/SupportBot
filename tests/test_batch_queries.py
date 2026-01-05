@@ -13,8 +13,8 @@ from datetime import datetime
 import yaml
 from qdrant_client import QdrantClient
 
-from lib.llm import EMBED_MODEL, OLLAMA_MODEL, generate_answer, retrieve_chunks
-from shared import SCORE_THRESHOLD, TOP_K
+from src.config import SCORE_THRESHOLD, TOP_K
+from src.lib.llm import EMBED_MODEL, OLLAMA_MODEL, generate_answer, retrieve_chunks
 
 # Test configuration
 MAX_WORKERS = 4  # Parallel processing with separate processes (each loads its own embedding model)

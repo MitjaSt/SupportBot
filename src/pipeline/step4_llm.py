@@ -4,8 +4,9 @@ import uuid
 from loguru import logger
 from qdrant_client import QdrantClient
 
-from lib.conversation_state import ConversationStateManager, get_redis_client
-from lib.llm import OLLAMA_MODEL, OLLAMA_URL, process_query
+from src.lib.conversations.conversation_state import ConversationStateManager
+from src.lib.llm import OLLAMA_MODEL, OLLAMA_URL, process_query
+from src.lib.redis import get_redis_client
 
 # --- QDRANT CLIENT ---
 qdrant = QdrantClient(host="localhost", port=6333)

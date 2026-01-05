@@ -12,7 +12,7 @@ from semantic_text_splitter import TextSplitter
 from sentence_transformers import SentenceTransformer
 from tqdm import tqdm
 
-from shared import (
+from src.config import (
     EMBED_MODEL,
     QDRANT_COLLECTION_NAME,
     VECTOR_SIZE,
