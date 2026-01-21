@@ -22,8 +22,6 @@ class LangfuseObserver:
 
     def __init__(self):
         """Initialize Langfuse client from environment variables."""
-        self._client = None
-
         try:
             self._client = Langfuse(
                 secret_key=os.environ["LANGFUSE_SECRET_KEY"],
@@ -33,11 +31,6 @@ class LangfuseObserver:
             logger.info("Langfuse observability enabled")
         except Exception as e:
             logger.error(f"Failed to initialize Langfuse: {e}")
-
-    @property
-    def enabled(self) -> bool:
-        """Check if Langfuse is enabled and configured."""
-        return self._client is not None
 
     def get_prompt(
         self,
@@ -73,9 +66,6 @@ class LangfuseObserver:
         Returns:
             Langfuse trace object or None if disabled
         """
-        if not self.enabled or not self._client:
-            return None
-
         try:
             return self._client.trace(
                 name=name,
@@ -106,8 +96,6 @@ class LangfuseObserver:
             scores: Optional similarity scores for each chunk
             metadata: Additional metadata
         """
-        if not self.enabled or trace is None:
-            return None
 
         try:
             return trace.span(
@@ -144,8 +132,6 @@ class LangfuseObserver:
             usage: Token usage stats (prompt_tokens, completion_tokens, total_tokens)
             metadata: Additional metadata
         """
-        if not self.enabled or trace is None:
-            return None
 
         try:
             return trace.generation(
@@ -178,9 +164,6 @@ class LangfuseObserver:
             output_data: Output data for the event
             metadata: Additional metadata
         """
-        if not self.enabled or trace is None:
-            return None
-
         try:
             return trace.event(
                 name=name,
@@ -208,8 +191,6 @@ class LangfuseObserver:
             value: Numeric score value
             comment: Optional comment explaining the score
         """
-        if not self.enabled or trace is None:
-            return None
 
         try:
             return trace.score(

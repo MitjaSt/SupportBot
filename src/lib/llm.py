@@ -15,6 +15,13 @@ from loguru import logger
 from sentence_transformers import SentenceTransformer
 
 from src.lib._shared import EMBED_MODEL, QDRANT_COLLECTION_NAME, SCORE_THRESHOLD, TOP_K
+from src.lib.conversations import (
+    CallbackFlowManager,
+    CollectionState,
+    ConversationStateManager,
+    format_conversation_history,
+    inject_collection_instructions,
+)
 from src.lib.langfuse import get_langfuse_observer
 from src.lib.mcp import ToolDispatcher, ToolRegistry
 from src.lib.mcp.tools import support_email
@@ -84,6 +91,8 @@ def retrieve_chunks(
 def generate_answer(
     query: str,
     chunks: list[str],
+    conversation_history_str: str | None = None,
+    collection_instructions_str: str | None = None,
 ) -> tuple[str, str]:
     """
     Generate answer using Ollama API.
@@ -91,6 +100,8 @@ def generate_answer(
     Args:
         query: User's question
         chunks: Retrieved context chunks
+        conversation_history_str: Formatted conversation history
+        collection_instructions_str: Collection flow instructions
 
     Returns:
         Tuple of (response_text, full_prompt)
@@ -98,11 +109,18 @@ def generate_answer(
     observer = get_langfuse_observer()
     tools = registry.get_schemas()
 
-    # Get compiled system prompt from Langfuse (includes RAG context)
-    system_prompt = observer.get_prompt(chunks=chunks)
+    # Get compiled system prompt from Langfuse (includes RAG context and conversation history)
+    system_prompt = observer.get_prompt(
+        chunks=chunks,
+        conversation_history_str=conversation_history_str,
+    )
 
     if not system_prompt:
         raise RuntimeError("Failed to fetch prompt from Langfuse")
+
+    # Append collection instructions if in a collection flow
+    if collection_instructions_str:
+        system_prompt = f"{system_prompt}\n\n{collection_instructions_str}"
 
     # Build messages - single system message with all context
     messages = [
@@ -139,13 +157,27 @@ def generate_answer(
                 tool_args = tool_call["function"].get("arguments", {})
                 formatted_tool_calls.append({"name": tool_name, "arguments": tool_args})
 
-        # Execute the tools
-        if formatted_tool_calls:
-            dispatcher.dispatch(formatted_tool_calls)
+        # Check if this is a legitimate support request (has phone number)
+        support_tool_calls = [
+            tc for tc in formatted_tool_calls
+            if tc["name"] == "send_support_email" and tc["arguments"].get("phone_number")
+        ]
 
-            # If there's no content but there are tool calls, provide a response
+        if support_tool_calls:
+            # Legitimate support request - dispatch and notify user
+            dispatcher.dispatch(support_tool_calls)
             if not response_text:
                 response_text = "I've notified our support team to contact you."
+        elif not response_text:
+            # LLM put the answer in tool call instead of content - extract it
+            # This happens when model is confused about when to use tools
+            for tc in formatted_tool_calls:
+                if tc["name"] == "send_support_email":
+                    summary = tc["arguments"].get("summary", "")
+                    if summary:
+                        logger.warning("Extracting answer from erroneous tool call summary")
+                        response_text = summary
+                        break
 
     return (response_text, system_prompt)
 
@@ -221,10 +253,19 @@ def log_prompt_response(
 def process_query(
     query: str,
     qdrant_client,
+    session_id: str | None = None,
+    state_manager: ConversationStateManager | None = None,
     verbose: bool = True,
 ) -> dict:
     """
-    Process a complete RAG query.
+    Process a complete RAG query with optional conversation state management.
+
+    Args:
+        query: User's question
+        qdrant_client: QdrantClient instance
+        session_id: Optional session identifier for conversation tracking
+        state_manager: Optional ConversationStateManager for multi-turn conversations
+        verbose: Whether to log output
 
     Returns:
         Dict with query results
@@ -235,9 +276,36 @@ def process_query(
     observer = get_langfuse_observer()
     trace = observer.create_trace(
         name="rag_query",
+        session_id=session_id,
         metadata={"query": query},
         tags=["rag", "macular-society"],
     )
+
+    # Initialize conversation components if session provided
+    session = None
+    callback_flow = None
+    conversation_history_str = None
+    collection_instructions_str = None
+
+    if session_id and state_manager:
+        # Get or create session
+        session = state_manager.get_session(session_id)
+        if not session:
+            session = state_manager.create_session(session_id)
+
+        # Add user message to history
+        state_manager.add_message(session_id, "user", query)
+
+        # Get conversation history
+        messages = state_manager.get_messages(session_id)
+        conversation_history_str = format_conversation_history(messages)
+
+        # Get collection instructions if in a flow
+        if session.collection_state != CollectionState.IDLE.value:
+            collection_instructions_str = inject_collection_instructions(session.collection_state)
+
+        # Initialize callback flow manager
+        callback_flow = CallbackFlowManager(state_manager)
 
     # Retrieve chunks
     chunks = retrieve_chunks(query, qdrant_client)
@@ -262,9 +330,25 @@ def process_query(
             "status": "no_chunks",
         }
 
+    # Check if we should offer callback (proactive detection)
+    if (
+        callback_flow
+        and session
+        and state_manager
+        and session_id
+        and callback_flow.should_offer_callback(query, chunks, session)
+    ):
+        state_manager.update_collection_state(session_id, CollectionState.OFFERING)
+        session = state_manager.get_session(session_id)
+        if session:
+            collection_instructions_str = inject_collection_instructions(session.collection_state)
+        logger.debug(f"Callback offer triggered for session {session_id}")
+
     # Generate answer
     try:
-        response_text, prompt = generate_answer(query, chunks)
+        response_text, prompt = generate_answer(
+            query, chunks, conversation_history_str, collection_instructions_str
+        )
         status = "success"
 
         # Log generation to Langfuse
@@ -273,6 +357,10 @@ def process_query(
             model=OLLAMA_MODEL,
             prompt=prompt,
             response=response_text,
+            metadata={
+                "has_conversation_history": conversation_history_str is not None,
+                "has_collection_instructions": collection_instructions_str is not None,
+            },
         )
     except Exception as e:
         response_text = f"Error: {str(e)}"
@@ -287,7 +375,35 @@ def process_query(
             output_data={"error": str(e)},
         )
 
+    # Process callback flow if in collection state
+    if (
+        callback_flow
+        and session
+        and state_manager
+        and session_id
+        and session.collection_state != CollectionState.IDLE.value
+    ):
+        result = callback_flow.process_user_response(session, query)
+        callback_flow.advance_state(session, result.get("extracted_data", {}), result["action"])
+
+        # Refresh session after state change
+        session = state_manager.get_session(session_id)
+
+        # Append collection prompt if still in flow
+        if (
+            session
+            and session.collection_state
+            not in [CollectionState.IDLE.value, CollectionState.COMPLETE.value]
+        ):
+            next_prompt = callback_flow.get_next_collection_prompt(session)
+            if next_prompt:
+                response_text = f"{response_text} {next_prompt}" if response_text else next_prompt
+
     end_time = time.time()
+
+    # Add assistant response to history
+    if session_id and state_manager:
+        state_manager.add_message(session_id, "assistant", response_text)
 
     # Log the interaction
     if status == "success":
@@ -309,4 +425,6 @@ def process_query(
         "status": status,
         "model": OLLAMA_MODEL,
         "embedding_model": EMBED_MODEL,
+        "session_id": session_id,
+        "collection_state": session.collection_state if session else None,
     }

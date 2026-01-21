@@ -65,6 +65,7 @@ docker-start:
 	./docker/start-docker.sh
 	@echo "$(GREEN)Docker services started!$(NC)"
 	@echo "$(YELLOW)Qdrant Dashboard: http://localhost:6333/dashboard$(NC)"
+	@echo "$(YELLOW)Redis Dashboard: http://localhost:5540/$(NC)"
 
 docker-stop:
 	@echo "$(BLUE)Stopping Docker services...$(NC)"
