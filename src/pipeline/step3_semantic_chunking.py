@@ -12,7 +12,7 @@ from semantic_text_splitter import TextSplitter
 from sentence_transformers import SentenceTransformer
 from tqdm import tqdm
 
-from src.config import (
+from src.lib._shared import (
     EMBED_MODEL,
     QDRANT_COLLECTION_NAME,
     VECTOR_SIZE,
@@ -24,7 +24,7 @@ from src.config import (
 # Config
 # ------------------------
 FLAT_CACHE_DIR = os.environ["CACHE_DIR_FLAT"]
-CHUNK_SIZE_TOKENS = 512  # max tokens per chunk
+CHUNK_SIZE_TOKENS = 256  # max tokens per chunk
 OVERLAP_TOKENS = 100  # overlap between chunks
 
 # ------------------------

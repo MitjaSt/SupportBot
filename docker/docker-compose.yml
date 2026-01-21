@@ -1,4 +1,3 @@
 include:
   - docker-compose.qdrant.yml
   - docker-compose.ollama.yml
-  - docker-compose.redis.yml

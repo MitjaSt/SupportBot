@@ -1,176 +1,169 @@
-# Macular Society RAG System
+# Macular Society RAG Pipeline
 
-A voice-enabled question-answering system that uses Retrieval-Augmented Generation (RAG) to provide accurate information about macular degeneration from the Macular Society website.
+A RAG (Retrieval-Augmented Generation) pipeline for a voice-based question-answering system focused on macular degeneration information from the Macular Society website.
 
-## Overview
+## Voice Pipeline Flow
 
-This system scrapes medical content from the Macular Society website, creates semantic embeddings, and uses a local LLM to answer user questions via voice interaction.
-
-**Pipeline Flow:**
 ```
 User speaks → ElevenLabs STT → RAG (embed + retrieve from Qdrant)
 → Local LLM (Mistral) → ElevenLabs TTS → Audio reply
 ```
 
-## Features
-
-- **Web Scraping**: Concurrent scraping of Macular Society website content
-- **Semantic Chunking**: Intelligent text chunking with token-based splitting
-- **Vector Search**: Qdrant vector database for efficient similarity search
-- **Local LLM**: Ollama-based inference for privacy-focused responses
-- **Voice Integration**: ElevenLabs STT/TTS for natural voice interaction
-
 ## Quick Start
 
-### Prerequisites
-
-- Python 3.11+
-- Docker and Docker Compose
-- ~8-16GB RAM
-
-### 1. Setup Environment
-
 ```bash
-# Clone repository
-git clone <repository-url>
-cd macular-society
+# 1. Setup environment
+make setup
 
-# Create virtual environment
-python3 -m venv .venv
+# 2. Activate virtual environment
 source .venv/bin/activate
 
-# Install dependencies
-pip install --upgrade pip
-pip install -r requirements.txt
-
-# Copy environment template
+# 3. Copy and configure environment variables
 cp .env.example .env
-# Edit .env with your API keys (HuggingFace, ElevenLabs)
+# Edit .env with your API keys
+
+# 4. Start Docker services (Qdrant)
+make docker-start
+
+# 5. Run the full pipeline
+make pipeline
+
+# 6. Query the system
+make query
 ```
 
-### 2. Start Qdrant Vector Database
+## Prerequisites
+
+- Python 3.11+
+- Docker & Docker Compose
+- Ollama (for local LLM inference)
+
+## Installation
+
+### Setup Virtual Environment
 
 ```bash
-( cd docker; ./start-docker.sh )
+make setup          # Create venv and install all dependencies
+make setup-dev      # Setup with development tools (pre-commit hooks)
 ```
 
-Verify Qdrant is running: [http://localhost:6333/dashboard](http://localhost:6333/dashboard)
+This will:
+- Create a `.venv` virtual environment
+- Install all Python dependencies from `requirements.txt`
+- Install Playwright browsers for web scraping
 
-### 3. Run the Pipeline
+### Environment Variables
 
-Execute the steps sequentially:
+Copy the example environment file and configure your API keys:
 
 ```bash
-# Step 1: Scrape website content
-python step1_scrape.py
-
-# Step 2: Flatten JSON to text
-python step2_flatten.py
-
-# Step 3: Create embeddings and populate Qdrant
-python step3_semantic_chunking.py
+cp .env.example .env
 ```
 
-### 4. Query the System
+See [.env.example](.env.example) for all available configuration options.
 
-**Option A: Simple Ollama backend**
+## Docker Services
+
+The pipeline uses Qdrant as the vector database. Manage Docker services with:
+
+| Command | Description |
+|---------|-------------|
+| `make docker-start` | Start Qdrant and other services |
+| `make docker-stop` | Stop all Docker services |
+| `make docker-restart` | Restart Docker services |
+| `make docker-logs` | Tail Docker container logs |
+| `make docker-status` | Show status of Docker containers |
+
+**Qdrant Dashboard:** http://localhost:6333/dashboard
+
+## Pipeline Execution
+
+The pipeline consists of 4 steps:
+
+### Run Individual Steps
+
+| Command | Description |
+|---------|-------------|
+| `make scrape` | **Step 1:** Scrape website content |
+| `make flatten` | **Step 2:** Flatten JSON to plain text |
+| `make embed` | **Step 3:** Create embeddings and load to Qdrant |
+| `make query` | **Step 4:** Interactive query interface |
+
+### Run Full Pipeline
+
 ```bash
-# Interactive mode
-python step4_llm.py
-
-# Single query
-python step4_llm.py "What is dry macular degeneration?"
+make pipeline        # Run steps 1-3 (scrape → flatten → embed)
+make pipeline-full   # Clean cache and run full pipeline
 ```
 
-**Option B: Enhanced semantic query**
-```bash
-# Interactive mode
-python step4_semantic_query.py
+After the pipeline completes, use `make query` to start asking questions.
 
-# Single query
-python step4_semantic_query.py "What is dry macular degeneration?"
-```
+## Testing
+
+| Command | Description |
+|---------|-------------|
+| `make test` | Run all tests with pytest |
+| `make test-batch-queries` | Run batch query tests from TESTING.md |
+| `make test-qdrant` | Test Qdrant vector search |
+| `make test-elevenlabs` | Test ElevenLabs API integration |
+| `make test-conversation` | Test conversation flow |
+
+## Code Quality
+
+| Command | Description |
+|---------|-------------|
+| `make lint` | Run linter (ruff) |
+| `make lint-fix` | Run linter with auto-fix |
+| `make format` | Format code (black + isort) |
+| `make format-check` | Check formatting without changes |
+| `make typecheck` | Run type checker (mypy) |
+| `make quality` | Run all quality checks (format + lint + typecheck) |
+
+## Utilities
+
+| Command | Description |
+|---------|-------------|
+| `make clean` | Remove venv, cache, and build artifacts |
+| `make clean-cache` | Remove only cache directories (preserves venv) |
+| `make validate` | Validate environment variables and dependencies |
+| `make stats` | Show project statistics |
+| `make open-qdrant` | Open Qdrant dashboard in browser |
+| `make logs` | Tail application logs |
+
+## Development
+
+| Command | Description |
+|---------|-------------|
+| `make install-hooks` | Install git pre-commit hooks |
+| `make dev-shell` | Activate development shell with venv |
+| `make requirements-update` | Update requirements.txt from current venv |
 
 ## Project Structure
 
 ```
-.
-├── step1_scrape.py              # Web scraping with Playwright
-├── step2_flatten.py             # JSON to text conversion
-├── step3_semantic_chunking.py   # Semantic chunking + embeddings
-├── step4_llm.py                 # Ollama RAG inference
-├── step4_semantic_query.py      # Enhanced RAG with detailed logging
-├── shared.py                    # Configuration and shared utilities
-├── cache/                       # Generated data
-│   ├── json/                    # Scraped JSON files
-│   ├── flat/                    # Flattened text files
-│   └── prompts/                 # Query/response logs
-├── docker/                      # Docker Compose for Qdrant
-└── .env                         # Environment configuration
+├── src/
+│   ├── pipeline/           # Main pipeline steps
+│   │   ├── step1_scrape.py
+│   │   ├── step2_flatten.py
+│   │   ├── step3_semantic_chunking.py
+│   │   └── step4_llm.py
+│   └── lib/                # Shared libraries
+├── tests/                  # Test files
+├── docker/                 # Docker configuration
+├── cache/                  # Cached data (gitignored)
+│   ├── json/              # Raw scraped JSON
+│   ├── flat/              # Flattened text files
+│   └── prompts/           # Query/response logs
+├── scripts/               # Utility scripts
+├── .env.example           # Environment template
+├── Makefile               # Build automation
+└── requirements.txt       # Python dependencies
 ```
 
-## Configuration
+## Help
 
-Edit [.env](.env) to configure:
-- **API Keys**: HuggingFace, ElevenLabs
-- **Qdrant**: Collection name, host
-- **Scraping**: Concurrency settings
-- **Model Settings**: Embedding model, retrieval parameters
-
-See [.env.example](.env.example) for all available options.
-
-## Testing
+Run `make` or `make help` to see all available commands:
 
 ```bash
-# Batch test all queries
-python test_batch_queries.py
-
-# Test ElevenLabs integration
-python test_elevenlabs_text2voice.py
-python test_elevenlabs_voice2text.py
-
-# Test Qdrant vector search
-python test_query_qdrant.py
+make help
 ```
-
-## Development
-
-### Code Quality
-
-```bash
-# Format code
-ruff format .
-
-# Lint
-ruff check .
-
-# Type checking
-mypy .
-```
-
-### Process Specific Files
-
-```bash
-# Flatten specific JSON files
-python step2_flatten.py file1.json file2.json
-```
-
-## Architecture Details
-
-For detailed technical documentation, see [CLAUDE.md](.claude/CLAUDE.md).
-
-### Key Technologies
-
-- **Scraping**: Playwright (headless Chromium)
-- **Embeddings**: SentenceTransformer (`embaas/sentence-transformers-gte-large`)
-- **Chunking**: `semantic-text-splitter` library
-- **Vector DB**: Qdrant (COSINE similarity)
-- **LLM**: Ollama (local inference)
-- **Voice**: ElevenLabs (STT/TTS)
-
-## Notes
-
-- The pipeline is **destructive**: Step 2 clears `cache/flat/`, Step 3 recreates the Qdrant collection
-- Qdrant must be running before Steps 3 and 4
-- First run will download embedding models (~1-2GB)
-- Query logs are saved to `cache/prompts/` for debugging

@@ -16,9 +16,11 @@ elevenlabs==2.27.0
 # Web Scraping
 playwright==1.57.0
 
-# Vector Database & State Management
+# Vector Database
 qdrant-client==1.16.2
-redis==5.0.0
+
+# Observability
+langfuse==2.60.0
 
 # Machine Learning & NLP
 sentence-transformers==5.2.0

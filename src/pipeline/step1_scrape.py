@@ -1,6 +1,7 @@
 import asyncio
 import json
 import os
+import shutil
 import xml.etree.ElementTree as ET
 
 import requests
@@ -10,13 +11,38 @@ from playwright.async_api import async_playwright
 
 load_dotenv()
 
-# Ensure cache directory exists
-os.makedirs(os.getenv("CACHE_DIR_JSON", ""), exist_ok=True)
+# Ensure cache directory exists and is empty
+cache_dir = os.getenv("CACHE_DIR_JSON", "")
+if os.path.exists(cache_dir):
+    shutil.rmtree(cache_dir)
+os.makedirs(cache_dir, exist_ok=True)
 
 BASE_URL = "https://www.macularsociety.org"
 SITEMAP_URL = f"{BASE_URL}/sitemap.xml"
 
-EXCLUDED_URL_PREFIXES = ["404", "about/media", "support/events"]
+EXCLUDED_URL_PREFIXES = [
+    "404",
+    "about/media",
+    "unsubscribe",
+    "support/support",
+    "get-involved/",
+    "support/events",
+    "support/daily-life",
+    "about/policies",
+    "about/media/news",
+    "careers",
+    "password-reset",
+    "newsletter",
+    "search",
+    "home",
+    "livechat",
+    "login",
+    "shop/",
+    "set-password/",
+    "search/",
+    "sitemap/",
+    "existing-member",
+]
 
 
 def should_exclude_url(url):
@@ -54,7 +80,7 @@ async def scrape_page(url, page):
                 ".img-with-footer",
                 "video",
                 ".on-this-page",
-                "cta-panel",
+                ".cta-panel",
                 "[aria-hidden='true']",
                 ".mini-promo",
                 "footer",

@@ -8,14 +8,14 @@ RED := \033[0;31m
 NC := \033[0m # No Color
 
 # Python executable (use venv if available, fallback to system python)
-PYTHON := $(shell if [ -f .venv/bin/python ]; then echo .venv/bin/python; else echo python3; fi)
+PYTHON := $(shell if [ -f .venv/bin/python ]; then echo .venv/bin/python; else echo python3.12; fi)
 
 # Default target
 .DEFAULT_GOAL := help
 
 ##@ General
 
-help: ## Display this help message
+help:
 	@echo "$(BLUE)Macular Society RAG Pipeline$(NC)"
 	@echo ""
 	@awk 'BEGIN {FS = ":.*##"; printf "Usage:\n  make $(YELLOW)<target>$(NC)\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  $(GREEN)%-20s$(NC) %s\n", $$1, $$2 } /^##@/ { printf "\n$(BLUE)%s$(NC)\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
@@ -23,8 +23,8 @@ help: ## Display this help message
 ##@ Setup & Environment
 
 setup: ## Create venv and install all dependencies
-	@echo "$(BLUE)Setting up virtual environment...$(NC)"
-	python3 -m venv .venv
+	@echo "$(BLUE)Setting up virtual environment with Python ...$(NC)"
+	$(PYTHON) -m venv .venv
 	@echo "$(GREEN)Virtual environment created!$(NC)"
 	@echo "$(YELLOW)Activate it with: source .venv/bin/activate$(NC)"
 	@echo ""
@@ -58,25 +58,25 @@ validate: ## Validate environment variables and dependencies
 	@echo "$(BLUE)Validating environment...$(NC)"
 	$(PYTHON) scripts/validate_env.py
 
-##@ Docker Services
+##@ Docker
 
-docker-start: ## Start Docker services (Qdrant, Ollama, Redis)
+docker-start:
 	@echo "$(BLUE)Starting Docker services...$(NC)"
 	./docker/start-docker.sh
 	@echo "$(GREEN)Docker services started!$(NC)"
 	@echo "$(YELLOW)Qdrant Dashboard: http://localhost:6333/dashboard$(NC)"
 
-docker-stop: ## Stop Docker services
+docker-stop:
 	@echo "$(BLUE)Stopping Docker services...$(NC)"
 	docker compose --file docker/docker-compose.yml down
 	@echo "$(GREEN)Docker services stopped!$(NC)"
 
-docker-restart: docker-stop docker-start ## Restart Docker services
+docker-restart: docker-stop docker-start
 
-docker-logs: ## Show Docker logs
+docker-logs:
 	docker compose --file docker/docker-compose.yml logs -f
 
-docker-status: ## Show Docker service status
+docker-status:
 	docker compose --file docker/docker-compose.yml ps
 
 ##@ Pipeline Execution
@@ -96,7 +96,7 @@ embed: validate docker-status ## Run Step 3: Create embeddings and load to Qdran
 	$(PYTHON) -m src.pipeline.step3_semantic_chunking
 	@echo "$(GREEN)Embeddings created and loaded to Qdrant!$(NC)"
 
-query: validate docker-status ## Run Step 4: Interactive query interface
+query: validate ## Run Step 4: Interactive query interface
 	@echo "$(BLUE)Starting interactive query interface...$(NC)"
 	@echo "$(YELLOW)Type your questions or 'quit' to exit$(NC)"
 	$(PYTHON) -m src.pipeline.step4_llm
@@ -127,21 +127,21 @@ test-conversation: ## Test conversation flow
 	@echo "$(BLUE)Testing conversation flow...$(NC)"
 	$(PYTHON) -m tests.test_conversation_flow
 
-test-batch: ## Run batch query tests
+test-batch-queries: ## Run batch query tests
 	@echo "$(BLUE)Running batch queries from TESTING.md...$(NC)"
 	$(PYTHON) -m tests.test_batch_queries
 
 ##@ Code Quality
 
-lint: ## Run linter (ruff)
+lint:
 	@echo "$(BLUE)Running linter...$(NC)"
 	@if [ -f .venv/bin/ruff ]; then .venv/bin/ruff check .; else ruff check .; fi
 
-lint-fix: ## Run linter and auto-fix issues
+lint-fix:
 	@echo "$(BLUE)Running linter with auto-fix...$(NC)"
 	@if [ -f .venv/bin/ruff ]; then .venv/bin/ruff check --fix .; else ruff check --fix .; fi
 
-format: ## Format code (black + isort)
+format:
 	@echo "$(BLUE)Formatting code...$(NC)"
 	@if [ -f .venv/bin/black ]; then .venv/bin/black .; else black .; fi
 	@if [ -f .venv/bin/isort ]; then .venv/bin/isort .; else isort .; fi
@@ -157,10 +157,6 @@ typecheck: ## Run type checker (mypy)
 	@if [ -f .venv/bin/mypy ]; then .venv/bin/mypy .; else mypy .; fi
 
 quality: format lint typecheck ## Run all code quality checks
-
-pre-commit: ## Run pre-commit hooks on all files
-	@echo "$(BLUE)Running pre-commit hooks...$(NC)"
-	@if [ -f .venv/bin/pre-commit ]; then .venv/bin/pre-commit run --all-files; else pre-commit run --all-files; fi
 
 ##@ Development
 

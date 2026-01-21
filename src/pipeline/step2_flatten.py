@@ -8,7 +8,10 @@ from loguru import logger
 
 load_dotenv()
 
-os.makedirs(os.environ["CACHE_DIR_FLAT"], exist_ok=True)
+cache_dir = os.getenv("CACHE_DIR_FLAT", "")
+if os.path.exists(cache_dir):
+    shutil.rmtree(cache_dir)
+os.makedirs(cache_dir, exist_ok=True)
 
 ### Example: python chunkify.py macular-disease--macular-conditions--dry-age-related-macular-degeneration.txt
 

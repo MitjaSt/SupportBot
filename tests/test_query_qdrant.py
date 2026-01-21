@@ -3,7 +3,7 @@ import sys
 from qdrant_client import QdrantClient
 from sentence_transformers import SentenceTransformer
 
-from src.config import EMBED_MODEL, QDRANT_COLLECTION_NAME
+from src.lib._shared import EMBED_MODEL, QDRANT_COLLECTION_NAME
 
 VECTOR_SIZE = 1024
 
