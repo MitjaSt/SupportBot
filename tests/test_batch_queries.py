@@ -18,7 +18,7 @@ from src.lib.llm import EMBED_MODEL, OLLAMA_MODEL, generate_answer, retrieve_chu
 
 # Test configuration
 MAX_WORKERS = 4  # Parallel processing with separate processes (each loads its own embedding model)
-BATCH_RESULTS_DIR = "cache/batch_tests"
+BATCH_RESULTS_DIR = ".cache/batch_tests"
 
 # Test questions from TESTING.md
 TEST_QUESTIONS = [
