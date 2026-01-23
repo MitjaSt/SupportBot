@@ -100,7 +100,7 @@ embed: validate docker-status ## Run Step 3: Create embeddings and load to Qdran
 query: validate ## Run Step 4: Interactive query interface
 	@echo "$(BLUE)Starting interactive query interface...$(NC)"
 	@echo "$(YELLOW)Type your questions or 'quit' to exit$(NC)"
-	$(PYTHON) -m src.pipeline.step4_llm
+	$(PYTHON) -m src.pipeline.step4_llm "$(Q)";
 
 pipeline: scrape flatten embed ## Run complete pipeline (steps 1-3)
 	@echo "$(GREEN)✓ Complete pipeline finished!$(NC)"

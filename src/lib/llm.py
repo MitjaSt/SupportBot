@@ -160,7 +160,8 @@ def generate_answer(
 
         # Check if this is a legitimate support request (has phone number)
         support_tool_calls = [
-            tc for tc in formatted_tool_calls
+            tc
+            for tc in formatted_tool_calls
             if tc["name"] == "send_support_email" and tc["arguments"].get("phone_number")
         ]
 
@@ -247,7 +248,12 @@ def log_prompt_response(
 
     with open(filename, "w", encoding="utf-8") as f:
         yaml.dump(
-            log_data, f, Dumper=MultilineYamlDumper, default_flow_style=False, allow_unicode=True, sort_keys=False  # type: ignore[arg-type]
+            log_data,
+            f,
+            Dumper=MultilineYamlDumper,  # type: ignore[arg-type]
+            default_flow_style=False,
+            allow_unicode=True,
+            sort_keys=False,
         )
 
     return filename
@@ -278,10 +284,10 @@ def process_query(
     # Initialize Langfuse observer for tracing
     observer = get_langfuse_observer()
     trace = observer.create_trace(
-        name="rag_query",
+        name="Chat",
         session_id=session_id,
-        metadata={"query": query},
-        tags=["rag", "macular-society"],
+        input=query,
+        tags=["macular-society"],
     )
 
     # Initialize conversation components if session provided
@@ -311,13 +317,17 @@ def process_query(
         callback_flow = CallbackFlowManager(state_manager)
 
     # Retrieve chunks
+    retrieval_start = time.time()
     chunks = retrieve_chunks(query, qdrant_client)
+    retrieval_duration_ms = (time.time() - retrieval_start) * 1000
 
     # Log retrieval to Langfuse
     observer.log_retrieval(
         trace,
         query=query,
         chunks=chunks,
+        model=EMBED_MODEL,
+        duration_ms=retrieval_duration_ms,
         metadata={"top_k": TOP_K, "score_threshold": SCORE_THRESHOLD},
     )
 
@@ -349,9 +359,11 @@ def process_query(
 
     # Generate answer
     try:
+        generation_start = time.time()
         response_text, prompt = generate_answer(
             query, chunks, conversation_history_str, collection_instructions_str
         )
+        generation_duration_ms = (time.time() - generation_start) * 1000
         status = "success"
 
         # Log generation to Langfuse
@@ -360,6 +372,7 @@ def process_query(
             model=OLLAMA_MODEL,
             prompt=prompt,
             response=response_text,
+            duration_ms=generation_duration_ms,
             metadata={
                 "has_conversation_history": conversation_history_str is not None,
                 "has_collection_instructions": collection_instructions_str is not None,
@@ -393,11 +406,10 @@ def process_query(
         session = state_manager.get_session(session_id)
 
         # Append collection prompt if still in flow
-        if (
-            session
-            and session.collection_state
-            not in [CollectionState.IDLE.value, CollectionState.COMPLETE.value]
-        ):
+        if session and session.collection_state not in [
+            CollectionState.IDLE.value,
+            CollectionState.COMPLETE.value,
+        ]:
             next_prompt = callback_flow.get_next_collection_prompt(session)
             if next_prompt:
                 response_text = f"{response_text} {next_prompt}" if response_text else next_prompt
@@ -416,6 +428,9 @@ def process_query(
         logger.info("\n Answer:")
         logger.info(response_text)
         logger.info(f"\n Response time: {end_time - start_time:.2f}s")
+
+    # Update trace with output
+    observer.update_trace(trace, output=response_text)
 
     # Flush Langfuse events
     observer.flush()

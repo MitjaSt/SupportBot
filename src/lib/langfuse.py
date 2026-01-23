@@ -5,10 +5,13 @@ Provides a clean interface for creating traces and observations.
 
 import os
 from contextlib import contextmanager
+from datetime import UTC, datetime
 from typing import Any
 
 from dotenv import load_dotenv
 from langfuse import Langfuse
+from langfuse.client import StatefulTraceClient
+from langfuse.model import ModelUsage
 from loguru import logger
 
 load_dotenv()
@@ -22,6 +25,7 @@ class LangfuseObserver:
 
     def __init__(self):
         """Initialize Langfuse client from environment variables."""
+        self._prompt_template = None
         try:
             self._client = Langfuse(
                 secret_key=os.environ["LANGFUSE_SECRET_KEY"],
@@ -37,10 +41,10 @@ class LangfuseObserver:
         chunks: list[str],
         conversation_history_str: str | None = None,
     ) -> str | None:
-        if not self._client:
-            return None
-        prompt = self._client.get_prompt("macular-society-system-prompt")
-        return prompt.compile(
+        if self._prompt_template is None:
+            self._prompt_template = self._client.get_prompt("macular-society-system-prompt")
+            logger.debug("Fetched and cached prompt template from Langfuse")
+        return self._prompt_template.compile(
             rag_context="\n".join(chunks),
             conversation_history=conversation_history_str or "",
         )
@@ -50,9 +54,10 @@ class LangfuseObserver:
         name: str,
         session_id: str | None = None,
         user_id: str | None = None,
+        input: str | dict[str, Any] | None = None,
         metadata: dict[str, Any] | None = None,
         tags: list[str] | None = None,
-    ):
+    ) -> StatefulTraceClient | None:
         """
         Create a new trace for tracking a complete interaction.
 
@@ -60,6 +65,7 @@ class LangfuseObserver:
             name: Name of the trace (e.g., "rag_query")
             session_id: Optional session identifier for grouping traces
             user_id: Optional user identifier
+            input: The input query or data for this trace
             metadata: Additional metadata to attach to the trace
             tags: Optional tags for filtering traces
 
@@ -71,6 +77,7 @@ class LangfuseObserver:
                 name=name,
                 session_id=session_id,
                 user_id=user_id,
+                input=input,
                 metadata=metadata or {},
                 tags=tags or [],
             )
@@ -80,10 +87,12 @@ class LangfuseObserver:
 
     def log_retrieval(
         self,
-        trace,
+        trace: StatefulTraceClient | None,
         query: str,
         chunks: list[str],
         scores: list[float] | None = None,
+        model: str | None = None,
+        duration_ms: float | None = None,
         metadata: dict[str, Any] | None = None,
     ):
         """
@@ -94,10 +103,18 @@ class LangfuseObserver:
             query: The search query
             chunks: Retrieved text chunks
             scores: Optional similarity scores for each chunk
+            model: The embedding model used for retrieval
+            duration_ms: Duration of the retrieval in milliseconds
             metadata: Additional metadata
         """
-
+        if trace is None:
+            return None
         try:
+            combined_metadata = metadata.copy() if metadata else {}
+            if model:
+                combined_metadata["embedding_model"] = model
+            if duration_ms is not None:
+                combined_metadata["duration_ms"] = duration_ms
             return trace.span(
                 name="retrieval",
                 input={"query": query},
@@ -106,7 +123,7 @@ class LangfuseObserver:
                     "chunk_count": len(chunks),
                     "scores": scores,
                 },
-                metadata=metadata or {},
+                metadata=combined_metadata,
             )
         except Exception as e:
             logger.warning(f"Failed to log retrieval span: {e}")
@@ -114,11 +131,12 @@ class LangfuseObserver:
 
     def log_generation(
         self,
-        trace,
+        trace: StatefulTraceClient | None,
         model: str,
         prompt: str | list[dict],
         response: str,
-        usage: dict[str, int] | None = None,
+        usage: ModelUsage | None = None,
+        duration_ms: float | None = None,
         metadata: dict[str, Any] | None = None,
     ):
         """
@@ -130,17 +148,22 @@ class LangfuseObserver:
             prompt: The prompt or messages sent to the LLM
             response: The generated response
             usage: Token usage stats (prompt_tokens, completion_tokens, total_tokens)
+            duration_ms: Duration of the generation in milliseconds
             metadata: Additional metadata
         """
-
+        if trace is None:
+            return None
         try:
+            combined_metadata = metadata.copy() if metadata else {}
+            if duration_ms is not None:
+                combined_metadata["duration_ms"] = duration_ms
             return trace.generation(
                 name="llm_generation",
                 model=model,
                 input=prompt,
                 output=response,
                 usage=usage,
-                metadata=metadata or {},
+                metadata=combined_metadata,
             )
         except Exception as e:
             logger.warning(f"Failed to log generation: {e}")
@@ -148,7 +171,7 @@ class LangfuseObserver:
 
     def log_event(
         self,
-        trace,
+        trace: StatefulTraceClient | None,
         name: str,
         input_data: dict[str, Any] | None = None,
         output_data: dict[str, Any] | None = None,
@@ -164,6 +187,8 @@ class LangfuseObserver:
             output_data: Output data for the event
             metadata: Additional metadata
         """
+        if trace is None:
+            return None
         try:
             return trace.event(
                 name=name,
@@ -177,7 +202,7 @@ class LangfuseObserver:
 
     def score_trace(
         self,
-        trace,
+        trace: StatefulTraceClient | None,
         name: str,
         value: float,
         comment: str | None = None,
@@ -191,7 +216,8 @@ class LangfuseObserver:
             value: Numeric score value
             comment: Optional comment explaining the score
         """
-
+        if trace is None:
+            return None
         try:
             return trace.score(
                 name=name,
@@ -200,6 +226,30 @@ class LangfuseObserver:
             )
         except Exception as e:
             logger.warning(f"Failed to add score: {e}")
+            return None
+
+    def update_trace(
+        self,
+        trace: StatefulTraceClient | None,
+        output: str | dict[str, Any] | None = None,
+        metadata: dict[str, Any] | None = None,
+    ):
+        """
+        Update a trace with output and/or additional metadata.
+        Also sets the end time to calculate duration.
+
+        Args:
+            trace: The trace to update
+            output: The output/response to add to the trace
+            metadata: Additional metadata to merge
+        """
+        if trace is None:
+            return None
+        try:
+            end_time = datetime.now(UTC)
+            return trace.update(output=output, metadata=metadata, end_time=end_time)
+        except Exception as e:
+            logger.warning(f"Failed to update trace: {e}")
             return None
 
     @contextmanager

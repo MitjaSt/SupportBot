@@ -30,13 +30,12 @@ if __name__ == "__main__":
     logger.info(f"Session ID: {session_id}")
 
     # Single query mode (from command line argument)
-    if len(sys.argv) > 1:
-        query = " ".join(sys.argv[1:])
+    query = " ".join(sys.argv[1:]).strip() if len(sys.argv) > 1 else ""
+    if query:
         logger.info(f"Query: {query}")
         process_query(query, qdrant, session_id=session_id, state_manager=state_manager)
-
-    # Interactive mode
     else:
+        # Interactive mode
         logger.info("Type 'exit' to quit or press Ctrl+C.")
 
         try:
