@@ -25,6 +25,7 @@ from src.lib.conversations import (
 from src.lib.langfuse import get_langfuse_observer
 from src.lib.mcp import ToolDispatcher, ToolRegistry
 from src.lib.mcp.tools import support_email
+from src.lib.yaml_utils import MultilineYamlDumper
 
 # Initialize global tool registry and register tools
 registry = ToolRegistry()
@@ -245,7 +246,9 @@ def log_prompt_response(
     }
 
     with open(filename, "w", encoding="utf-8") as f:
-        yaml.dump(log_data, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
+        yaml.dump(
+            log_data, f, Dumper=MultilineYamlDumper, default_flow_style=False, allow_unicode=True, sort_keys=False  # type: ignore[arg-type]
+        )
 
     return filename
 
@@ -293,12 +296,12 @@ def process_query(
         if not session:
             session = state_manager.create_session(session_id)
 
-        # Add user message to history
-        state_manager.add_message(session_id, "user", query)
-
-        # Get conversation history
+        # Get conversation history BEFORE adding current message
         messages = state_manager.get_messages(session_id)
         conversation_history_str = format_conversation_history(messages)
+
+        # Add user message to history (for next turn)
+        state_manager.add_message(session_id, "user", query)
 
         # Get collection instructions if in a flow
         if session.collection_state != CollectionState.IDLE.value:

@@ -1,9 +1,12 @@
 import sys
+import uuid
 
 from loguru import logger
 from qdrant_client import QdrantClient
 
+from src.lib.conversations import ConversationStateManager
 from src.lib.llm import OLLAMA_MODEL, OLLAMA_URL, process_query
+from src.lib.redis import get_redis_client
 
 # --- QDRANT CLIENT ---
 qdrant = QdrantClient(host="localhost", port=6333)
@@ -13,11 +16,24 @@ qdrant = QdrantClient(host="localhost", port=6333)
 if __name__ == "__main__":
     logger.info(f"Ollama RAG assistant ready. Using {OLLAMA_MODEL} at {OLLAMA_URL}")
 
+    # Initialize Redis and conversation state manager
+    try:
+        redis_client = get_redis_client()
+        state_manager = ConversationStateManager(redis_client)
+        logger.info("Redis conversation history enabled")
+    except Exception as e:
+        logger.warning(f"Redis unavailable, conversation history disabled: {e}")
+        state_manager = None
+
+    # Generate session ID for this conversation
+    session_id = str(uuid.uuid4())
+    logger.info(f"Session ID: {session_id}")
+
     # Single query mode (from command line argument)
     if len(sys.argv) > 1:
         query = " ".join(sys.argv[1:])
         logger.info(f"Query: {query}")
-        process_query(query, qdrant)
+        process_query(query, qdrant, session_id=session_id, state_manager=state_manager)
 
     # Interactive mode
     else:
@@ -30,7 +46,7 @@ if __name__ == "__main__":
                 if query.lower() == "exit":
                     break
 
-                process_query(query, qdrant)
+                process_query(query, qdrant, session_id=session_id, state_manager=state_manager)
 
         except KeyboardInterrupt:
             print("\n")  # New line after ^C
