@@ -124,10 +124,6 @@ test-qdrant: ## Test Qdrant vector search
 	@echo "$(BLUE)Testing Qdrant queries...$(NC)"
 	$(PYTHON) -m tests.test_query_qdrant
 
-test-conversation: ## Test conversation flow
-	@echo "$(BLUE)Testing conversation flow...$(NC)"
-	$(PYTHON) -m tests.test_conversation_flow
-
 test-batch-queries: ## Run batch query tests
 	@echo "$(BLUE)Running batch queries from TESTING.md...$(NC)"
 	$(PYTHON) -m tests.test_batch_queries

@@ -4,28 +4,27 @@ Used by step4_llm.py and test_batch_queries.py.
 """
 
 import os
-import threading
 import time
-from datetime import datetime
+from dataclasses import dataclass, field
 
 import requests
-import yaml
 from dotenv import load_dotenv
 from loguru import logger
-from sentence_transformers import SentenceTransformer
 
 from src.lib._shared import EMBED_MODEL, QDRANT_COLLECTION_NAME, SCORE_THRESHOLD, TOP_K
 from src.lib.conversations import (
     CallbackFlowManager,
     CollectionState,
+    ConversationSession,
     ConversationStateManager,
     format_conversation_history,
     inject_collection_instructions,
 )
 from src.lib.langfuse import get_langfuse_observer
+from src.lib.logging import log_prompt_response
 from src.lib.mcp import ToolDispatcher, ToolRegistry
 from src.lib.mcp.tools import support_email
-from src.lib.yaml_utils import MultilineYamlDumper
+from src.lib.model import embed_query
 
 # Initialize global tool registry and register tools
 registry = ToolRegistry()
@@ -43,23 +42,6 @@ OLLAMA_URL = os.environ["OLLAMA_URL"]
 OLLAMA_MODEL = os.environ["OLLAMA_MODEL"]
 OLLAMA_TIMEOUT = int(os.environ["OLLAMA_TIMEOUT"])
 CACHE_DIR_PROMPTS = os.environ["CACHE_DIR_PROMPTS"]
-
-# Thread-local storage for embedding model (prevents threading issues)
-
-_thread_local = threading.local()
-
-
-def get_embed_model():
-    """Get or initialize the embedding model (thread-local singleton pattern)."""
-    if not hasattr(_thread_local, "embed_model"):
-        _thread_local.embed_model = SentenceTransformer(EMBED_MODEL)
-    return _thread_local.embed_model
-
-
-def embed_query(text: str):
-    """Embed a text query using the sentence transformer model."""
-    model = get_embed_model()
-    return model.encode([text])[0]
 
 
 def retrieve_chunks(
@@ -184,79 +166,176 @@ def generate_answer(
     return (response_text, system_prompt)
 
 
-def sanitize_filename(text: str, max_length: int = 50) -> str:
-    import re
+@dataclass
+class QueryContext:
+    """Context object holding all state for a RAG query."""
 
-    # Replace whitespace with underscores
-    text = re.sub(r"\s+", "_", text)
-    # Remove invalid filename characters
-    text = re.sub(r'[<>:"/\\|?*]', "", text)
-    # Limit length
-    text = text[:max_length]
-    # Remove trailing underscores or dots
-    text = text.rstrip("_.")
-    return text.lower()
-
-
-def estimate_tokens(text: str) -> int:
-    """
-    Estimate token count for a text string.
-    Uses word count * 1.3 as approximation (typical for English text with LLMs).
-    """
-    words = len(text.split())
-    return int(words * 1.3)
+    query: str
+    session_id: str | None = None
+    session: ConversationSession | None = None
+    state_manager: ConversationStateManager | None = None
+    callback_flow: CallbackFlowManager | None = None
+    conversation_history_str: str | None = None
+    collection_instructions_str: str | None = None
+    chunks: list[str] = field(default_factory=list)
+    response_text: str = ""
+    prompt: str = ""
+    status: str = "pending"
+    start_time: float = field(default_factory=time.time)
 
 
-def log_prompt_response(
-    query: str, prompt: str, response: str, chunks: list[str], start_time: float, end_time: float
-) -> str:
-    """
-    Log prompt and response to cache/prompts directory as YAML.
+def _init_conversation_context(ctx: QueryContext) -> None:
+    """Initialize conversation state from session manager."""
+    if not ctx.session_id or not ctx.state_manager:
+        return
 
-    Returns:
-        Path to saved log file
-    """
-    os.makedirs(CACHE_DIR_PROMPTS, exist_ok=True)
+    # Get or create session
+    ctx.session = ctx.state_manager.get_session(ctx.session_id)
+    if not ctx.session:
+        ctx.session = ctx.state_manager.create_session(ctx.session_id)
 
-    # Create filename from timestamp and sanitized query
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    sanitized_query = sanitize_filename(query)
-    filename = f"{CACHE_DIR_PROMPTS}/{timestamp}_{sanitized_query}.yaml"
+    # Get conversation history BEFORE adding current message
+    messages = ctx.state_manager.get_messages(ctx.session_id)
+    ctx.conversation_history_str = format_conversation_history(messages)
 
-    # Estimate token counts
-    prompt_tokens = estimate_tokens(prompt)
-    query_tokens = estimate_tokens(query)
-    response_tokens = estimate_tokens(response)
+    # Add user message to history (for next turn)
+    ctx.state_manager.add_message(ctx.session_id, "user", ctx.query)
 
-    log_data = {
-        "start_time": datetime.fromtimestamp(start_time).isoformat(),
-        "end_time": datetime.fromtimestamp(end_time).isoformat(),
-        "model": OLLAMA_MODEL,
-        "prompt": prompt,
-        "chunks": chunks,
-        "chunks_length": len(chunks),
-        "query": query,
-        "response": response,
-        "elapsed_seconds": round(end_time - start_time, 2),
-        "tokens": {
-            "prompt_estimate": prompt_tokens,
-            "query_estimate": query_tokens,
-            "response_estimate": response_tokens,
-            "total_estimate": prompt_tokens + query_tokens + response_tokens,
-        },
-    }
-
-    with open(filename, "w", encoding="utf-8") as f:
-        yaml.dump(
-            log_data,
-            f,
-            Dumper=MultilineYamlDumper,  # type: ignore[arg-type]
-            default_flow_style=False,
-            allow_unicode=True,
-            sort_keys=False,
+    # Get collection instructions if in a flow
+    if ctx.session.collection_state != CollectionState.IDLE.value:
+        ctx.collection_instructions_str = inject_collection_instructions(
+            ctx.session.collection_state
         )
 
-    return filename
+    # Initialize callback flow manager
+    ctx.callback_flow = CallbackFlowManager(ctx.state_manager)
+
+
+def _retrieve_and_log(ctx: QueryContext, qdrant_client, observer, trace) -> float:
+    """Retrieve chunks from vector DB and log to Langfuse. Returns duration in ms."""
+    retrieval_start = time.time()
+    ctx.chunks = retrieve_chunks(ctx.query, qdrant_client)
+    duration_ms = (time.time() - retrieval_start) * 1000
+
+    observer.log_retrieval(
+        trace,
+        query=ctx.query,
+        chunks=ctx.chunks,
+        model=EMBED_MODEL,
+        duration_ms=duration_ms,
+        metadata={"top_k": TOP_K, "score_threshold": SCORE_THRESHOLD},
+    )
+    return duration_ms
+
+
+def _check_callback_offer(ctx: QueryContext) -> None:
+    """Check if we should proactively offer a callback."""
+    if not (ctx.callback_flow and ctx.session and ctx.state_manager and ctx.session_id):
+        return
+
+    if ctx.callback_flow.should_offer_callback(ctx.query, ctx.chunks, ctx.session):
+        ctx.state_manager.update_collection_state(ctx.session_id, CollectionState.OFFERING)
+        ctx.session = ctx.state_manager.get_session(ctx.session_id)
+        if ctx.session:
+            ctx.collection_instructions_str = inject_collection_instructions(
+                ctx.session.collection_state
+            )
+        logger.debug(f"Callback offer triggered for session {ctx.session_id}")
+
+
+def _generate_and_log(ctx: QueryContext, observer, trace) -> None:
+    """Generate LLM response and log to Langfuse."""
+    try:
+        generation_start = time.time()
+        ctx.response_text, ctx.prompt = generate_answer(
+            ctx.query, ctx.chunks, ctx.conversation_history_str, ctx.collection_instructions_str
+        )
+        generation_duration_ms = (time.time() - generation_start) * 1000
+        ctx.status = "success"
+
+        observer.log_generation(
+            trace,
+            model=OLLAMA_MODEL,
+            prompt=ctx.prompt,
+            response=ctx.response_text,
+            duration_ms=generation_duration_ms,
+            metadata={
+                "has_conversation_history": ctx.conversation_history_str is not None,
+                "has_collection_instructions": ctx.collection_instructions_str is not None,
+            },
+        )
+    except Exception as e:
+        ctx.response_text = f"Error: {str(e)}"
+        ctx.prompt = ""
+        ctx.status = "error"
+
+        observer.log_event(
+            trace,
+            name="generation_error",
+            input_data={"query": ctx.query},
+            output_data={"error": str(e)},
+        )
+
+
+def _process_callback_flow(ctx: QueryContext) -> None:
+    """Process callback collection flow if active."""
+    if not (ctx.callback_flow and ctx.session and ctx.state_manager and ctx.session_id):
+        return
+    if ctx.session.collection_state == CollectionState.IDLE.value:
+        return
+
+    result = ctx.callback_flow.process_user_response(ctx.session, ctx.query)
+    ctx.callback_flow.advance_state(ctx.session, result.get("extracted_data", {}), result["action"])
+
+    # Refresh session after state change
+    ctx.session = ctx.state_manager.get_session(ctx.session_id)
+
+    # Append collection prompt if still in flow
+    if ctx.session and ctx.session.collection_state not in [
+        CollectionState.IDLE.value,
+        CollectionState.COMPLETE.value,
+    ]:
+        next_prompt = ctx.callback_flow.get_next_collection_prompt(ctx.session)
+        if next_prompt:
+            ctx.response_text = (
+                f"{ctx.response_text} {next_prompt}" if ctx.response_text else next_prompt
+            )
+
+
+def _finalize_query(ctx: QueryContext, observer, trace, verbose: bool) -> dict:
+    """Finalize query: log, update trace, and return result."""
+    end_time = time.time()
+
+    # Add assistant response to history
+    if ctx.session_id and ctx.state_manager:
+        ctx.state_manager.add_message(ctx.session_id, "assistant", ctx.response_text)
+
+    # Log the interaction
+    if ctx.status == "success":
+        log_prompt_response(
+            ctx.query, ctx.prompt, ctx.response_text, ctx.chunks, ctx.start_time, end_time
+        )
+
+    if verbose:
+        logger.info("\n Answer:")
+        logger.info(ctx.response_text)
+        logger.info(f"\n Response time: {end_time - ctx.start_time:.2f}s")
+
+    # Update trace with output
+    observer.update_trace(trace, output=ctx.response_text)
+    observer.flush()
+
+    return {
+        "query": ctx.query,
+        "answer": ctx.response_text,
+        "chunks": ctx.chunks,
+        "elapsed_seconds": round(end_time - ctx.start_time, 2),
+        "status": ctx.status,
+        "model": OLLAMA_MODEL,
+        "embedding_model": EMBED_MODEL,
+        "session_id": ctx.session_id,
+        "collection_state": ctx.session.collection_state if ctx.session else None,
+    }
 
 
 def process_query(
@@ -279,9 +358,8 @@ def process_query(
     Returns:
         Dict with query results
     """
-    start_time = time.time()
-
-    # Initialize Langfuse observer for tracing
+    # Initialize context and tracing
+    ctx = QueryContext(query=query, session_id=session_id, state_manager=state_manager)
     observer = get_langfuse_observer()
     trace = observer.create_trace(
         name="Chat",
@@ -290,159 +368,32 @@ def process_query(
         tags=["macular-society"],
     )
 
-    # Initialize conversation components if session provided
-    session = None
-    callback_flow = None
-    conversation_history_str = None
-    collection_instructions_str = None
+    # Step 1: Initialize conversation context
+    _init_conversation_context(ctx)
 
-    if session_id and state_manager:
-        # Get or create session
-        session = state_manager.get_session(session_id)
-        if not session:
-            session = state_manager.create_session(session_id)
+    # Step 2: Retrieve chunks from vector DB
+    _retrieve_and_log(ctx, qdrant_client, observer, trace)
 
-        # Get conversation history BEFORE adding current message
-        messages = state_manager.get_messages(session_id)
-        conversation_history_str = format_conversation_history(messages)
-
-        # Add user message to history (for next turn)
-        state_manager.add_message(session_id, "user", query)
-
-        # Get collection instructions if in a flow
-        if session.collection_state != CollectionState.IDLE.value:
-            collection_instructions_str = inject_collection_instructions(session.collection_state)
-
-        # Initialize callback flow manager
-        callback_flow = CallbackFlowManager(state_manager)
-
-    # Retrieve chunks
-    retrieval_start = time.time()
-    chunks = retrieve_chunks(query, qdrant_client)
-    retrieval_duration_ms = (time.time() - retrieval_start) * 1000
-
-    # Log retrieval to Langfuse
-    observer.log_retrieval(
-        trace,
-        query=query,
-        chunks=chunks,
-        model=EMBED_MODEL,
-        duration_ms=retrieval_duration_ms,
-        metadata={"top_k": TOP_K, "score_threshold": SCORE_THRESHOLD},
-    )
-
-    if not chunks:
+    # Early return if no chunks found
+    if not ctx.chunks:
         if verbose:
             logger.debug("No relevant chunks found in Qdrant.")
-
         return {
             "query": query,
             "answer": "No relevant chunks found in Qdrant.",
             "chunks": [],
-            "elapsed_seconds": round(time.time() - start_time, 2),
+            "elapsed_seconds": round(time.time() - ctx.start_time, 2),
             "status": "no_chunks",
         }
 
-    # Check if we should offer callback (proactive detection)
-    if (
-        callback_flow
-        and session
-        and state_manager
-        and session_id
-        and callback_flow.should_offer_callback(query, chunks, session)
-    ):
-        state_manager.update_collection_state(session_id, CollectionState.OFFERING)
-        session = state_manager.get_session(session_id)
-        if session:
-            collection_instructions_str = inject_collection_instructions(session.collection_state)
-        logger.debug(f"Callback offer triggered for session {session_id}")
+    # Step 3: Check for proactive callback offer
+    _check_callback_offer(ctx)
 
-    # Generate answer
-    try:
-        generation_start = time.time()
-        response_text, prompt = generate_answer(
-            query, chunks, conversation_history_str, collection_instructions_str
-        )
-        generation_duration_ms = (time.time() - generation_start) * 1000
-        status = "success"
+    # Step 4: Generate LLM response
+    _generate_and_log(ctx, observer, trace)
 
-        # Log generation to Langfuse
-        observer.log_generation(
-            trace,
-            model=OLLAMA_MODEL,
-            prompt=prompt,
-            response=response_text,
-            duration_ms=generation_duration_ms,
-            metadata={
-                "has_conversation_history": conversation_history_str is not None,
-                "has_collection_instructions": collection_instructions_str is not None,
-            },
-        )
-    except Exception as e:
-        response_text = f"Error: {str(e)}"
-        prompt = ""
-        status = "error"
+    # Step 5: Process callback flow if active
+    _process_callback_flow(ctx)
 
-        # Log error event to Langfuse
-        observer.log_event(
-            trace,
-            name="generation_error",
-            input_data={"query": query},
-            output_data={"error": str(e)},
-        )
-
-    # Process callback flow if in collection state
-    if (
-        callback_flow
-        and session
-        and state_manager
-        and session_id
-        and session.collection_state != CollectionState.IDLE.value
-    ):
-        result = callback_flow.process_user_response(session, query)
-        callback_flow.advance_state(session, result.get("extracted_data", {}), result["action"])
-
-        # Refresh session after state change
-        session = state_manager.get_session(session_id)
-
-        # Append collection prompt if still in flow
-        if session and session.collection_state not in [
-            CollectionState.IDLE.value,
-            CollectionState.COMPLETE.value,
-        ]:
-            next_prompt = callback_flow.get_next_collection_prompt(session)
-            if next_prompt:
-                response_text = f"{response_text} {next_prompt}" if response_text else next_prompt
-
-    end_time = time.time()
-
-    # Add assistant response to history
-    if session_id and state_manager:
-        state_manager.add_message(session_id, "assistant", response_text)
-
-    # Log the interaction
-    if status == "success":
-        log_prompt_response(query, prompt, response_text, chunks, start_time, end_time)
-
-    if verbose:
-        logger.info("\n Answer:")
-        logger.info(response_text)
-        logger.info(f"\n Response time: {end_time - start_time:.2f}s")
-
-    # Update trace with output
-    observer.update_trace(trace, output=response_text)
-
-    # Flush Langfuse events
-    observer.flush()
-
-    return {
-        "query": query,
-        "answer": response_text,
-        "chunks": chunks,
-        "elapsed_seconds": round(end_time - start_time, 2),
-        "status": status,
-        "model": OLLAMA_MODEL,
-        "embedding_model": EMBED_MODEL,
-        "session_id": session_id,
-        "collection_state": session.collection_state if session else None,
-    }
+    # Step 6: Finalize and return
+    return _finalize_query(ctx, observer, trace, verbose)
