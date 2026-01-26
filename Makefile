@@ -90,6 +90,7 @@ scrape: validate ## Run Step 1: Scrape website
 flatten: validate ## Run Step 2: Flatten JSON to text
 	@echo "$(BLUE)Running Step 2: Flattening content...$(NC)"
 	$(PYTHON) -m src.pipeline.step2_flatten
+	$(PYTHON) -m src.pipeline.step2b_summarize
 	@echo "$(GREEN)Flattening complete!$(NC)"
 
 embed: validate docker-status ## Run Step 3: Create embeddings and load to Qdrant
