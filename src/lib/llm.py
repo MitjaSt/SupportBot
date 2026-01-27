@@ -180,7 +180,7 @@ def generate_answer_openai(
     import json
 
     from openai import OpenAI
-    from openai.types.chat import ChatCompletionMessageParam, ChatCompletionToolParam
+    from openai.types.chat import ChatCompletionMessageParam
 
     observer = get_langfuse_observer()
     tools = registry.get_schemas()
@@ -204,24 +204,17 @@ def generate_answer_openai(
         {"role": "user", "content": query},
     ]
 
-    # Convert tool schemas to OpenAI format with proper typing
-    openai_tools: list[ChatCompletionToolParam] = []
-    if tools:
-        openai_tools = [
-            {"type": "function", "function": tool}  # type: ignore[misc]
-            for tool in tools
-        ]
-
     client = OpenAI(api_key=env.openai.api_key)
 
     # Build request kwargs - only include tools if we have them
+    # Note: registry.get_schemas() already returns OpenAI-compatible format
     request_kwargs: dict = {
         "model": env.openai.model,
         "messages": messages,
         "timeout": env.openai.timeout,
     }
-    if openai_tools:
-        request_kwargs["tools"] = openai_tools
+    if tools:
+        request_kwargs["tools"] = tools
 
     response = client.chat.completions.create(**request_kwargs)
 
@@ -348,21 +341,32 @@ def _generate_and_log(ctx: QueryContext, observer, trace) -> None:
     """Generate LLM response and log to Langfuse."""
     try:
         generation_start = time.time()
-        ctx.response_text, ctx.prompt = generate_answer(
-            ctx.query, ctx.chunks, ctx.conversation_history_str, ctx.collection_instructions_str
-        )
+
+        # Choose backend based on configuration
+        if env.openai.enabled:
+            ctx.response_text, ctx.prompt = generate_answer_openai(
+                ctx.query, ctx.chunks, ctx.conversation_history_str, ctx.collection_instructions_str
+            )
+            model_name = env.openai.model
+        else:
+            ctx.response_text, ctx.prompt = generate_answer(
+                ctx.query, ctx.chunks, ctx.conversation_history_str, ctx.collection_instructions_str
+            )
+            model_name = env.ollama.model
+
         generation_duration_ms = (time.time() - generation_start) * 1000
         ctx.status = "success"
 
         observer.log_generation(
             trace,
-            model=env.ollama.model,
+            model=model_name,
             prompt=ctx.prompt,
             response=ctx.response_text,
             duration_ms=generation_duration_ms,
             metadata={
                 "has_conversation_history": ctx.conversation_history_str is not None,
                 "has_collection_instructions": ctx.collection_instructions_str is not None,
+                "backend": "openai" if env.openai.enabled else "ollama",
             },
         )
     except Exception as e:
@@ -432,7 +436,8 @@ def _finalize_query(ctx: QueryContext, observer, trace, verbose: bool) -> dict:
         "chunks": ctx.chunks,
         "elapsed_seconds": round(end_time - ctx.start_time, 2),
         "status": ctx.status,
-        "model": env.ollama.model,
+        "model": env.openai.model if env.openai.enabled else env.ollama.model,
+        "backend": "openai" if env.openai.enabled else "ollama",
         "embedding_model": EMBED_MODEL,
         "session_id": ctx.session_id,
         "collection_state": ctx.session.collection_state if ctx.session else None,

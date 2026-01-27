@@ -84,6 +84,7 @@ class RedisConfig:
 class OpenAIConfig:
     """OpenAI API configuration."""
 
+    enabled: bool
     api_key: str
     model: str
     timeout: int
@@ -138,6 +139,7 @@ def _load_config() -> EnvConfig:
             timeout=_get_int("OLLAMA_TIMEOUT", 600),
         ),
         openai=OpenAIConfig(
+            enabled=_get_optional("OPENAI_ENABLE", "false").lower() == "true",
             api_key=_get_optional("OPENAI_API_KEY"),
             model=_get_optional("OPENAI_MODEL", "gpt-4o"),
             timeout=_get_int("OPENAI_TIMEOUT", 120),
