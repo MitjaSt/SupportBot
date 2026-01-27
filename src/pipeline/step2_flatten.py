@@ -3,12 +3,11 @@ import os
 import shutil
 import sys
 
-from dotenv import load_dotenv
 from loguru import logger
 
-load_dotenv()
+from src.lib.env import env
 
-cache_dir = os.getenv("CACHE_DIR_FLAT", "")
+cache_dir = env.filesystem.cache_dir_flat
 if os.path.exists(cache_dir):
     shutil.rmtree(cache_dir)
 os.makedirs(cache_dir, exist_ok=True)
@@ -42,7 +41,7 @@ def get_all_files():
     if sys.argv[1:]:
         return sys.argv[1:]
     else:
-        return os.listdir(os.environ["CACHE_DIR_JSON"])
+        return os.listdir(env.filesystem.cache_dir_json)
 
 
 def flatten_page(json_data):
@@ -74,7 +73,7 @@ def clear_directory(dir_path):
 
 
 def main():
-    clear_directory(os.getenv("CACHE_DIR_FLAT"))
+    clear_directory(env.filesystem.cache_dir_flat)
     files = get_all_files()
     all_files_count = len(files)
     files = filter_files(files)
@@ -82,7 +81,7 @@ def main():
 
     for filename in files:
         if filename.endswith(".json"):
-            filepath = os.path.join(os.getenv("CACHE_DIR_JSON", ""), filename)
+            filepath = os.path.join(env.filesystem.cache_dir_json, filename)
 
             logger.info(f"Processing file: {filepath}")
 
@@ -91,7 +90,7 @@ def main():
                     data = f.read()
                     json_data = json.loads(data)
                     flat_filepath = os.path.join(
-                        os.getenv("CACHE_DIR_FLAT", ""), filename.replace(".json", ".txt")
+                        env.filesystem.cache_dir_flat, filename.replace(".json", ".txt")
                     )
 
                     with open(flat_filepath, "w", encoding="utf-8") as f:
@@ -102,7 +101,7 @@ def main():
                 logger.error(f"Error reading file {filepath}: {e}")
 
     logger.info(
-        f"\nProcessed {processed}/{all_files_count} files into {os.getenv('CACHE_DIR_FLAT', '')}/"
+        f"\nProcessed {processed}/{all_files_count} files into {env.filesystem.cache_dir_flat}/"
     )
 
 

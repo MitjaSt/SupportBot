@@ -5,7 +5,8 @@ from loguru import logger
 from qdrant_client import QdrantClient
 
 from src.lib.conversations import ConversationStateManager
-from src.lib.llm import OLLAMA_MODEL, OLLAMA_URL, process_query
+from src.lib.env import env
+from src.lib.llm import process_query
 from src.lib.redis import get_redis_client
 
 # --- QDRANT CLIENT ---
@@ -14,7 +15,7 @@ qdrant = QdrantClient(host="localhost", port=6333)
 
 # --- MAIN LOOP ---
 if __name__ == "__main__":
-    logger.info(f"Ollama RAG assistant ready. Using {OLLAMA_MODEL} at {OLLAMA_URL}")
+    logger.info(f"Ollama RAG assistant ready. Using {env.ollama.model} at {env.ollama.url}")
 
     # Initialize Redis and conversation state manager
     try:

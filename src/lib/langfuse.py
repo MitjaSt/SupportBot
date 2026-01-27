@@ -3,18 +3,16 @@ Langfuse observability wrapper for tracking LLM interactions.
 Provides a clean interface for creating traces and observations.
 """
 
-import os
 from contextlib import contextmanager
 from datetime import UTC, datetime
 from typing import Any
 
-from dotenv import load_dotenv
 from langfuse import Langfuse
 from langfuse.client import StatefulTraceClient
 from langfuse.model import ModelUsage
 from loguru import logger
 
-load_dotenv()
+from src.lib.env import env
 
 
 class LangfuseObserver:
@@ -28,9 +26,9 @@ class LangfuseObserver:
         self._prompt_template = None
         try:
             self._client = Langfuse(
-                secret_key=os.environ["LANGFUSE_SECRET_KEY"],
-                public_key=os.environ["LANGFUSE_PUBLIC_KEY"],
-                host=os.getenv("LANGFUSE_BASE_URL", "https://cloud.langfuse.com"),
+                secret_key=env.langfuse.secret_key,
+                public_key=env.langfuse.public_key,
+                host=env.langfuse.base_url,
             )
             logger.info("Langfuse observability enabled")
         except Exception as e:
@@ -42,8 +40,8 @@ class LangfuseObserver:
         conversation_history_str: str | None = None,
     ) -> str | None:
         if self._prompt_template is None:
-            self._prompt_template = self._client.get_prompt("macular-society-system-prompt")
-            logger.debug("Fetched and cached prompt template from Langfuse")
+            self._prompt_template = self._client.get_prompt(env.langfuse.prompt_system)
+            logger.debug(f"Fetched and cached {env.langfuse.prompt_system} prompt from Langfuse")
         return self._prompt_template.compile(
             rag_context="\n".join(chunks),
             conversation_history=conversation_history_str or "",

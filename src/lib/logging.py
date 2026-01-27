@@ -3,12 +3,10 @@ from datetime import datetime
 
 import yaml
 
+from src.lib.env import env
 from src.lib.filesystem import sanitize_filename
 from src.lib.model import estimate_tokens
 from src.lib.yaml_utils import MultilineYamlDumper
-
-OLLAMA_MODEL = os.environ["OLLAMA_MODEL"]
-CACHE_DIR_PROMPTS = os.environ["CACHE_DIR_PROMPTS"]
 
 
 def log_prompt_response(
@@ -20,12 +18,12 @@ def log_prompt_response(
     Returns:
         Path to saved log file
     """
-    os.makedirs(CACHE_DIR_PROMPTS, exist_ok=True)
+    os.makedirs(env.filesystem.cache_dir_prompts, exist_ok=True)
 
     # Create filename from timestamp and sanitized query
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     sanitized_query = sanitize_filename(query)
-    filename = f"{CACHE_DIR_PROMPTS}/{timestamp}_{sanitized_query}.yaml"
+    filename = f"{env.filesystem.cache_dir_prompts}/{timestamp}_{sanitized_query}.yaml"
 
     # Estimate token counts
     prompt_tokens = estimate_tokens(prompt)
@@ -35,7 +33,7 @@ def log_prompt_response(
     log_data = {
         "start_time": datetime.fromtimestamp(start_time).isoformat(),
         "end_time": datetime.fromtimestamp(end_time).isoformat(),
-        "model": OLLAMA_MODEL,
+        "model": env.ollama.model,
         "prompt": prompt,
         "chunks": chunks,
         "chunks_length": len(chunks),

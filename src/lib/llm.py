@@ -3,12 +3,10 @@ Shared LLM and RAG functionality.
 Used by step4_llm.py and test_batch_queries.py.
 """
 
-import os
 import time
 from dataclasses import dataclass, field
 
 import requests
-from dotenv import load_dotenv
 from loguru import logger
 
 from src.lib._shared import EMBED_MODEL, QDRANT_COLLECTION_NAME, SCORE_THRESHOLD, TOP_K
@@ -20,6 +18,7 @@ from src.lib.conversations import (
     format_conversation_history,
     inject_collection_instructions,
 )
+from src.lib.env import env
 from src.lib.langfuse import get_langfuse_observer
 from src.lib.logging import log_prompt_response
 from src.lib.mcp import ToolDispatcher, ToolRegistry
@@ -33,15 +32,7 @@ registry.register(
 )
 dispatcher = ToolDispatcher(registry)
 
-load_dotenv()
-
 get_langfuse_observer()
-
-# Configuration from environment
-OLLAMA_URL = os.environ["OLLAMA_URL"]
-OLLAMA_MODEL = os.environ["OLLAMA_MODEL"]
-OLLAMA_TIMEOUT = int(os.environ["OLLAMA_TIMEOUT"])
-CACHE_DIR_PROMPTS = os.environ["CACHE_DIR_PROMPTS"]
 
 
 def retrieve_chunks(
@@ -112,13 +103,15 @@ def generate_answer(
     ]
 
     data = {
-        "model": OLLAMA_MODEL,
+        "model": env.ollama.model,
         "stream": False,
         "messages": messages,
         "tools": tools,
     }
 
-    response = requests.post(f"{OLLAMA_URL}/api/chat", json=data, timeout=OLLAMA_TIMEOUT)
+    response = requests.post(
+        f"{env.ollama.url}/api/chat", json=data, timeout=env.ollama.timeout
+    )
     response.raise_for_status()
     response_json = response.json()
 
@@ -155,6 +148,114 @@ def generate_answer(
         elif not response_text:
             # LLM put the answer in tool call instead of content - extract it
             # This happens when model is confused about when to use tools
+            for tc in formatted_tool_calls:
+                if tc["name"] == "send_support_email":
+                    summary = tc["arguments"].get("summary", "")
+                    if summary:
+                        logger.warning("Extracting answer from erroneous tool call summary")
+                        response_text = summary
+                        break
+
+    return (response_text, system_prompt)
+
+
+def generate_answer_openai(
+    query: str,
+    chunks: list[str],
+    conversation_history_str: str | None = None,
+    collection_instructions_str: str | None = None,
+) -> tuple[str, str]:
+    """
+    Generate answer using OpenAI API.
+
+    Args:
+        query: User's question
+        chunks: Retrieved context chunks
+        conversation_history_str: Formatted conversation history
+        collection_instructions_str: Collection flow instructions
+
+    Returns:
+        Tuple of (response_text, full_prompt)
+    """
+    import json
+
+    from openai import OpenAI
+    from openai.types.chat import ChatCompletionMessageParam, ChatCompletionToolParam
+
+    observer = get_langfuse_observer()
+    tools = registry.get_schemas()
+
+    # Get compiled system prompt from Langfuse (includes RAG context and conversation history)
+    system_prompt = observer.get_prompt(
+        chunks=chunks,
+        conversation_history_str=conversation_history_str,
+    )
+
+    if not system_prompt:
+        raise RuntimeError("Failed to fetch prompt from Langfuse")
+
+    # Append collection instructions if in a collection flow
+    if collection_instructions_str:
+        system_prompt = f"{system_prompt}\n\n{collection_instructions_str}"
+
+    # Build messages with proper typing
+    messages: list[ChatCompletionMessageParam] = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": query},
+    ]
+
+    # Convert tool schemas to OpenAI format with proper typing
+    openai_tools: list[ChatCompletionToolParam] = []
+    if tools:
+        openai_tools = [
+            {"type": "function", "function": tool}  # type: ignore[misc]
+            for tool in tools
+        ]
+
+    client = OpenAI(api_key=env.openai.api_key)
+
+    # Build request kwargs - only include tools if we have them
+    request_kwargs: dict = {
+        "model": env.openai.model,
+        "messages": messages,
+        "timeout": env.openai.timeout,
+    }
+    if openai_tools:
+        request_kwargs["tools"] = openai_tools
+
+    response = client.chat.completions.create(**request_kwargs)
+
+    message = response.choices[0].message
+    response_text = message.content or ""
+    tool_calls = message.tool_calls or []
+
+    logger.debug(f"OpenAI response: {response}")
+
+    # Handle tool calls if present
+    if tool_calls:
+        logger.debug(f"Tool calls detected: {tool_calls}")
+
+        # Extract tool calls in the format expected by dispatcher
+        formatted_tool_calls = []
+        for tool_call in tool_calls:
+            tool_name = tool_call.function.name
+            tool_args = json.loads(tool_call.function.arguments) if tool_call.function.arguments else {}
+            formatted_tool_calls.append({"name": tool_name, "arguments": tool_args})
+
+        # Check if this is a legitimate support request (has phone number)
+        support_tool_calls = [
+            tc
+            for tc in formatted_tool_calls
+            if tc["name"] == "send_support_email" and tc["arguments"].get("phone_number")
+        ]
+
+        if support_tool_calls:
+            # Legitimate support request - dispatch and notify user
+            dispatcher.dispatch(support_tool_calls)
+            if not response_text:
+                response_text = "I've notified our support team to contact you."
+        elif not response_text:
+            # LLM put the answer in tool call instead of content - extract it
             for tc in formatted_tool_calls:
                 if tc["name"] == "send_support_email":
                     summary = tc["arguments"].get("summary", "")
@@ -255,7 +356,7 @@ def _generate_and_log(ctx: QueryContext, observer, trace) -> None:
 
         observer.log_generation(
             trace,
-            model=OLLAMA_MODEL,
+            model=env.ollama.model,
             prompt=ctx.prompt,
             response=ctx.response_text,
             duration_ms=generation_duration_ms,
@@ -331,7 +432,7 @@ def _finalize_query(ctx: QueryContext, observer, trace, verbose: bool) -> dict:
         "chunks": ctx.chunks,
         "elapsed_seconds": round(end_time - ctx.start_time, 2),
         "status": ctx.status,
-        "model": OLLAMA_MODEL,
+        "model": env.ollama.model,
         "embedding_model": EMBED_MODEL,
         "session_id": ctx.session_id,
         "collection_state": ctx.session.collection_state if ctx.session else None,

@@ -3,7 +3,6 @@ Semantic chunking and embeddings using modern libraries (Python 3.12+ compatible
 This provides LlamaIndex-style functionality without the framework dependency.
 """
 
-import os
 import uuid
 from pathlib import Path
 
@@ -19,11 +18,11 @@ from src.lib._shared import (
     get_qdrant_client,
     recreate_qdrant_collection,
 )
+from src.lib.env import env
 
 # ------------------------
 # Config
 # ------------------------
-FLAT_CACHE_DIR = os.environ["CACHE_DIR_FLAT"]
 CHUNK_SIZE_TOKENS = 256  # max tokens per chunk
 OVERLAP_TOKENS = 100  # overlap between chunks
 
@@ -36,6 +35,7 @@ embed_model = SentenceTransformer(EMBED_MODEL)
 # Initialize semantic text splitter (more advanced than NLTK sentence splitting)
 # This uses the model's tokenizer for accurate token-based chunking
 print("Initializing semantic text splitter...")
+
 # Get the underlying tokenizers.Tokenizer from the transformers tokenizer
 # SentenceTransformer uses transformers tokenizers which wrap tokenizers.Tokenizer
 tokenizer_backend = embed_model.tokenizer.backend_tokenizer
@@ -108,15 +108,15 @@ def process_file(filepath: Path) -> dict:
 # Main
 # ------------------------
 def main():
-    flat_dir = Path(FLAT_CACHE_DIR)
+    flat_dir = Path(env.filesystem.cache_dir_summaries)
 
     if not flat_dir.exists():
-        raise FileNotFoundError(f"Directory not found: {FLAT_CACHE_DIR}")
+        raise FileNotFoundError(f"Directory not found: {env.filesystem.cache_dir_summaries}")
 
     txt_files = list(flat_dir.glob("*.txt"))
 
     if not txt_files:
-        raise ValueError(f"No .txt files found in {FLAT_CACHE_DIR}")
+        raise ValueError(f"No .txt files found in {env.filesystem.cache_dir_summaries}")
 
     print(f"\nFound {len(txt_files)} files to process")
     print("Configuration:")

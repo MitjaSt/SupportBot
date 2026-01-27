@@ -4,15 +4,13 @@ Handles session tracking, message history, and user information collection.
 """
 
 import json
-import os
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from enum import Enum
 
-from dotenv import load_dotenv
 from loguru import logger
 
-load_dotenv()
+from src.lib.env import env
 
 
 class CollectionState(Enum):
@@ -68,8 +66,8 @@ class ConversationStateManager:
             redis_client: Redis client instance
         """
         self.redis = redis_client
-        self.expiry_seconds = int(os.getenv("CONVERSATION_EXPIRY_SECONDS", "86400"))
-        self.max_history = int(os.getenv("MAX_HISTORY_MESSAGES", "20"))
+        self.expiry_seconds = env.redis.conversation_expiry_seconds
+        self.max_history = env.redis.max_history_messages
 
     def create_session(self, session_id: str) -> ConversationSession:
         """

@@ -5,14 +5,13 @@ import shutil
 import xml.etree.ElementTree as ET
 
 import requests
-from dotenv import load_dotenv
 from loguru import logger
 from playwright.async_api import async_playwright
 
-load_dotenv()
+from src.lib.env import env
 
 # Ensure cache directory exists and is empty
-cache_dir = os.getenv("CACHE_DIR_JSON", "")
+cache_dir = env.filesystem.cache_dir_json
 if os.path.exists(cache_dir):
     shutil.rmtree(cache_dir)
 os.makedirs(cache_dir, exist_ok=True)
@@ -138,7 +137,7 @@ def save_page_json(page_data):
     url = page_data["url"]
     filename = url_to_filename(page_data["url"])
 
-    filepath = os.path.join(os.getenv("CACHE_DIR_JSON", ""), filename)
+    filepath = os.path.join(env.filesystem.cache_dir_json, filename)
 
     with open(filepath, "w", encoding="utf-8") as f:
         json.dump(page_data, f, ensure_ascii=False, indent=4)  # pretty multiline JSON
@@ -174,8 +173,7 @@ async def main():
     logger.info(f"Processing {len(urls)} URLs")
 
     # Limit concurrent requests to avoid overwhelming the server
-    max_concurrent = int(os.getenv("MAX_CONCURRENT_SCRAPES", "5"))
-    semaphore = asyncio.Semaphore(max_concurrent)
+    semaphore = asyncio.Semaphore(env.scraping.max_concurrent_scrapes)
 
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
@@ -198,7 +196,7 @@ if __name__ == "__main__":
         asyncio.run(main())
     except KeyboardInterrupt:
         print("\n")  # New line after ^C
-        logger.info("Goodbye! 👋")
+        logger.info("Goodbye!")
     except EOFError:
         print("\n")  # New line after ^D
-        logger.info("Goodbye! 👋")
+        logger.info("Goodbye!")
