@@ -13,6 +13,12 @@ PYTHON := $(shell if [ -f .venv/bin/python ]; then echo .venv/bin/python; else e
 # Default target
 .DEFAULT_GOAL := help
 
+# -- Docker
+DOCKER_UID  = $(shell id -u)
+DOCKER_GID  = $(shell id -g)
+DOCKER_USER = $(DOCKER_UID):$(DOCKER_GID)
+COMPOSE     = DOCKER_USER=$(DOCKER_USER) docker compose
+
 ##@ General
 
 help:
@@ -69,16 +75,16 @@ docker-start:
 
 docker-stop:
 	@echo "$(BLUE)Stopping Docker services...$(NC)"
-	docker compose --file docker/docker-compose.yml down
+	@$(COMPOSE) --file docker/docker-compose.yml down
 	@echo "$(GREEN)Docker services stopped!$(NC)"
 
 docker-restart: docker-stop docker-start
 
 docker-logs:
-	docker compose --file docker/docker-compose.yml logs -f
+	@$(COMPOSE) --file docker/docker-compose.yml logs -f
 
 docker-status:
-	docker compose --file docker/docker-compose.yml ps
+	@$(COMPOSE) --file docker/docker-compose.yml ps
 
 ##@ Pipeline Execution
 
