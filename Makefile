@@ -1,4 +1,5 @@
-.PHONY: help setup clean test lint format docker-start docker-stop docker-restart pipeline query validate
+SHELL := /bin/bash
+.PHONY: help setup activate clean test lint format docker-start docker-stop docker-restart pipeline query validate install-hooks requirements-update
 
 # Colors for output
 BLUE := \033[0;34m
@@ -57,7 +58,7 @@ clean: ## Remove cache, build artifacts, and Python bytecode
 
 clean-cache: ## Remove only cache directories (preserves venv)
 	@echo "$(BLUE)Cleaning cache directories...$(NC)"
-	rm -rf cache/json/* cache/flat/* cache/prompts/*
+	rm -rf cache/json/* cache/flat/* cache/prompts/* cache/agent_simulations/*
 	@echo "$(GREEN)Cache cleaned!$(NC)"
 
 validate: ## Validate environment variables and dependencies
@@ -169,9 +170,9 @@ install-hooks: ## Install git pre-commit hooks
 	pre-commit install
 	@echo "$(GREEN)Pre-commit hooks installed!$(NC)"
 
-dev-shell: ## Activate development shell with venv
-	@echo "$(YELLOW)Starting development shell...$(NC)"
-	@bash --init-file <(echo ". ~/.bashrc; source .venv/bin/activate; echo 'Development environment activated'")
+activate: ## Start a shell with venv activated
+	@echo "$(YELLOW)Starting activated shell...$(NC)"
+	@bash --init-file <(echo ". ~/.bashrc; source .venv/bin/activate; echo 'Virtual environment activated'")
 
 requirements-update: ## Update requirements.txt from current venv
 	@echo "$(BLUE)Updating requirements.txt...$(NC)"

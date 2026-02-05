@@ -21,6 +21,7 @@ qdrant-client==1.16.2
 
 # Observability
 langfuse==2.60.0
+langwatch-scenario>=0.1.0
 
 # Machine Learning & NLP
 sentence-transformers==5.2.0
@@ -29,6 +30,7 @@ torch==2.9.1
 
 # Utilities
 tqdm==4.67.1
+pandas>=2.0.0
 
 # ============================================================================
 # Development Dependencies
