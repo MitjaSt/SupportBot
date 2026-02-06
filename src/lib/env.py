@@ -116,6 +116,27 @@ class ScrapingConfig:
 
 
 @dataclass(frozen=True)
+class ConfidentAIConfig:
+    """Confident AI / DeepEval configuration."""
+
+    enabled: bool
+    api_key: str
+
+
+@dataclass(frozen=True)
+class PostgresConfig:
+    """PostgreSQL with pgvector configuration."""
+
+    host: str
+    port: int
+    database: str
+    user: str
+    password: str
+    session_expiry_hours: int
+    max_history_messages: int
+
+
+@dataclass(frozen=True)
 class EnvConfig:
     """Root configuration container."""
 
@@ -125,7 +146,9 @@ class EnvConfig:
     openai: OpenAIConfig
     langfuse: LangfuseConfig
     langwatch: LangWatchConfig
+    confidentai: ConfidentAIConfig
     redis: RedisConfig
+    postgres: PostgresConfig
     elevenlabs: ElevenLabsConfig
     scraping: ScrapingConfig
     huggingface_token: str
@@ -168,12 +191,25 @@ def _load_config() -> EnvConfig:
             api_key=_get_optional("LANGWATCH_API_KEY"),
             prompt_system=_get_optional("LANGWATCH_PROMPT_SYSTEM", "macular-society-system-prompt"),
         ),
+        confidentai=ConfidentAIConfig(
+            enabled=_get_optional("CONFIDENTAI_ENABLE", "false").lower() == "true",
+            api_key=_get_optional("CONFIDENTAI_API_KEY"),
+        ),
         redis=RedisConfig(
             host=_get_optional("REDIS_HOST", "localhost"),
             port=_get_int("REDIS_PORT", 6379),
             db=_get_int("REDIS_DB", 0),
             password=_get_optional("REDIS_PASSWORD") or None,
             conversation_expiry_seconds=_get_int("CONVERSATION_EXPIRY_SECONDS", 86400),
+            max_history_messages=_get_int("MAX_HISTORY_MESSAGES", 20),
+        ),
+        postgres=PostgresConfig(
+            host=_get_optional("POSTGRES_HOST", "localhost"),
+            port=_get_int("POSTGRES_PORT", 5432),
+            database=_get_optional("POSTGRES_DATABASE", "macular_society"),
+            user=_get_optional("POSTGRES_USER", "macular"),
+            password=_get_optional("POSTGRES_PASSWORD", "macular_dev"),
+            session_expiry_hours=_get_int("POSTGRES_SESSION_EXPIRY_HOURS", 24),
             max_history_messages=_get_int("MAX_HISTORY_MESSAGES", 20),
         ),
         elevenlabs=ElevenLabsConfig(

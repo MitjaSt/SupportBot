@@ -21,7 +21,7 @@ from src.lib.conversations import (
 from src.lib.env import env
 from src.lib.logging import log_prompt_response
 from src.lib.mcp import ToolDispatcher, ToolRegistry
-from src.lib.mcp.tools import support_email
+from src.lib.mcp.tools import support_email as support_email
 from src.lib.model import embed_query
 from src.lib.observer import get_active_observer
 
@@ -110,9 +110,7 @@ def generate_answer(
         "tools": tools,
     }
 
-    response = requests.post(
-        f"{env.ollama.url}/api/chat", json=data, timeout=env.ollama.timeout
-    )
+    response = requests.post(f"{env.ollama.url}/api/chat", json=data, timeout=env.ollama.timeout)
     response.raise_for_status()
     response_json = response.json()
 
@@ -233,7 +231,9 @@ def generate_answer_openai(
         formatted_tool_calls = []
         for tool_call in tool_calls:
             tool_name = tool_call.function.name
-            tool_args = json.loads(tool_call.function.arguments) if tool_call.function.arguments else {}
+            tool_args = (
+                json.loads(tool_call.function.arguments) if tool_call.function.arguments else {}
+            )
             formatted_tool_calls.append({"name": tool_name, "arguments": tool_args})
 
         # Check if this is a legitimate support request (has phone number)

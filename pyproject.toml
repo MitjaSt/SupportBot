@@ -43,3 +43,16 @@ target-version = ['py311']
 [tool.isort]
 profile = "black"
 line_length = 100
+
+[tool.pytest.ini_options]
+# Custom markers for test categorization
+markers = [
+    "agent_test: marks tests as agent simulation tests (may be slow)",
+]
+# Warning filters to suppress benign third-party warnings
+filterwarnings = [
+    # DeepEval asyncio deprecation warning (Python 3.10+ compatibility)
+    "ignore:There is no current event loop:DeprecationWarning",
+    # LangWatch local prompts.json warning (not using local prompts)
+    "ignore:No prompts.json found:UserWarning",
+]
