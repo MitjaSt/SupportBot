@@ -1,5 +1,5 @@
 SHELL := /bin/bash
-.PHONY: help setup activate clean test lint format docker-start docker-stop docker-restart pipeline query validate install-hooks requirements-update
+.PHONY: help setup activate clean test lint format docker-start docker-stop docker-restart pipeline query validate install-hooks requirements-update api api-prod
 
 # Colors for output
 BLUE := \033[0;34m
@@ -115,6 +115,17 @@ pipeline: scrape flatten embed ## Run complete pipeline (steps 1-3)
 	@echo "$(YELLOW)Run 'make query' to start asking questions$(NC)"
 
 pipeline-full: clean-cache pipeline ## Clean cache and run full pipeline
+
+##@ API Server
+
+api: validate ## Start the FastAPI server
+	@echo "$(BLUE)Starting FastAPI server...$(NC)"
+	@echo "$(YELLOW)API docs: http://localhost:8000/docs$(NC)"
+	$(PYTHON) -m uvicorn api.main:app --reload --host 0.0.0.0 --port 8000
+
+api-prod: validate ## Start the FastAPI server in production mode
+	@echo "$(BLUE)Starting FastAPI server (production)...$(NC)"
+	$(PYTHON) -m uvicorn api.main:app --host 0.0.0.0 --port 8000 --workers 4
 
 ##@ Testing
 

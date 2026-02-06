@@ -24,6 +24,13 @@ class LangfuseObserver:
     def __init__(self):
         """Initialize Langfuse client from environment variables."""
         self._prompt_template = None
+        self._client = None
+        self._enabled = env.langfuse.enabled
+
+        if not self._enabled:
+            logger.info("Langfuse observability disabled")
+            return
+
         try:
             self._client = Langfuse(
                 secret_key=env.langfuse.secret_key,
@@ -33,19 +40,42 @@ class LangfuseObserver:
             logger.info("Langfuse observability enabled")
         except Exception as e:
             logger.error(f"Failed to initialize Langfuse: {e}")
+            self._enabled = False
+
+    @property
+    def enabled(self) -> bool:
+        """Check if Langfuse is enabled."""
+        return self._enabled
 
     def get_prompt(
         self,
         chunks: list[str],
         conversation_history_str: str | None = None,
     ) -> str | None:
-        if self._prompt_template is None:
-            self._prompt_template = self._client.get_prompt(env.langfuse.prompt_system)
-            logger.debug(f"Fetched and cached {env.langfuse.prompt_system} prompt from Langfuse")
-        return self._prompt_template.compile(
-            rag_context="\n".join(chunks),
-            conversation_history=conversation_history_str or "",
-        )
+        """
+        Fetch and compile a prompt from Langfuse.
+
+        Args:
+            chunks: Retrieved RAG context chunks
+            conversation_history_str: Optional conversation history
+
+        Returns:
+            Compiled prompt string or None if disabled/failed
+        """
+        if not self._enabled or not self._client:
+            return None
+
+        try:
+            if self._prompt_template is None:
+                self._prompt_template = self._client.get_prompt(env.langfuse.prompt_system)
+                logger.debug(f"Fetched and cached {env.langfuse.prompt_system} prompt from Langfuse")
+            return self._prompt_template.compile(
+                rag_context="\n".join(chunks),
+                conversation_history=conversation_history_str or "",
+            )
+        except Exception as e:
+            logger.warning(f"Failed to get prompt from Langfuse: {e}")
+            return None
 
     def create_trace(
         self,
@@ -70,6 +100,9 @@ class LangfuseObserver:
         Returns:
             Langfuse trace object or None if disabled
         """
+        if not self._enabled or not self._client:
+            return None
+
         try:
             return self._client.trace(
                 name=name,
@@ -267,6 +300,10 @@ class LangfuseObserver:
                 observer.log_retrieval(trace, query, chunks)
                 observer.log_generation(trace, model, prompt, response)
         """
+        if not self._enabled:
+            yield None
+            return
+
         trace = self.create_trace(
             name=name,
             session_id=session_id,

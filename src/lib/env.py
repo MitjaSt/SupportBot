@@ -61,6 +61,7 @@ class OllamaConfig:
 class LangfuseConfig:
     """Langfuse observability configuration."""
 
+    enabled: bool
     secret_key: str
     public_key: str
     base_url: str
@@ -99,6 +100,15 @@ class ElevenLabsConfig:
 
 
 @dataclass(frozen=True)
+class LangWatchConfig:
+    """LangWatch observability configuration."""
+
+    enabled: bool
+    api_key: str
+    prompt_system: str
+
+
+@dataclass(frozen=True)
 class ScrapingConfig:
     """Web scraping configuration."""
 
@@ -114,6 +124,7 @@ class EnvConfig:
     ollama: OllamaConfig
     openai: OpenAIConfig
     langfuse: LangfuseConfig
+    langwatch: LangWatchConfig
     redis: RedisConfig
     elevenlabs: ElevenLabsConfig
     scraping: ScrapingConfig
@@ -145,11 +156,17 @@ def _load_config() -> EnvConfig:
             timeout=_get_int("OPENAI_TIMEOUT", 120),
         ),
         langfuse=LangfuseConfig(
-            secret_key=_get_required("LANGFUSE_SECRET_KEY"),
-            public_key=_get_required("LANGFUSE_PUBLIC_KEY"),
+            enabled=_get_optional("LANGFUSE_ENABLE", "false").lower() == "true",
+            secret_key=_get_optional("LANGFUSE_SECRET_KEY"),
+            public_key=_get_optional("LANGFUSE_PUBLIC_KEY"),
             base_url=_get_optional("LANGFUSE_BASE_URL", "https://cloud.langfuse.com"),
-            prompt_summary=_get_required("LANGFUSE_PROMPT_SUMMARY"),
-            prompt_system=_get_required("LANGFUSE_PROMPT_SYSTEM"),
+            prompt_summary=_get_optional("LANGFUSE_PROMPT_SUMMARY", "ContentSummarizer"),
+            prompt_system=_get_optional("LANGFUSE_PROMPT_SYSTEM", "macular-society-system-prompt"),
+        ),
+        langwatch=LangWatchConfig(
+            enabled=_get_optional("LANGWATCH_ENABLE", "false").lower() == "true",
+            api_key=_get_optional("LANGWATCH_API_KEY"),
+            prompt_system=_get_optional("LANGWATCH_PROMPT_SYSTEM", "macular-society-system-prompt"),
         ),
         redis=RedisConfig(
             host=_get_optional("REDIS_HOST", "localhost"),

@@ -19,11 +19,11 @@ from src.lib.conversations import (
     inject_collection_instructions,
 )
 from src.lib.env import env
-from src.lib.langfuse import get_langfuse_observer
 from src.lib.logging import log_prompt_response
 from src.lib.mcp import ToolDispatcher, ToolRegistry
 from src.lib.mcp.tools import support_email
 from src.lib.model import embed_query
+from src.lib.observer import get_active_observer
 
 # Initialize global tool registry and register tools
 registry = ToolRegistry()
@@ -32,7 +32,8 @@ registry.register(
 )
 dispatcher = ToolDispatcher(registry)
 
-get_langfuse_observer()
+# Initialize the active observer at module load
+get_active_observer()
 
 
 def retrieve_chunks(
@@ -80,17 +81,17 @@ def generate_answer(
     Returns:
         Tuple of (response_text, full_prompt)
     """
-    observer = get_langfuse_observer()
+    observer = get_active_observer()
     tools = registry.get_schemas()
 
-    # Get compiled system prompt from Langfuse (includes RAG context and conversation history)
+    # Get compiled system prompt from observer (includes RAG context and conversation history)
     system_prompt = observer.get_prompt(
         chunks=chunks,
         conversation_history_str=conversation_history_str,
     )
 
     if not system_prompt:
-        raise RuntimeError("Failed to fetch prompt from Langfuse")
+        raise RuntimeError("Failed to fetch prompt from observer")
 
     # Append collection instructions if in a collection flow
     if collection_instructions_str:
@@ -182,17 +183,17 @@ def generate_answer_openai(
     from openai import OpenAI
     from openai.types.chat import ChatCompletionMessageParam
 
-    observer = get_langfuse_observer()
+    observer = get_active_observer()
     tools = registry.get_schemas()
 
-    # Get compiled system prompt from Langfuse (includes RAG context and conversation history)
+    # Get compiled system prompt from observer (includes RAG context and conversation history)
     system_prompt = observer.get_prompt(
         chunks=chunks,
         conversation_history_str=conversation_history_str,
     )
 
     if not system_prompt:
-        raise RuntimeError("Failed to fetch prompt from Langfuse")
+        raise RuntimeError("Failed to fetch prompt from observer")
 
     # Append collection instructions if in a collection flow
     if collection_instructions_str:
@@ -306,7 +307,7 @@ def _init_conversation_context(ctx: QueryContext) -> None:
 
 
 def _retrieve_and_log(ctx: QueryContext, qdrant_client, observer, trace) -> float:
-    """Retrieve chunks from vector DB and log to Langfuse. Returns duration in ms."""
+    """Retrieve chunks from vector DB and log to observer. Returns duration in ms."""
     retrieval_start = time.time()
     ctx.chunks = retrieve_chunks(ctx.query, qdrant_client)
     duration_ms = (time.time() - retrieval_start) * 1000
@@ -338,7 +339,7 @@ def _check_callback_offer(ctx: QueryContext) -> None:
 
 
 def _generate_and_log(ctx: QueryContext, observer, trace) -> None:
-    """Generate LLM response and log to Langfuse."""
+    """Generate LLM response and log to observer."""
     try:
         generation_start = time.time()
 
@@ -434,6 +435,7 @@ def _finalize_query(ctx: QueryContext, observer, trace, verbose: bool) -> dict:
         "query": ctx.query,
         "answer": ctx.response_text,
         "chunks": ctx.chunks,
+        "system_prompt": ctx.prompt,
         "elapsed_seconds": round(end_time - ctx.start_time, 2),
         "status": ctx.status,
         "model": env.openai.model if env.openai.enabled else env.ollama.model,
@@ -466,7 +468,7 @@ def process_query(
     """
     # Initialize context and tracing
     ctx = QueryContext(query=query, session_id=session_id, state_manager=state_manager)
-    observer = get_langfuse_observer()
+    observer = get_active_observer()
     trace = observer.create_trace(
         name="Chat",
         session_id=session_id,
