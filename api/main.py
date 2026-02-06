@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 # Load environment variables before importing other modules
 load_dotenv()
 
+# ruff: noqa: E402
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger

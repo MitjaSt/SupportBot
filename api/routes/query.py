@@ -21,7 +21,7 @@ def get_qdrant():
         return client
     except Exception as e:
         logger.error(f"Failed to connect to Qdrant: {e}")
-        raise HTTPException(status_code=503, detail="Vector database unavailable")
+        raise HTTPException(status_code=503, detail="Vector database unavailable") from None
 
 
 def get_state_manager():
@@ -39,8 +39,8 @@ def get_state_manager():
 @router.post("", response_model=QueryResponse)
 async def query(
     request: QueryRequest,
-    qdrant=Depends(get_qdrant),
-    state_manager: ConversationStateManager | None = Depends(get_state_manager),
+    qdrant=Depends(get_qdrant),  # noqa: B008
+    state_manager: ConversationStateManager | None = Depends(get_state_manager),  # noqa: B008
 ) -> QueryResponse:
     """
     Process a RAG query about macular degeneration.
@@ -74,4 +74,4 @@ async def query(
         )
     except Exception as e:
         logger.error(f"Query processing error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from None

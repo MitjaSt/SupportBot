@@ -248,10 +248,7 @@ class CallbackFlowManager:
 
         if re.match(r"^0\d{10}$", cleaned):
             return True
-        if re.match(r"^\+44\d{10}$", cleaned):
-            return True
-
-        return False
+        return bool(re.match(r"^\+44\d{10}$", cleaned))
 
     def advance_state(self, session: ConversationSession, extracted_data: dict, action: str):
         """
