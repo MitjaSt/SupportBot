@@ -21,10 +21,10 @@ from src.lib._shared import (
 from src.lib.env import env
 
 # ------------------------
-# Config
+# Config (from environment)
 # ------------------------
-CHUNK_SIZE_TOKENS = 256  # max tokens per chunk
-OVERLAP_TOKENS = 100  # overlap between chunks
+CHUNK_SIZE_TOKENS = env.chunking.chunk_size_tokens
+OVERLAP_TOKENS = env.chunking.overlap_tokens
 
 # ------------------------
 # Initialize Models

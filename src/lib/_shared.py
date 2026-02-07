@@ -1,15 +1,26 @@
-EMBED_MODEL = "embaas/sentence-transformers-gte-large"  # 1024-dim
-VECTOR_SIZE = 1024
-QDRANT_COLLECTION_NAME = "macular_society"
-TOP_K = 2  # Number of top similar chunks to retrieve
-MAX_TOKENS = 4096
-SCORE_THRESHOLD = 0.7  # Minimum similarity score for relevant results
+"""
+Shared constants and utilities.
+
+Constants are now loaded from environment configuration for flexibility.
+These module-level aliases provide backward compatibility.
+"""
+
+from src.lib.env import env
+
+# Re-export from env config for backward compatibility
+EMBED_MODEL = env.embedding.model
+VECTOR_SIZE = env.embedding.vector_size
+QDRANT_COLLECTION_NAME = env.qdrant.collection_name
+TOP_K = env.rag.top_k
+MAX_TOKENS = env.rag.max_tokens
+SCORE_THRESHOLD = env.rag.score_threshold
 
 
 def get_qdrant_client():
+    """Get configured Qdrant client."""
     from qdrant_client import QdrantClient
 
-    return QdrantClient(host="localhost", port=6333)
+    return QdrantClient(host=env.qdrant.host, port=6333)
 
 
 def recreate_qdrant_collection(collection_name, vector_size):

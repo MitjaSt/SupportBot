@@ -30,6 +30,11 @@ def _get_int(key: str, default: int) -> int:
     return int(os.getenv(key, str(default)))
 
 
+def _get_float(key: str, default: float) -> float:
+    """Get float environment variable with default."""
+    return float(os.getenv(key, str(default)))
+
+
 @dataclass(frozen=True)
 class FilesystemConfig:
     """Filesystem paths configuration."""
@@ -38,6 +43,31 @@ class FilesystemConfig:
     cache_dir_flat: str
     cache_dir_summaries: str
     cache_dir_prompts: str
+
+
+@dataclass(frozen=True)
+class EmbeddingConfig:
+    """Embedding model configuration."""
+
+    model: str
+    vector_size: int
+
+
+@dataclass(frozen=True)
+class RAGConfig:
+    """RAG retrieval configuration."""
+
+    top_k: int
+    score_threshold: float
+    max_tokens: int
+
+
+@dataclass(frozen=True)
+class ChunkingConfig:
+    """Semantic chunking configuration for document processing."""
+
+    chunk_size_tokens: int
+    overlap_tokens: int
 
 
 @dataclass(frozen=True)
@@ -141,6 +171,9 @@ class EnvConfig:
     """Root configuration container."""
 
     filesystem: FilesystemConfig
+    embedding: EmbeddingConfig
+    rag: RAGConfig
+    chunking: ChunkingConfig
     qdrant: QdrantConfig
     ollama: OllamaConfig
     openai: OpenAIConfig
@@ -162,6 +195,19 @@ def _load_config() -> EnvConfig:
             cache_dir_flat=_get_required("CACHE_DIR_FLAT"),
             cache_dir_summaries=_get_required("CACHE_DIR_SUMMARIES"),
             cache_dir_prompts=_get_required("CACHE_DIR_PROMPTS"),
+        ),
+        embedding=EmbeddingConfig(
+            model=_get_optional("EMBEDDING_MODEL", "embaas/sentence-transformers-gte-large"),
+            vector_size=_get_int("EMBEDDING_VECTOR_SIZE", 1024),
+        ),
+        rag=RAGConfig(
+            top_k=_get_int("RAG_TOP_K", 2),
+            score_threshold=_get_float("RAG_SCORE_THRESHOLD", 0.7),
+            max_tokens=_get_int("RAG_MAX_TOKENS", 4096),
+        ),
+        chunking=ChunkingConfig(
+            chunk_size_tokens=_get_int("CHUNKING_SIZE_TOKENS", 256),
+            overlap_tokens=_get_int("CHUNKING_OVERLAP_TOKENS", 100),
         ),
         qdrant=QdrantConfig(
             collection_name=_get_required("QDRANT_COLLECTION_NAME"),

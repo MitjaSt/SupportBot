@@ -1,10 +1,14 @@
 """
 Session repository for conversation state management.
-Replaces Redis for session and message storage.
+PostgreSQL backend replacing Redis.
+
+This module provides the same interface as ConversationStateManager
+to allow drop-in replacement.
 """
 
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
+from enum import Enum
 from typing import Literal
 
 from loguru import logger
@@ -12,6 +16,18 @@ from loguru import logger
 from src.lib.env import env
 
 from .client import get_connection
+
+
+class CollectionState(Enum):
+    """Collection flow states - matches conversations module."""
+
+    IDLE = "idle"
+    OFFERING = "offering"
+    COLLECTING_USER_PHONE = "collecting__user_phone"
+    COLLECTING_USER_NAME = "collecting__user_name"
+    COLLECTING_USER_TIME = "collecting_user_time"
+    CONFIRMING = "confirming"
+    COMPLETE = "complete"
 
 
 @dataclass
@@ -24,8 +40,11 @@ class Message:
 
 
 @dataclass
-class Session:
-    """Conversation session with user state."""
+class ConversationSession:
+    """Conversation session with user state.
+
+    Named to match the Redis implementation for compatibility.
+    """
 
     session_id: str
     created_at: str
@@ -33,8 +52,12 @@ class Session:
     user_phone: str | None = None
     user_name: str | None = None
     preferred_call_time: str | None = None
-    collection_state: str = "idle"
+    collection_state: str = CollectionState.IDLE.value
     callback_topic: str | None = None
+
+
+# Alias for backward compatibility
+Session = ConversationSession
 
 
 @dataclass
@@ -57,7 +80,7 @@ class SessionRepository:
         self.expiry_hours = env.postgres.session_expiry_hours
         self.max_history = env.postgres.max_history_messages
 
-    def create_session(self, session_id: str) -> Session:
+    def create_session(self, session_id: str) -> ConversationSession:
         """
         Create a new conversation session.
 
@@ -90,7 +113,7 @@ class SessionRepository:
             logger.debug(f"Created session: {session_id}")
             return self._row_to_session(row)
 
-    def get_session(self, session_id: str) -> Session | None:
+    def get_session(self, session_id: str) -> ConversationSession | None:
         """
         Retrieve a session by ID.
 
@@ -119,7 +142,7 @@ class SessionRepository:
 
             return self._row_to_session(row)
 
-    def update_session(self, session: Session) -> None:
+    def update_session(self, session: ConversationSession) -> None:
         """
         Update session fields.
 
@@ -153,21 +176,26 @@ class SessionRepository:
             conn.commit()
             logger.debug(f"Updated session: {session.session_id}")
 
-    def update_collection_state(self, session_id: str, state: str) -> None:
+    def update_collection_state(
+        self, session_id: str, state: CollectionState | str
+    ) -> None:
         """
         Update collection flow state.
 
         Args:
             session_id: Session identifier
-            state: New state value
+            state: New state (CollectionState enum or string value)
         """
+        # Accept both enum and string for compatibility
+        state_value = state.value if isinstance(state, CollectionState) else state
+
         with get_connection() as conn, conn.cursor() as cur:
             cur.execute(
                 "UPDATE sessions SET collection_state = %s WHERE session_id = %s",
-                (state, session_id),
+                (state_value, session_id),
             )
             conn.commit()
-            logger.debug(f"Updated state to {state} for session {session_id}")
+            logger.debug(f"Updated state to {state_value} for session {session_id}")
 
     def update_user_info(self, session_id: str, **kwargs) -> None:
         """
@@ -318,15 +346,15 @@ class SessionRepository:
                 logger.info(f"Cleaned up {deleted} expired sessions")
             return deleted
 
-    def _row_to_session(self, row: dict) -> Session:
+    def _row_to_session(self, row: dict) -> ConversationSession:
         """Convert database row to Session object."""
-        return Session(
+        return ConversationSession(
             session_id=row["session_id"],
             created_at=row["created_at"].isoformat() if row["created_at"] else "",
             updated_at=row["updated_at"].isoformat() if row["updated_at"] else "",
             user_phone=row["user_phone"],
             user_name=row["user_name"],
             preferred_call_time=row["preferred_call_time"],
-            collection_state=row["collection_state"] or "idle",
+            collection_state=row["collection_state"] or CollectionState.IDLE.value,
             callback_topic=row["callback_topic"],
         )

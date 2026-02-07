@@ -4,18 +4,20 @@ Manages multi-turn conversations to collect phone, name, and preferred time.
 """
 
 import re
+from typing import TYPE_CHECKING
 
 from loguru import logger
 
-from src.lib.conversations.conversation_state import (
-    CollectionState,
-    ConversationSession,
-    ConversationStateManager,
-)
+# Import types from db module (PostgreSQL backend)
+from db import CollectionState, ConversationSession, SessionRepository
+
+if TYPE_CHECKING:
+    # For type checking, allow any compatible state manager
+    StateManager = SessionRepository
 
 
 class CallbackFlowManager:
-    def __init__(self, state_manager: ConversationStateManager):
+    def __init__(self, state_manager: SessionRepository):
         self.state_manager = state_manager
 
         # Keywords that trigger proactive callback offer

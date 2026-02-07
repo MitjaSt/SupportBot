@@ -16,10 +16,10 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 from datetime import datetime
 
 import yaml
-from qdrant_client import QdrantClient
 
-from src.lib._shared import EMBED_MODEL, SCORE_THRESHOLD, TOP_K
-from src.lib.llm import OLLAMA_MODEL, generate_answer, retrieve_chunks
+from src.lib._shared import EMBED_MODEL, SCORE_THRESHOLD, TOP_K, get_qdrant_client
+from src.lib.env import env
+from src.lib.llm import generate_answer, retrieve_chunks
 
 # Test configuration
 MAX_WORKERS = 4  # Parallel processing with separate processes (each loads its own embedding model)
@@ -73,7 +73,7 @@ def process_single_query(query: str, query_index: int) -> dict:
     start_time = time.time()
 
     # Create Qdrant client for this process
-    qdrant_client = QdrantClient(host="localhost", port=6333)
+    qdrant_client = get_qdrant_client()
 
     # Retrieve chunks
     chunks = retrieve_chunks(query, qdrant_client)
@@ -104,7 +104,7 @@ def process_single_query(query: str, query_index: int) -> dict:
         "chunks": chunks,
         "num_chunks": len(chunks),
         "elapsed_seconds": round(end_time - start_time, 2),
-        "model": OLLAMA_MODEL,
+        "model": env.ollama.model,
         "status": status,
         "query": query,
         "answer": response_text,
@@ -132,7 +132,7 @@ def save_batch_results(results: list[dict], batch_timestamp: str):
         "errors": errors,
         "total_elapsed_seconds": round(total_time, 2),
         "average_seconds_per_query": round(avg_time, 2),
-        "model": OLLAMA_MODEL,
+        "model": env.ollama.model,
         "embedding_model": EMBED_MODEL,
         "top_k": TOP_K,
         "score_threshold": SCORE_THRESHOLD,
@@ -154,7 +154,7 @@ def main():
 
     print(f"\nFound {len(TEST_QUESTIONS)} questions")
     print(f"Running with {MAX_WORKERS} parallel workers")
-    print(f"Model: {OLLAMA_MODEL}")
+    print(f"Model: {env.ollama.model}")
     print(f"Embedding: {EMBED_MODEL}")
     print("=" * 80 + "\n")
 

@@ -6,12 +6,14 @@ from fastapi import APIRouter, Depends, HTTPException
 from loguru import logger
 
 from api.models.query import QueryRequest, QueryResponse
+from db import SessionRepository
 from src.lib._shared import get_qdrant_client
-from src.lib.conversations import ConversationStateManager
 from src.lib.llm import process_query
-from src.lib.redis import get_redis_client
 
 router = APIRouter(prefix="/query", tags=["query"])
+
+# Singleton session repository
+_session_repo: SessionRepository | None = None
 
 
 def get_qdrant():
@@ -24,15 +26,15 @@ def get_qdrant():
         raise HTTPException(status_code=503, detail="Vector database unavailable") from None
 
 
-def get_state_manager():
-    """Dependency to get conversation state manager (optional)."""
+def get_state_manager() -> SessionRepository | None:
+    """Dependency to get session repository (PostgreSQL backend)."""
+    global _session_repo
     try:
-        redis_client = get_redis_client()
-        if redis_client:
-            return ConversationStateManager(redis_client)
-        return None
+        if _session_repo is None:
+            _session_repo = SessionRepository()
+        return _session_repo
     except Exception as e:
-        logger.warning(f"Redis not available, conversation state disabled: {e}")
+        logger.warning(f"PostgreSQL not available, conversation state disabled: {e}")
         return None
 
 
@@ -40,7 +42,7 @@ def get_state_manager():
 async def query(
     request: QueryRequest,
     qdrant=Depends(get_qdrant),  # noqa: B008
-    state_manager: ConversationStateManager | None = Depends(get_state_manager),  # noqa: B008
+    state_manager: SessionRepository | None = Depends(get_state_manager),  # noqa: B008
 ) -> QueryResponse:
     """
     Process a RAG query about macular degeneration.

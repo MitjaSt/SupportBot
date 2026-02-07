@@ -9,12 +9,10 @@ from dataclasses import dataclass, field
 import requests
 from loguru import logger
 
+from db import CollectionState, ConversationSession, SessionRepository
 from src.lib._shared import EMBED_MODEL, QDRANT_COLLECTION_NAME, SCORE_THRESHOLD, TOP_K
 from src.lib.conversations import (
     CallbackFlowManager,
-    CollectionState,
-    ConversationSession,
-    ConversationStateManager,
     format_conversation_history,
     inject_collection_instructions,
 )
@@ -24,6 +22,9 @@ from src.lib.mcp import ToolDispatcher, ToolRegistry
 from src.lib.mcp.tools import support_email as support_email
 from src.lib.model import embed_query
 from src.lib.observer import get_active_observer
+
+# Type alias for state manager (PostgreSQL backend)
+StateManager = SessionRepository
 
 # Initialize global tool registry and register tools
 registry = ToolRegistry()
@@ -63,6 +64,76 @@ def retrieve_chunks(
     ]
 
 
+def _prepare_system_prompt(
+    chunks: list[str],
+    conversation_history_str: str | None = None,
+    collection_instructions_str: str | None = None,
+) -> str:
+    """
+    Prepare the system prompt with RAG context and optional instructions.
+
+    Args:
+        chunks: Retrieved context chunks
+        conversation_history_str: Formatted conversation history
+        collection_instructions_str: Collection flow instructions
+
+    Returns:
+        Compiled system prompt
+    """
+    observer = get_active_observer()
+
+    system_prompt = observer.get_prompt(
+        chunks=chunks,
+        conversation_history_str=conversation_history_str,
+    )
+
+    if not system_prompt:
+        raise RuntimeError("Failed to fetch prompt from observer")
+
+    if collection_instructions_str:
+        system_prompt = f"{system_prompt}\n\n{collection_instructions_str}"
+
+    return system_prompt
+
+
+def _process_tool_calls(formatted_tool_calls: list[dict], response_text: str) -> str:
+    """
+    Process tool calls from LLM response.
+
+    Handles legitimate support requests and extracts answers from erroneous tool calls.
+
+    Args:
+        formatted_tool_calls: List of tool calls with name and arguments
+        response_text: Initial response text from LLM
+
+    Returns:
+        Updated response text
+    """
+    # Check if this is a legitimate support request (has phone number)
+    support_tool_calls = [
+        tc
+        for tc in formatted_tool_calls
+        if tc["name"] == "send_support_email" and tc["arguments"].get("phone_number")
+    ]
+
+    if support_tool_calls:
+        # Legitimate support request - dispatch and notify user
+        dispatcher.dispatch(support_tool_calls)
+        if not response_text:
+            response_text = "I've notified our support team to contact you."
+    elif not response_text:
+        # LLM put the answer in tool call instead of content - extract it
+        for tc in formatted_tool_calls:
+            if tc["name"] == "send_support_email":
+                summary = tc["arguments"].get("summary", "")
+                if summary:
+                    logger.warning("Extracting answer from erroneous tool call summary")
+                    response_text = summary
+                    break
+
+    return response_text
+
+
 def generate_answer(
     query: str,
     chunks: list[str],
@@ -81,23 +152,11 @@ def generate_answer(
     Returns:
         Tuple of (response_text, full_prompt)
     """
-    observer = get_active_observer()
     tools = registry.get_schemas()
-
-    # Get compiled system prompt from observer (includes RAG context and conversation history)
-    system_prompt = observer.get_prompt(
-        chunks=chunks,
-        conversation_history_str=conversation_history_str,
+    system_prompt = _prepare_system_prompt(
+        chunks, conversation_history_str, collection_instructions_str
     )
 
-    if not system_prompt:
-        raise RuntimeError("Failed to fetch prompt from observer")
-
-    # Append collection instructions if in a collection flow
-    if collection_instructions_str:
-        system_prompt = f"{system_prompt}\n\n{collection_instructions_str}"
-
-    # Build messages - single system message with all context
     messages = [
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": query},
@@ -120,40 +179,14 @@ def generate_answer(
     response_text = message.get("content", "")
     tool_calls = message.get("tool_calls", [])
 
-    # Handle tool calls if present
     if tool_calls:
         logger.debug(f"Tool calls detected: {tool_calls}")
-
-        # Extract tool calls in the format expected by dispatcher
-        formatted_tool_calls = []
-        for tool_call in tool_calls:
-            if "function" in tool_call:
-                tool_name = tool_call["function"]["name"]
-                tool_args = tool_call["function"].get("arguments", {})
-                formatted_tool_calls.append({"name": tool_name, "arguments": tool_args})
-
-        # Check if this is a legitimate support request (has phone number)
-        support_tool_calls = [
-            tc
-            for tc in formatted_tool_calls
-            if tc["name"] == "send_support_email" and tc["arguments"].get("phone_number")
+        formatted_tool_calls = [
+            {"name": tc["function"]["name"], "arguments": tc["function"].get("arguments", {})}
+            for tc in tool_calls
+            if "function" in tc
         ]
-
-        if support_tool_calls:
-            # Legitimate support request - dispatch and notify user
-            dispatcher.dispatch(support_tool_calls)
-            if not response_text:
-                response_text = "I've notified our support team to contact you."
-        elif not response_text:
-            # LLM put the answer in tool call instead of content - extract it
-            # This happens when model is confused about when to use tools
-            for tc in formatted_tool_calls:
-                if tc["name"] == "send_support_email":
-                    summary = tc["arguments"].get("summary", "")
-                    if summary:
-                        logger.warning("Extracting answer from erroneous tool call summary")
-                        response_text = summary
-                        break
+        response_text = _process_tool_calls(formatted_tool_calls, response_text)
 
     return (response_text, system_prompt)
 
@@ -181,32 +214,17 @@ def generate_answer_openai(
     from openai import OpenAI
     from openai.types.chat import ChatCompletionMessageParam
 
-    observer = get_active_observer()
     tools = registry.get_schemas()
-
-    # Get compiled system prompt from observer (includes RAG context and conversation history)
-    system_prompt = observer.get_prompt(
-        chunks=chunks,
-        conversation_history_str=conversation_history_str,
+    system_prompt = _prepare_system_prompt(
+        chunks, conversation_history_str, collection_instructions_str
     )
 
-    if not system_prompt:
-        raise RuntimeError("Failed to fetch prompt from observer")
-
-    # Append collection instructions if in a collection flow
-    if collection_instructions_str:
-        system_prompt = f"{system_prompt}\n\n{collection_instructions_str}"
-
-    # Build messages with proper typing
     messages: list[ChatCompletionMessageParam] = [
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": query},
     ]
 
     client = OpenAI(api_key=env.openai.api_key)
-
-    # Build request kwargs - only include tools if we have them
-    # Note: registry.get_schemas() already returns OpenAI-compatible format
     request_kwargs: dict = {
         "model": env.openai.model,
         "messages": messages,
@@ -223,40 +241,16 @@ def generate_answer_openai(
 
     logger.debug(f"OpenAI response: {response}")
 
-    # Handle tool calls if present
     if tool_calls:
         logger.debug(f"Tool calls detected: {tool_calls}")
-
-        # Extract tool calls in the format expected by dispatcher
-        formatted_tool_calls = []
-        for tool_call in tool_calls:
-            tool_name = tool_call.function.name
-            tool_args = (
-                json.loads(tool_call.function.arguments) if tool_call.function.arguments else {}
-            )
-            formatted_tool_calls.append({"name": tool_name, "arguments": tool_args})
-
-        # Check if this is a legitimate support request (has phone number)
-        support_tool_calls = [
-            tc
-            for tc in formatted_tool_calls
-            if tc["name"] == "send_support_email" and tc["arguments"].get("phone_number")
+        formatted_tool_calls = [
+            {
+                "name": tc.function.name,
+                "arguments": json.loads(tc.function.arguments) if tc.function.arguments else {},
+            }
+            for tc in tool_calls
         ]
-
-        if support_tool_calls:
-            # Legitimate support request - dispatch and notify user
-            dispatcher.dispatch(support_tool_calls)
-            if not response_text:
-                response_text = "I've notified our support team to contact you."
-        elif not response_text:
-            # LLM put the answer in tool call instead of content - extract it
-            for tc in formatted_tool_calls:
-                if tc["name"] == "send_support_email":
-                    summary = tc["arguments"].get("summary", "")
-                    if summary:
-                        logger.warning("Extracting answer from erroneous tool call summary")
-                        response_text = summary
-                        break
+        response_text = _process_tool_calls(formatted_tool_calls, response_text)
 
     return (response_text, system_prompt)
 
@@ -268,7 +262,7 @@ class QueryContext:
     query: str
     session_id: str | None = None
     session: ConversationSession | None = None
-    state_manager: ConversationStateManager | None = None
+    state_manager: StateManager | None = None
     callback_flow: CallbackFlowManager | None = None
     conversation_history_str: str | None = None
     collection_instructions_str: str | None = None
@@ -450,7 +444,7 @@ def process_query(
     query: str,
     qdrant_client,
     session_id: str | None = None,
-    state_manager: ConversationStateManager | None = None,
+    state_manager: StateManager | None = None,
     verbose: bool = True,
 ) -> dict:
     """
@@ -460,7 +454,7 @@ def process_query(
         query: User's question
         qdrant_client: QdrantClient instance
         session_id: Optional session identifier for conversation tracking
-        state_manager: Optional ConversationStateManager for multi-turn conversations
+        state_manager: Optional StateManager for multi-turn conversations
         verbose: Whether to log output
 
     Returns:
