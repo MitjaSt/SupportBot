@@ -18,7 +18,7 @@ dist/
 .env
 
 # Cache directories
-.cache/
+**/.cache/
 
 # Docker
 docker/storage/
@@ -27,10 +27,4 @@ docker/storage/
 tmp/voice/
 
 # Personal notes
-TODO.md
-PROMPT.md
-cheats
-
-# Project reorganization planning docs (temporary)
-RESTRUCTURE_PLAN.md
-REORGANIZATION_SUMMARY.md
+docs/personal
