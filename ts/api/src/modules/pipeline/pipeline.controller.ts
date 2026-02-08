@@ -1,12 +1,14 @@
 import { Controller, Get, Post } from '@nestjs/common';
 import { ScrapingService } from '@/modules/scraping/scraping.service';
 import { ProcessingService } from '@/modules/processing/processing.service';
+import { SummarizationService } from '@/modules/processing/summarization.service';
 import { EmbeddingsService } from '@/modules/embeddings/embeddings.service';
 import { VectorDbService } from '@/modules/vector-db/vector-db.service';
 import { ConfigService } from '@/config/config.service';
 import type {
   ScrapeResult,
   ProcessResult,
+  SummarizeResult,
   EmbedResult,
   CollectionInfo,
 } from '@/dto/pipeline.dto';
@@ -16,6 +18,7 @@ export class PipelineController {
   constructor(
     private readonly scraping: ScrapingService,
     private readonly processing: ProcessingService,
+    private readonly summarization: SummarizationService,
     private readonly embeddings: EmbeddingsService,
     private readonly vectorDb: VectorDbService,
     private readonly config: ConfigService,
@@ -44,6 +47,20 @@ export class PipelineController {
       processed: flatResult.processed,
       skipped: flatResult.skipped,
       chunks: chunks.length,
+      duration: (Date.now() - start) / 1000,
+    };
+  }
+
+  @Post('summarize')
+  async summarize(): Promise<SummarizeResult> {
+    const start = Date.now();
+
+    const result = await this.summarization.summarizeAll((current, total) => {
+      console.log(`Summarization progress: ${current}/${total}`);
+    });
+
+    return {
+      ...result,
       duration: (Date.now() - start) / 1000,
     };
   }
@@ -82,6 +99,7 @@ export class PipelineController {
   async fullPipeline(): Promise<{
     scrape: ScrapeResult;
     process: ProcessResult;
+    summarize: SummarizeResult;
     embed: EmbedResult;
     totalDuration: number;
   }> {
@@ -89,11 +107,13 @@ export class PipelineController {
 
     const scrape = await this.scrape();
     const process = await this.process();
+    const summarize = await this.summarize();
     const embed = await this.embed();
 
     return {
       scrape,
       process,
+      summarize,
       embed,
       totalDuration: (Date.now() - start) / 1000,
     };

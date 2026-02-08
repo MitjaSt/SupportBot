@@ -69,8 +69,8 @@ export class ConfigService {
     };
 
     const rag: RagConfig = {
-      topK: getInt('RAG_TOP_K', 2),
-      scoreThreshold: getFloat('RAG_SCORE_THRESHOLD', 0.7),
+      topK: getInt('RAG_TOP_K', 4),
+      scoreThreshold: getFloat('RAG_SCORE_THRESHOLD', 0.5),
       maxTokens: getInt('RAG_MAX_TOKENS', 4096),
     };
 

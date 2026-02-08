@@ -79,8 +79,6 @@ export class RagService {
       ? `Context:\n${context}\n\nQuestion: ${query}`
       : query;
 
-      console.warn(userMessage);
-
     messages.push({ role: 'user', content: userMessage });
 
     // Generate response
@@ -95,15 +93,12 @@ export class RagService {
     messages: OpenAI.ChatCompletionMessageParam[],
     sources: SearchResult[],
   ): Promise<RagResponse> {
-    console.warn({messages});
     const response = await this.openaiClient.chat.completions.create({
       model: this.config.openai.chatModel,
       messages,
       max_tokens: this.maxTokens,
       temperature: 0.7,
     });
-
-    console.warn({response});
 
     return {
       answer: response.choices[0]?.message?.content ?? '',
@@ -145,18 +140,8 @@ export class RagService {
   ): Promise<RagResponse> {
     const chunks = await this.retrieve(query);
 
-    if (chunks.length === 0) {
-      return {
-        answer:
-          'I do not have information about that. Can I help you with something else?',
-        sources: [],
-        model: this.config.openai.enabled
-          ? this.config.openai.chatModel
-          : this.config.ollama.model,
-        backend: this.config.openai.enabled ? 'openai' : 'ollama',
-      };
-    }
-
+    // Always pass to LLM - let it handle greetings and non-RAG queries naturally
+    // The system prompt guides it to say "I don't have info" for medical questions without context
     return this.generateAnswer(query, chunks, conversationHistory);
   }
 }

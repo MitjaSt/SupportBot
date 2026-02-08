@@ -40,6 +40,15 @@ export const EmbedResultSchema = Type.Object({
 
 export type EmbedResult = Static<typeof EmbedResultSchema>;
 
+export const SummarizeResultSchema = Type.Object({
+  summarized: Type.Number(),
+  skipped: Type.Number(),
+  errors: Type.Number(),
+  duration: Type.Number(),
+});
+
+export type SummarizeResult = Static<typeof SummarizeResultSchema>;
+
 export const CollectionInfoSchema = Type.Object({
   collectionName: Type.String(),
   pointsCount: Type.Number(),
