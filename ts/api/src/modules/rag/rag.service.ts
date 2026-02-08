@@ -3,6 +3,7 @@ import OpenAI from 'openai';
 import { ConfigService } from '@/config/config.service';
 import { EmbeddingsService } from '../embeddings/embeddings.service';
 import { VectorDbService, SearchResult } from '../vector-db/vector-db.service';
+import { PromptLoggerService } from '../prompt-logger/prompt-logger.service';
 
 export interface RagResponse {
   answer: string;
@@ -31,6 +32,7 @@ export class RagService {
     private readonly config: ConfigService,
     private readonly embeddings: EmbeddingsService,
     private readonly vectorDb: VectorDbService,
+    private readonly promptLogger: PromptLoggerService,
   ) {
     this.openaiClient = new OpenAI({
       apiKey: config.openai.apiKey,
@@ -134,14 +136,53 @@ export class RagService {
     };
   }
 
+  private buildFullPrompt(
+    query: string,
+    chunks: SearchResult[],
+    conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>,
+  ): string {
+    const parts = [`INSTRUCTIONS:\n${SYSTEM_PROMPT}`];
+
+    if (conversationHistory?.length) {
+      const history = conversationHistory.map((m) => `${m.role}: ${m.content}`).join('\n');
+      parts.push(`CONVERSATION HISTORY:\n${history}`);
+    }
+
+    if (chunks.length > 0) {
+      const context = chunks.map((c, i) => `[${i + 1}] ${c.text}`).join('\n\n');
+      parts.push(`RETRIEVED CONTEXT:\n${context}`);
+    }
+
+    parts.push(`Question: ${query}`);
+    return parts.join('\n\n');
+  }
+
   async query(
     query: string,
     conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>,
   ): Promise<RagResponse> {
+    const startTime = new Date();
     const chunks = await this.retrieve(query);
 
     // Always pass to LLM - let it handle greetings and non-RAG queries naturally
     // The system prompt guides it to say "I don't have info" for medical questions without context
-    return this.generateAnswer(query, chunks, conversationHistory);
+    const result = await this.generateAnswer(query, chunks, conversationHistory);
+    const endTime = new Date();
+
+    // Fire-and-forget: log the prompt/response as YAML
+    const logEntry = this.promptLogger.buildLogEntry({
+      startTime,
+      endTime,
+      model: result.model,
+      prompt: this.buildFullPrompt(query, chunks, conversationHistory),
+      chunks: chunks.map((c) => c.text),
+      query,
+      response: result.answer,
+    });
+    this.promptLogger
+      .log(logEntry)
+      .catch((err) => console.error('Failed to write prompt log:', err));
+
+    return result;
   }
 }
