@@ -71,13 +71,13 @@ export class SystemController {
       const info = await this.vectorDb.getCollectionInfo();
       return {
         status: 'ok',
-        collection: this.config.qdrant.collectionName,
+        collection: 'vectors',
         pointsCount: info.pointsCount,
       };
     } catch {
       return {
         status: 'error',
-        collection: this.config.qdrant.collectionName,
+        collection: 'vectors',
         pointsCount: 0,
       };
     }

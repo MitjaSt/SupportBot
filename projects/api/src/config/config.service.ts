@@ -2,18 +2,17 @@ import { Injectable } from '@nestjs/common';
 import { config } from 'dotenv';
 import { resolve } from 'path';
 import type {
+  ChunkingConfig,
+  ConfidentAIConfig,
+  EmbeddingConfig,
   EnvConfig,
   FilesystemConfig,
-  EmbeddingConfig,
-  RagConfig,
-  ChunkingConfig,
-  QdrantConfig,
-  OpenAIConfig,
-  PostgresConfig,
-  ScrapingConfig,
   LangfuseConfig,
   LangwatchConfig,
-  ConfidentAIConfig,
+  OpenAIConfig,
+  PostgresConfig,
+  RagConfig,
+  ScrapingConfig,
 } from './env.schema';
 
 // Load .env from project root (shared with Python)
@@ -60,6 +59,7 @@ export class ConfigService {
       cacheJsonDir: getRequired('CACHE_DIR_JSON'),
       cacheFlatDir: getRequired('CACHE_DIR_FLAT'),
       cacheSummariesDir: getRequired('CACHE_DIR_SUMMARIES'),
+      cacheCriteriaDir: getRequired('CACHE_DIR_CRITERIA'),
       cachePromptsDir: getRequired('CACHE_DIR_PROMPTS'),
     };
 
@@ -78,13 +78,6 @@ export class ConfigService {
     const chunking: ChunkingConfig = {
       chunkSizeTokens: getInt('CHUNKING_SIZE_TOKENS', 256),
       overlapTokens: getInt('CHUNKING_OVERLAP_TOKENS', 100),
-    };
-
-    const qdrantUrl = new URL(getOptional('QDRANT_HOST', 'http://localhost:6333'));
-    const qdrant: QdrantConfig = {
-      host: qdrantUrl.hostname,
-      port: parseInt(qdrantUrl.port, 10) || 6333,
-      collectionName: getRequired('QDRANT_COLLECTION_NAME'),
     };
 
     const openai: OpenAIConfig = {
@@ -138,7 +131,6 @@ export class ConfigService {
       embedding,
       rag,
       chunking,
-      qdrant,
       openai,
       postgres,
       scraping,
@@ -162,10 +154,6 @@ export class ConfigService {
 
   get chunking(): ChunkingConfig {
     return this.config.chunking;
-  }
-
-  get qdrant(): QdrantConfig {
-    return this.config.qdrant;
   }
 
   get openai(): OpenAIConfig {

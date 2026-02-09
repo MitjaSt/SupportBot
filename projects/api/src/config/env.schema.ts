@@ -1,8 +1,9 @@
-import { Type, Static } from '@sinclair/typebox';
+import { Static, Type } from '@sinclair/typebox';
 
 export const FilesystemConfigSchema = Type.Object({
   cacheJsonDir: Type.String(),
   cacheFlatDir: Type.String(),
+  cacheCriteriaDir: Type.String(),
   cacheSummariesDir: Type.String(),
   cachePromptsDir: Type.String(),
 });
@@ -22,12 +23,6 @@ export const RagConfigSchema = Type.Object({
 export const ChunkingConfigSchema = Type.Object({
   chunkSizeTokens: Type.Number(),
   overlapTokens: Type.Number(),
-});
-
-export const QdrantConfigSchema = Type.Object({
-  host: Type.String(),
-  port: Type.Number(),
-  collectionName: Type.String(),
 });
 
 export const OpenAIConfigSchema = Type.Object({
@@ -78,7 +73,6 @@ export const EnvConfigSchema = Type.Object({
   embedding: EmbeddingConfigSchema,
   rag: RagConfigSchema,
   chunking: ChunkingConfigSchema,
-  qdrant: QdrantConfigSchema,
   openai: OpenAIConfigSchema,
   postgres: PostgresConfigSchema,
   scraping: ScrapingConfigSchema,
@@ -91,7 +85,6 @@ export type FilesystemConfig = Static<typeof FilesystemConfigSchema>;
 export type EmbeddingConfig = Static<typeof EmbeddingConfigSchema>;
 export type RagConfig = Static<typeof RagConfigSchema>;
 export type ChunkingConfig = Static<typeof ChunkingConfigSchema>;
-export type QdrantConfig = Static<typeof QdrantConfigSchema>;
 export type OpenAIConfig = Static<typeof OpenAIConfigSchema>;
 export type PostgresConfig = Static<typeof PostgresConfigSchema>;
 export type ScrapingConfig = Static<typeof ScrapingConfigSchema>;

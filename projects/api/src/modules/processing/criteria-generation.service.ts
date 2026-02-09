@@ -166,8 +166,8 @@ export class CriteriaGenerationService {
     onProgress?: (current: number, total: number) => void,
   ): Promise<SummarizeResult> {
     // Ensure summaries directory exists
-    if (!existsSync(this.summariesDir)) await mkdir(this.summariesDir, { recursive: true });
-    if (!existsSync(this.summariesDir)) return { summarized: 0, skipped: 0, errors: 0 };
+    if (!existsSync(this.criteriaDir)) await mkdir(this.criteriaDir, { recursive: true });
+    if (!existsSync(this.criteriaDir)) return { summarized: 0, skipped: 0, errors: 0 };
 
     const files = await readdir(this.summariesDir);
     const txtFiles = files.filter((f) => f.endsWith('.txt'));

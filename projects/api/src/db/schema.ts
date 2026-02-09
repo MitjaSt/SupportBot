@@ -5,8 +5,24 @@ import {
   integer,
   uuid,
   pgEnum,
+  index,
+  customType,
 } from 'drizzle-orm/pg-core';
-import { relations } from 'drizzle-orm';
+import { relations, sql } from 'drizzle-orm';
+
+// Custom pgvector type for Drizzle ORM
+const vector = (name: string, config: { dimensions: number }) =>
+  customType<{ data: number[]; driverData: string }>({
+    dataType() {
+      return `vector(${config.dimensions})`;
+    },
+    toDriver(value: number[]): string {
+      return JSON.stringify(value);
+    },
+    fromDriver(value: string): number[] {
+      return typeof value === 'string' ? JSON.parse(value) : value;
+    },
+  })(name);
 
 // Enums
 export const collectionStateEnum = pgEnum('collection_state', [
@@ -57,6 +73,17 @@ export const messagesRelations = relations(messages, ({ one }) => ({
   }),
 }));
 
+// Vectors table for pgvector embeddings
+export const vectors = pgTable('vectors', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  embedding: vector('embedding', { dimensions: 1536 }).notNull(),
+  text: text('text').notNull(),
+  source: text('source').notNull(),
+  chunkIndex: integer('chunk_index').notNull(),
+  chunkLength: integer('chunk_length'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
 // Types
 export type Session = typeof sessions.$inferSelect;
 export type NewSession = typeof sessions.$inferInsert;
@@ -64,3 +91,5 @@ export type Message = typeof messages.$inferSelect;
 export type NewMessage = typeof messages.$inferInsert;
 export type CollectionState = (typeof collectionStateEnum.enumValues)[number];
 export type MessageRole = (typeof messageRoleEnum.enumValues)[number];
+export type Vector = typeof vectors.$inferSelect;
+export type NewVector = typeof vectors.$inferInsert;

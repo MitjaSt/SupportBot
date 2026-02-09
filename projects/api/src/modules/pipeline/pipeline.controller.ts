@@ -1,17 +1,18 @@
-import { Controller, Get, Post } from '@nestjs/common';
-import { ScrapingService } from '@/modules/scraping/scraping.service';
-import { ProcessingService } from '@/modules/processing/processing.service';
-import { SummarizationService } from '@/modules/processing/summarization.service';
-import { EmbeddingsService } from '@/modules/embeddings/embeddings.service';
-import { VectorDbService } from '@/modules/vector-db/vector-db.service';
 import { ConfigService } from '@/config/config.service';
 import type {
-  ScrapeResult,
-  ProcessResult,
-  SummarizeResult,
-  EmbedResult,
   CollectionInfo,
+  EmbedResult,
+  ProcessResult,
+  ScrapeResult,
+  SummarizeResult,
 } from '@/dto/pipeline.dto';
+import { EmbeddingsService } from '@/modules/embeddings/embeddings.service';
+import { ProcessingService } from '@/modules/processing/processing.service';
+import { SummarizationService } from '@/modules/processing/summarization.service';
+import { ScrapingService } from '@/modules/scraping/scraping.service';
+import { VectorDbService } from '@/modules/vector-db/vector-db.service';
+import { Controller, Get, Post } from '@nestjs/common';
+import { CriteriaGenerationService } from '../processing/criteria-generation.service';
 
 @Controller('pipeline')
 export class PipelineController {
@@ -19,6 +20,7 @@ export class PipelineController {
     private readonly scraping: ScrapingService,
     private readonly processing: ProcessingService,
     private readonly summarization: SummarizationService,
+    private readonly criteriaGeneration: CriteriaGenerationService,
     private readonly embeddings: EmbeddingsService,
     private readonly vectorDb: VectorDbService,
     private readonly config: ConfigService,
@@ -95,6 +97,22 @@ export class PipelineController {
     };
   }
 
+
+  @Post('criteria-generation')
+  async criteria(): Promise<SummarizeResult> {
+    const start = Date.now();
+
+    const result = await this.criteriaGeneration.criteriaGeneration((current, total) => {
+      console.log(`Criteria generation progress: ${current}/${total}`);
+    });
+
+    return {
+      ...result,
+      duration: (Date.now() - start) / 1000,
+    };
+  }
+
+
   @Post('full')
   async fullPipeline(): Promise<{
     scrape: ScrapeResult;
@@ -123,7 +141,7 @@ export class PipelineController {
   async getCollectionInfo(): Promise<CollectionInfo> {
     const info = await this.vectorDb.getCollectionInfo();
     return {
-      collectionName: this.config.qdrant.collectionName,
+      collectionName: 'vectors',
       ...info,
     };
   }
