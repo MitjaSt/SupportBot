@@ -1,4 +1,4 @@
-name: Lint - Python
+name: Lint - TypeScript
 
 on:
   pull_request:
@@ -6,25 +6,60 @@ on:
   workflow_dispatch:
 
 jobs:
-  lint:
+  lint-api:
+    name: Lint API
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          fetch-depth: 0
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install ruff
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: projects/api/package-lock.json
 
-      - name: Run Ruff lint (changed files only)
-        run: |
-          git diff --name-only ${{ github.event.before }} ${{ github.event.after }} | grep '\.py$' | xargs ruff check
+      - name: Install API dependencies
+        working-directory: projects/api
+        run: npm ci
 
+      - name: Run ESLint on API
+        working-directory: projects/api
+        run: npm run lint
 
+      - name: Run TypeScript type check on API
+        working-directory: projects/api
+        run: npm run typecheck
+
+  lint-frontend:
+    name: Lint Frontend
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: projects/frontend/package-lock.json
+
+      - name: Install Frontend dependencies
+        working-directory: projects/frontend
+        run: npm ci
+
+      - name: Run ESLint on Frontend
+        working-directory: projects/frontend
+        run: npm run lint
+
+      - name: Run TypeScript type check on Frontend
+        working-directory: projects/frontend
+        run: npm run typecheck

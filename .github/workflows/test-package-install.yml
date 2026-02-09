@@ -3,24 +3,65 @@ name: Test Package Install
 on:
   push:
     paths:
-      - "requirements.txt"
+      - "projects/api/package.json"
+      - "projects/api/package-lock.json"
+      - "projects/frontend/package.json"
+      - "projects/frontend/package-lock.json"
       - ".github/workflows/test-package-install.yml"
+  pull_request:
+    paths:
+      - "projects/api/package.json"
+      - "projects/api/package-lock.json"
+      - "projects/frontend/package.json"
+      - "projects/frontend/package-lock.json"
 
 jobs:
-  build:
-    name: Test Package Install
+  test-api-install:
+    name: Test API Package Install
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.11"]
+        node-version: ["20", "22"]
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+
+      - name: Set up Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
         with:
-          python-version: ${{ matrix.python-version }}
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          cache-dependency-path: projects/api/package-lock.json
+
+      - name: Install API dependencies
+        working-directory: projects/api
+        run: npm ci
+
+      - name: Build API
+        working-directory: projects/api
+        run: npm run build
+
+  test-frontend-install:
+    name: Test Frontend Package Install
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: ["20", "22"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          cache-dependency-path: projects/frontend/package-lock.json
+
+      - name: Install Frontend dependencies
+        working-directory: projects/frontend
+        run: npm ci
+
+      - name: Build Frontend
+        working-directory: projects/frontend
+        run: npm run build

@@ -8,9 +8,10 @@ YELLOW := \033[0;33m
 RED := \033[0;31m
 NC := \033[0m # No Color
 
-# API settings
-API_URL := http://localhost:3000
+# Project settings
+API_URL := http://localhost:3030
 API_DIR := projects/api
+FRONTEND_DIR := projects/frontend
 
 # Default target
 .DEFAULT_GOAL := help
@@ -31,9 +32,13 @@ help:
 ##@ Setup & Environment
 
 setup: ## Install npm dependencies for all projects
-	@echo "$(BLUE)Installing npm dependencies...$(NC)"
+	@echo "$(BLUE)Installing API dependencies...$(NC)"
 	cd $(API_DIR) && npm install
-	@echo "$(GREEN)Dependencies installed!$(NC)"
+	@echo "$(GREEN)API dependencies installed!$(NC)"
+	@echo ""
+	@echo "$(BLUE)Installing Frontend dependencies...$(NC)"
+	cd $(FRONTEND_DIR) && npm install
+	@echo "$(GREEN)Frontend dependencies installed!$(NC)"
 	@echo ""
 	@echo "$(BLUE)Installing Playwright browsers...$(NC)"
 	cd $(API_DIR) && npx playwright install
@@ -42,6 +47,7 @@ setup: ## Install npm dependencies for all projects
 clean: ## Remove node_modules and build artifacts
 	@echo "$(BLUE)Cleaning up...$(NC)"
 	rm -rf $(API_DIR)/node_modules $(API_DIR)/dist
+	rm -rf $(FRONTEND_DIR)/node_modules $(FRONTEND_DIR)/dist
 	@echo "$(GREEN)Cleanup complete!$(NC)"
 
 clean-cache: ## Remove only cache directories
@@ -92,7 +98,7 @@ summarize: ## Run Step 2b: Summarize content via API
 
 criteria: ## Generate evaluation criteria via API
 	@echo "$(BLUE)Generating evaluation criteria...$(NC)"
-	@curl -X POST $(API_URL)/pipeline/criteria-generation -H "Content-Type: application/json"
+	@curl -X POST $(API_URL)/pipeline/criteria-generation
 	@echo ""
 	@echo "$(GREEN)Criteria generation complete!$(NC)"
 
@@ -129,6 +135,22 @@ api-build: ## Build the API for production
 	cd $(API_DIR) && npm run build
 	@echo "$(GREEN)Build complete!$(NC)"
 
+##@ Frontend
+
+frontend: ## Start the frontend development server
+	@echo "$(BLUE)Starting frontend development server...$(NC)"
+	@echo "$(YELLOW)Frontend will be available at: http://localhost:5173$(NC)"
+	cd $(FRONTEND_DIR) && npm run dev
+
+frontend-build: ## Build the frontend for production
+	@echo "$(BLUE)Building frontend...$(NC)"
+	cd $(FRONTEND_DIR) && npm run build
+	@echo "$(GREEN)Frontend build complete!$(NC)"
+
+frontend-preview: ## Preview the production build
+	@echo "$(BLUE)Starting frontend preview server...$(NC)"
+	cd $(FRONTEND_DIR) && npm run preview
+
 ##@ Testing
 
 test: ## Run all tests
@@ -145,28 +167,32 @@ test-simulations: ## Run agent simulation tests
 
 ##@ Code Quality
 
-lint: ## Run ESLint
-	@echo "$(BLUE)Running linter...$(NC)"
+lint: ## Run ESLint on all projects
+	@echo "$(BLUE)Running linter on API...$(NC)"
 	cd $(API_DIR) && npm run lint
+	@echo "$(BLUE)Running linter on Frontend...$(NC)"
+	cd $(FRONTEND_DIR) && npm run lint
 
-lint-fix: ## Run ESLint with auto-fix
+lint-fix: ## Run ESLint with auto-fix on API
 	@echo "$(BLUE)Running linter with auto-fix...$(NC)"
 	cd $(API_DIR) && npm run lint:fix
 
-format: ## Format code with Prettier
+format: ## Format code with Prettier on API
 	@echo "$(BLUE)Formatting code...$(NC)"
 	cd $(API_DIR) && npm run format
 	@echo "$(GREEN)Code formatted!$(NC)"
 
-format-check: ## Check code formatting without changes
+format-check: ## Check code formatting on API
 	@echo "$(BLUE)Checking code formatting...$(NC)"
 	cd $(API_DIR) && npm run format:check
 
-typecheck: ## Run TypeScript type checker
-	@echo "$(BLUE)Running type checker...$(NC)"
+typecheck: ## Run TypeScript type checker on all projects
+	@echo "$(BLUE)Running type checker on API...$(NC)"
 	cd $(API_DIR) && npm run typecheck
+	@echo "$(BLUE)Running type checker on Frontend...$(NC)"
+	cd $(FRONTEND_DIR) && npm run typecheck
 
-check: ## Run all code quality checks
+check: ## Run all code quality checks on API
 	@echo "$(BLUE)Running all code quality checks...$(NC)"
 	cd $(API_DIR) && npm run check
 	@echo "$(GREEN)All checks passed!$(NC)"

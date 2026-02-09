@@ -18,6 +18,7 @@
     "test": "vitest",
     "test:cov": "vitest --coverage",
     "test:simulations": "vitest run test/agent-simulations/ --reporter=verbose",
+    "test:generate": "ts-node -r tsconfig-paths/register scripts/generate-tests-from-criteria.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",

@@ -102,6 +102,7 @@ export interface SummarizeResult {
   summarized: number;
   skipped: number;
   errors: number;
+  intentStats?: Record<string, number>;
 }
 
 @Injectable()
@@ -120,6 +121,19 @@ export class CriteriaGenerationService {
     });
   }
 
+  /**
+   * Strip markdown code fences from JSON response
+   */
+  private stripMarkdownCodeFence(content: string): string {
+    // Remove ```json and ``` or ```JSON and ```
+    const stripped = content
+      .replace(/^```json\s*/i, '')
+      .replace(/^```JSON\s*/i, '')
+      .replace(/\s*```$/, '')
+      .trim();
+    return stripped;
+  }
+
   async generationText(text: string): Promise<string> {
     const prompt = SYSTEM_PROMPT.replace('{text}', text);
 
@@ -130,7 +144,19 @@ export class CriteriaGenerationService {
       temperature: 0.3,
     });
 
-    return response.choices[0]?.message?.content?.trim() ?? '';
+    const rawContent = response.choices[0]?.message?.content?.trim() ?? '';
+
+    // Strip markdown code fences if present
+    const cleanedContent = this.stripMarkdownCodeFence(rawContent);
+
+    // Parse and re-stringify to ensure valid JSON and consistent formatting
+    try {
+      const parsed = JSON.parse(cleanedContent);
+      return JSON.stringify(parsed, null, 2);
+    } catch (error) {
+      console.warn('Failed to parse JSON response, returning raw content:', error);
+      return cleanedContent;
+    }
   }
 
   async generateFile(filename: string): Promise<{
@@ -170,20 +196,39 @@ export class CriteriaGenerationService {
     if (!existsSync(this.criteriaDir)) return { summarized: 0, skipped: 0, errors: 0 };
 
     const files = await readdir(this.summariesDir);
-    const txtFiles = files.filter((f) => f.endsWith('.txt'));
+    const txtFiles = files.filter((f) => f.endsWith('.txt') &&
+    (
+      f.startsWith('macular-disease') ||
+      f.startsWith('research') ||
+      f.startsWith('diagnosis-treatment') ||
+      f.startsWith('become-member')
+    ));
+
+    // Filter out files that already have generated criteria (skip already processed)
+    const filesToProcess = txtFiles.filter((file) => {
+      const outputPath = join(this.criteriaDir, file.replace('.txt', '.json'));
+      return !existsSync(outputPath);
+    });
+
+    const alreadyProcessed = txtFiles.length - filesToProcess.length;
+    console.log(
+      `Found ${txtFiles.length} files, ${filesToProcess.length} to process, ${alreadyProcessed} already done`,
+    );
 
     let summarized = 0;
     let skipped = 0;
     let errors = 0;
 
+    // Count already processed files as skipped
+    skipped += alreadyProcessed;
+
     // Process in batches to avoid rate limits
-    for (let i = 0; i < txtFiles.length; i += this.maxConcurrent) {
-      const batch = txtFiles.slice(i, i + this.maxConcurrent);
+    for (let i = 0; i < filesToProcess.length; i += this.maxConcurrent) {
+      const batch = filesToProcess.slice(i, i + this.maxConcurrent);
 
       const results = await Promise.all(
         batch.map((file) => this.generateFile(file)),
       );
-    return { summarized, skipped, errors };
 
       for (const result of results) {
         if (result.status === 'success') {
@@ -195,10 +240,22 @@ export class CriteriaGenerationService {
         }
       }
 
-      onProgress?.(Math.min(i + batch.length, txtFiles.length), txtFiles.length);
+      onProgress?.(Math.min(i + batch.length, filesToProcess.length), txtFiles.length);
     }
 
-    return { summarized, skipped, errors };
+    // Analyze intents after processing
+    console.log('\nAnalyzing question intents across all criteria files...');
+    const intentStats = await this.analyzeIntents();
+
+    // Log intent statistics
+    console.log('\n📊 Intent Distribution:');
+    const sortedIntents = Object.entries(intentStats).sort((a, b) => b[1] - a[1]);
+    for (const [intent, count] of sortedIntents) {
+      console.log(`  ${intent}: ${count}`);
+    }
+    console.log(`\n  Total questions: ${Object.values(intentStats).reduce((a, b) => a + b, 0)}`);
+
+    return { summarized, skipped, errors, intentStats };
   }
 
   async getSummarizedFiles(): Promise<string[]> {
@@ -207,5 +264,41 @@ export class CriteriaGenerationService {
     }
     const files = await readdir(this.summariesDir);
     return files.filter((f) => f.endsWith('.txt'));
+  }
+
+  /**
+   * Analyze all generated criteria files and count question intents
+   */
+  async analyzeIntents(): Promise<Record<string, number>> {
+    if (!existsSync(this.criteriaDir)) {
+      return {};
+    }
+
+    const files = await readdir(this.criteriaDir);
+    const jsonFiles = files.filter((f) => f.endsWith('.json'));
+
+    const intentCounts: Record<string, number> = {};
+
+    for (const file of jsonFiles) {
+      try {
+        const filePath = join(this.criteriaDir, file);
+        const content = await readFile(filePath, 'utf-8');
+        const parsed = JSON.parse(content);
+
+        // Extract intents from questions array
+        if (parsed.questions && Array.isArray(parsed.questions)) {
+          for (const question of parsed.questions) {
+            if (question.intent) {
+              const intent = question.intent.toLowerCase();
+              intentCounts[intent] = (intentCounts[intent] || 0) + 1;
+            }
+          }
+        }
+      } catch (error) {
+        console.warn(`Failed to parse ${file}:`, error);
+      }
+    }
+
+    return intentCounts;
   }
 }

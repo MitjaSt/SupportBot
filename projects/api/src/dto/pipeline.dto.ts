@@ -45,6 +45,7 @@ export const SummarizeResultSchema = Type.Object({
   skipped: Type.Number(),
   errors: Type.Number(),
   duration: Type.Number(),
+  intentStats: Type.Optional(Type.Record(Type.String(), Type.Number())),
 });
 
 export type SummarizeResult = Static<typeof SummarizeResultSchema>;
