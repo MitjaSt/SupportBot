@@ -92,7 +92,7 @@ process: ## Run Step 2: Process and flatten content via API
 
 summarize: ## Run Step 2b: Summarize content via API
 	@echo "$(BLUE)Running Step 2b: Summarizing content...$(NC)"
-	@curl -X POST $(API_URL)/pipeline/summarize -H "Content-Type: application/json"
+	@curl -X POST $(API_URL)/pipeline/summarize
 	@echo ""
 	@echo "$(GREEN)Summarization complete!$(NC)"
 
@@ -104,7 +104,7 @@ criteria: ## Generate evaluation criteria via API
 
 embed: ## Run Step 3: Create embeddings and store in Postgres
 	@echo "$(BLUE)Running Step 3: Creating embeddings...$(NC)"
-	@curl -X POST $(API_URL)/pipeline/embed -H "Content-Type: application/json"
+	@curl -X POST $(API_URL)/pipeline/embed
 	@echo ""
 	@echo "$(GREEN)Embeddings created and stored in Postgres!$(NC)"
 

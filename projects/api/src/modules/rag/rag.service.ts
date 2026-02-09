@@ -5,12 +5,18 @@ import { EmbeddingsService } from '../embeddings/embeddings.service';
 import { VectorDbService, SearchResult } from '../vector-db/vector-db.service';
 import { PromptLoggerService } from '../prompt-logger/prompt-logger.service';
 import { ObservabilityService } from '../observability/observability.service';
+import { ToolHandlerService } from './services/tool-handler.service';
+import { RAG_TOOLS, TOOL_USAGE_INSTRUCTIONS } from './tools';
 
 export interface RagResponse {
   answer: string;
   sources: SearchResult[];
   model: string;
   backend: 'openai';
+  contactCollected?: {
+    type: 'phone' | 'email';
+    value: string;
+  };
 }
 
 // System prompt matching Python implementation
@@ -20,7 +26,9 @@ If the context doesn't contain relevant information, say:
 "I do not have information about that. Can I help you with something else?"
 
 Keep responses concise and suitable for a phone conversation.
-Refer to the person as "you" not "the caller".`;
+Refer to the person as "you" not "the caller".
+
+${TOOL_USAGE_INSTRUCTIONS}`;
 
 @Injectable()
 export class RagService {
@@ -36,6 +44,7 @@ export class RagService {
     private readonly vectorDb: VectorDbService,
     private readonly promptLogger: PromptLoggerService,
     private readonly observability: ObservabilityService,
+    private readonly toolHandler: ToolHandlerService,
   ) {
     this.openaiClient = new OpenAI({
       apiKey: config.openai.apiKey,
@@ -62,6 +71,7 @@ export class RagService {
     chunks: SearchResult[],
     conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>,
     systemPrompt: string = SYSTEM_PROMPT,
+    sessionId?: string,
   ): Promise<RagResponse> {
     // Build context from chunks
     const context = chunks
@@ -87,16 +97,45 @@ export class RagService {
 
     messages.push({ role: 'user', content: userMessage });
 
-    // Generate response
+    // Generate response with tool calling support
     const response = await this.openaiClient.chat.completions.create({
       model: this.config.openai.chatModel,
       messages,
       max_tokens: this.maxTokens,
       temperature: 0.7,
+      tools: RAG_TOOLS,
+      tool_choice: 'auto',
     });
 
+    const choice = response.choices[0];
+    const message = choice?.message;
+
+    // Handle tool calls
+    if (message?.tool_calls && message.tool_calls.length > 0) {
+      const toolCall = message.tool_calls[0];
+
+      // Delegate to tool handler service
+      const toolResult = await this.toolHandler.execute(toolCall, {
+        query,
+        conversationHistory,
+        sessionId,
+        chunks,
+        model: this.config.openai.chatModel,
+        backend: 'openai',
+      });
+
+      return {
+        answer: toolResult.answer,
+        sources: chunks,
+        model: this.config.openai.chatModel,
+        backend: 'openai',
+        ...toolResult.metadata,
+      };
+    }
+
+    // No tool calls - return regular response
     return {
-      answer: response.choices[0]?.message?.content ?? '',
+      answer: message?.content ?? '',
       sources: chunks,
       model: this.config.openai.chatModel,
       backend: 'openai',
@@ -183,7 +222,7 @@ export class RagService {
 
     // Generation phase (timed)
     const generationStart = Date.now();
-    const result = await this.generateAnswer(query, chunks, conversationHistory, systemPrompt);
+    const result = await this.generateAnswer(query, chunks, conversationHistory, systemPrompt, sessionId);
     const generationDurationMs = Date.now() - generationStart;
 
     const fullPrompt = this.buildFullPrompt(query, chunks, conversationHistory, systemPrompt);
