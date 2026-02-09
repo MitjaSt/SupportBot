@@ -1,2 +1,4 @@
 include:
   - docker-compose.postgres.yml
+  - docker-compose.whisper.yml
+  - docker-compose.piper.yml

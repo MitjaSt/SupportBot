@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Box, Typography, Alert } from '@mui/material';
 import { ChatMessage } from './ChatMessage';
 import { ChatInput } from './ChatInput';
-import { sendQueryStream, getSession } from '../api/client';
+import { sendQueryStream, sendVoiceQuery, getSession, synthesizeSpeech } from '../api/client';
 import type { Message } from '../types';
 
 interface ChatViewProps {
@@ -19,6 +19,7 @@ export function ChatView({ onSessionUpdate }: ChatViewProps) {
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(sessionId ?? null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const isStreamingRef = useRef(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Load existing session if navigating to one (but not during streaming)
   useEffect(() => {
@@ -53,6 +54,34 @@ export function ChatView({ onSessionUpdate }: ChatViewProps) {
     } catch (err) {
       console.error('Failed to load session:', err);
       setError('Failed to load conversation');
+    }
+  };
+
+  const playAudio = async (text: string) => {
+    try {
+      // Stop any currently playing audio
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+
+      // Synthesize speech
+      const audioBlob = await synthesizeSpeech(text);
+      const audioUrl = URL.createObjectURL(audioBlob);
+
+      // Create and play audio element
+      const audio = new Audio(audioUrl);
+      audioRef.current = audio;
+
+      audio.onended = () => {
+        URL.revokeObjectURL(audioUrl);
+        audioRef.current = null;
+      };
+
+      await audio.play();
+    } catch (err) {
+      console.error('Failed to play audio:', err);
+      // Don't show error to user - TTS is optional enhancement
     }
   };
 
@@ -142,6 +171,11 @@ export function ChatView({ onSessionUpdate }: ChatViewProps) {
         if (event.type === 'done') {
           // Notify sidebar to refresh
           onSessionUpdate();
+
+          // Play audio response
+          if (fullContent) {
+            playAudio(fullContent);
+          }
         }
       }
     } catch (err) {
@@ -156,6 +190,49 @@ export function ChatView({ onSessionUpdate }: ChatViewProps) {
       });
     } finally {
       isStreamingRef.current = false;
+      setLoading(false);
+    }
+  };
+
+  const handleVoiceSend = async (audioBlob: Blob) => {
+    setError(null);
+    setLoading(true);
+
+    try {
+      // Send voice query
+      const response = await sendVoiceQuery(audioBlob, currentSessionId ?? undefined);
+
+      // If this is a new session, update the URL
+      if (!currentSessionId) {
+        setCurrentSessionId(response.sessionId);
+        navigate(`/chat/${response.sessionId}`, { replace: true });
+      }
+
+      // Add user message (transcribed text)
+      const userMessage: Message = {
+        role: 'user',
+        content: response.transcription?.text || '[Voice message]',
+        createdAt: new Date().toISOString(),
+      };
+      setMessages((prev) => [...prev, userMessage]);
+
+      // Add assistant message
+      const assistantMessage: Message = {
+        role: 'assistant',
+        content: response.answer,
+        createdAt: new Date().toISOString(),
+      };
+      setMessages((prev) => [...prev, assistantMessage]);
+
+      // Notify sidebar to refresh
+      onSessionUpdate();
+
+      // Play audio response
+      playAudio(response.answer);
+    } catch (err) {
+      console.error('Failed to send voice message:', err);
+      setError('Failed to process voice message. Please try again.');
+    } finally {
       setLoading(false);
     }
   };
@@ -208,7 +285,7 @@ export function ChatView({ onSessionUpdate }: ChatViewProps) {
       )}
 
       {/* Input area */}
-      <ChatInput onSend={handleSend} loading={loading} />
+      <ChatInput onSend={handleSend} onVoiceSend={handleVoiceSend} loading={loading} />
     </Box>
   );
 }

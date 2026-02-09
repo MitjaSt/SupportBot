@@ -1,0 +1,14 @@
+services:
+  piper:
+    build:
+      context: ./piper
+      dockerfile: Dockerfile
+    container_name: macular-piper
+    restart: unless-stopped
+    ports:
+      - "3050:8001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3

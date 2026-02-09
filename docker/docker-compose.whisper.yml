@@ -1,0 +1,26 @@
+services:
+  whisper:
+    build:
+      context: ./whisper
+      dockerfile: Dockerfile
+    container_name: macular-whisper
+    restart: unless-stopped
+    ports:
+      - "3040:8000"
+    environment:
+      WHISPER_MODEL: base  # tiny, base, small, medium, large-v3
+      WHISPER_DEVICE: cpu
+      WHISPER_COMPUTE_TYPE: int8  # int8 for CPU, float16 for GPU
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    # Uncomment for GPU support
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]

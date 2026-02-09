@@ -10,9 +10,11 @@ import type {
   LangfuseConfig,
   LangwatchConfig,
   OpenAIConfig,
+  PiperConfig,
   PostgresConfig,
   RagConfig,
   ScrapingConfig,
+  WhisperConfig,
 } from './env.schema';
 
 // Load .env from project root (shared with Python)
@@ -126,6 +128,14 @@ export class ConfigService {
       apiKey: getRequired('CONFIDENTAI_API_KEY'),
     };
 
+    const whisper: WhisperConfig = {
+      url: getOptional('WHISPER_URL', 'http://localhost:8000'),
+    };
+
+    const piper: PiperConfig = {
+      url: getOptional('PIPER_URL', 'http://localhost:8001'),
+    };
+
     return {
       filesystem,
       embedding,
@@ -137,6 +147,8 @@ export class ConfigService {
       langfuse,
       langwatch,
       confidentai,
+      whisper,
+      piper,
     };
   }
 
@@ -178,5 +190,13 @@ export class ConfigService {
 
   get confidentai(): ConfidentAIConfig {
     return this.config.confidentai;
+  }
+
+  get whisper(): WhisperConfig {
+    return this.config.whisper;
+  }
+
+  get piper(): PiperConfig {
+    return this.config.piper;
   }
 }
