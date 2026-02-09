@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Box, Typography, Alert } from '@mui/material';
 import { ChatMessage } from './ChatMessage';
 import { ChatInput } from './ChatInput';
-import { sendQuery, getSession } from '../api/client';
+import { sendQueryStream, getSession } from '../api/client';
 import type { Message } from '../types';
 
 interface ChatViewProps {
@@ -18,9 +18,15 @@ export function ChatView({ onSessionUpdate }: ChatViewProps) {
   const [error, setError] = useState<string | null>(null);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(sessionId ?? null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const isStreamingRef = useRef(false);
 
-  // Load existing session if navigating to one
+  // Load existing session if navigating to one (but not during streaming)
   useEffect(() => {
+    // Skip loading if we're currently streaming (prevents race condition)
+    if (isStreamingRef.current) {
+      return;
+    }
+
     if (sessionId) {
       loadSession(sessionId);
       setCurrentSessionId(sessionId);
@@ -53,6 +59,7 @@ export function ChatView({ onSessionUpdate }: ChatViewProps) {
   const handleSend = async (content: string) => {
     setError(null);
     setLoading(true);
+    isStreamingRef.current = true;
 
     // Optimistically add user message
     const userMessage: Message = {
@@ -63,30 +70,92 @@ export function ChatView({ onSessionUpdate }: ChatViewProps) {
     setMessages((prev) => [...prev, userMessage]);
 
     try {
-      const response = await sendQuery(content, currentSessionId ?? undefined);
+      let fullContent = '';
+      let newSessionId: string | null = null;
+      let assistantMessageAdded = false;
 
-      // If this is a new session, update the URL
-      if (!currentSessionId) {
-        setCurrentSessionId(response.sessionId);
-        navigate(`/chat/${response.sessionId}`, { replace: true });
+      // Stream the response
+      for await (const event of sendQueryStream(content, currentSessionId ?? undefined)) {
+        if (event.type === 'error') {
+          throw new Error(event.content || 'Stream error');
+        }
+
+        // Update sessionId if this is a new session
+        if (event.sessionId && !currentSessionId && !newSessionId) {
+          newSessionId = event.sessionId;
+          setCurrentSessionId(newSessionId);
+          navigate(`/chat/${newSessionId}`, { replace: true });
+        }
+
+        // Accumulate content chunks
+        if (event.type === 'chunk' && event.content) {
+          fullContent += event.content;
+
+          // Add assistant message on first chunk
+          if (!assistantMessageAdded) {
+            const assistantMessage: Message = {
+              role: 'assistant',
+              content: fullContent,
+              createdAt: new Date().toISOString(),
+            };
+            setMessages((prev) => [...prev, assistantMessage]);
+            assistantMessageAdded = true;
+          } else {
+            // Update the last message (assistant's response) in real-time
+            setMessages((prev) => {
+              const updated = [...prev];
+              updated[updated.length - 1] = {
+                ...updated[updated.length - 1],
+                content: fullContent,
+              };
+              return updated;
+            });
+          }
+        }
+
+        // Handle tool response (replaces streamed content)
+        if (event.type === 'tool' && event.content) {
+          fullContent = event.content;
+
+          // Add or update assistant message with tool response
+          if (!assistantMessageAdded) {
+            const assistantMessage: Message = {
+              role: 'assistant',
+              content: fullContent,
+              createdAt: new Date().toISOString(),
+            };
+            setMessages((prev) => [...prev, assistantMessage]);
+            assistantMessageAdded = true;
+          } else {
+            setMessages((prev) => {
+              const updated = [...prev];
+              updated[updated.length - 1] = {
+                ...updated[updated.length - 1],
+                content: fullContent,
+              };
+              return updated;
+            });
+          }
+        }
+
+        // Done streaming
+        if (event.type === 'done') {
+          // Notify sidebar to refresh
+          onSessionUpdate();
+        }
       }
-
-      // Add assistant message
-      const assistantMessage: Message = {
-        role: 'assistant',
-        content: response.answer,
-        createdAt: new Date().toISOString(),
-      };
-      setMessages((prev) => [...prev, assistantMessage]);
-
-      // Notify sidebar to refresh
-      onSessionUpdate();
     } catch (err) {
       console.error('Failed to send message:', err);
       setError('Failed to send message. Please try again.');
-      // Remove optimistic message on error
-      setMessages((prev) => prev.slice(0, -1));
+      // Remove optimistic user message (and assistant message if it was added)
+      setMessages((prev) => {
+        // If we added an assistant message, remove both user and assistant
+        // Otherwise just remove the user message
+        const messagesToRemove = prev[prev.length - 1]?.role === 'assistant' ? 2 : 1;
+        return prev.slice(0, -messagesToRemove);
+      });
     } finally {
+      isStreamingRef.current = false;
       setLoading(false);
     }
   };

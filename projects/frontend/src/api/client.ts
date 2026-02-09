@@ -2,6 +2,21 @@ import type { QueryResponse, Session, SessionWithHistory } from '../types';
 
 const API_BASE = '/api';
 
+export interface StreamEvent {
+  type: 'chunk' | 'tool' | 'done' | 'error';
+  content?: string;
+  sessionId?: string;
+  metadata?: {
+    sources?: any[];
+    model?: string;
+    backend?: string;
+    contactCollected?: {
+      type: 'phone' | 'email';
+      value: string;
+    };
+  };
+}
+
 export async function sendQuery(
   query: string,
   sessionId?: string
@@ -17,6 +32,71 @@ export async function sendQuery(
   }
 
   return response.json();
+}
+
+/**
+ * Stream query responses using Server-Sent Events
+ * Yields events as they are received from the server
+ */
+export async function* sendQueryStream(
+  query: string,
+  sessionId?: string
+): AsyncGenerator<StreamEvent> {
+  const response = await fetch(`${API_BASE}/chat/query/stream`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query, sessionId }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Query failed: ${response.statusText}`);
+  }
+
+  if (!response.body) {
+    throw new Error('Response body is null');
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+
+      if (done) {
+        break;
+      }
+
+      // Decode the chunk and add to buffer
+      buffer += decoder.decode(value, { stream: true });
+
+      // Split by SSE message boundary (double newline)
+      const messages = buffer.split('\n\n');
+
+      // Keep the last incomplete message in the buffer
+      buffer = messages.pop() || '';
+
+      // Process complete messages
+      for (const message of messages) {
+        if (message.trim() === '') continue;
+
+        // SSE format: "data: {json}"
+        const dataPrefix = 'data: ';
+        if (message.startsWith(dataPrefix)) {
+          const jsonStr = message.slice(dataPrefix.length);
+          try {
+            const event: StreamEvent = JSON.parse(jsonStr);
+            yield event;
+          } catch (e) {
+            console.error('Failed to parse SSE message:', jsonStr, e);
+          }
+        }
+      }
+    }
+  } finally {
+    reader.releaseLock();
+  }
 }
 
 export async function listSessions(): Promise<(Session & { messageCount: number })[]> {

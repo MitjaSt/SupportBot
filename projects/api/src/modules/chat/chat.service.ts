@@ -5,7 +5,7 @@ import {
   type Message,
   type CollectionState,
 } from '../database/session.repository';
-import { RagService, RagResponse } from '../rag/rag.service';
+import { RagService, RagResponse, StreamEvent } from '../rag/rag.service';
 
 export interface ChatResponse extends RagResponse {
   sessionId: string;
@@ -62,5 +62,45 @@ export class ChatService {
 
   async listSessions(limit = 50) {
     return this.sessions.listSessions(limit);
+  }
+
+  /**
+   * Streaming version of chat() that yields events as they're generated
+   */
+  async *chatStream(
+    sessionId: string,
+    message: string,
+  ): AsyncGenerator<StreamEvent & { sessionId: string }> {
+    // Get or create session
+    const session = await this.sessions.getOrCreateSession(sessionId);
+
+    // Get conversation history
+    const history = await this.sessions.getMessages(sessionId);
+
+    // Add user message to history
+    await this.sessions.addMessage(sessionId, 'user', message);
+
+    // Convert to RAG format
+    const conversationHistory = history.map((m) => ({
+      role: m.role,
+      content: m.content,
+    }));
+
+    // Stream RAG response
+    let fullAnswer = '';
+    for await (const event of this.rag.queryStream(message, conversationHistory, sessionId)) {
+      // Collect full answer for storage
+      if (event.type === 'chunk' && event.content) {
+        fullAnswer += event.content;
+      } else if (event.type === 'tool' && event.content) {
+        fullAnswer = event.content;
+      }
+
+      // Yield event to client with sessionId
+      yield { ...event, sessionId: session.sessionId };
+    }
+
+    // Add assistant response to history after streaming completes
+    await this.sessions.addMessage(sessionId, 'assistant', fullAnswer);
   }
 }

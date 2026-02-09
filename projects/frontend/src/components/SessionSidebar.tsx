@@ -1,26 +1,26 @@
-import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
 import {
-  Box,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemText,
-  ListItemIcon,
-  IconButton,
-  Typography,
-  Divider,
-  Button,
-  Tooltip,
-} from '@mui/material';
-import {
-  PushPin,
-  PushPinOutlined,
   Add,
   Chat,
   Delete,
+  PushPin,
+  PushPinOutlined,
 } from '@mui/icons-material';
-import { listSessions, deleteSession } from '../api/client';
+import {
+  Box,
+  Button,
+  Divider,
+  IconButton,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Tooltip,
+  Typography,
+} from '@mui/material';
+import { useEffect, useState } from 'react';
+import { useNavigate, useLocation, matchPath } from 'react-router-dom';
+import { deleteSession, listSessions } from '../api/client';
 import { usePinnedSessions } from '../hooks/usePinnedSessions';
 import type { Session } from '../types';
 
@@ -34,7 +34,11 @@ export function SessionSidebar({ onNewSession, refreshTrigger }: SessionSidebarP
   const [loading, setLoading] = useState(true);
   const { togglePin, isPinned } = usePinnedSessions();
   const navigate = useNavigate();
-  const { sessionId: currentSessionId } = useParams();
+  const location = useLocation();
+
+  // Extract sessionId from current route
+  const match = matchPath('/chat/:sessionId', location.pathname);
+  const currentSessionId = match?.params.sessionId;
 
   useEffect(() => {
     loadSessions();
@@ -169,7 +173,21 @@ export function SessionSidebar({ onNewSession, refreshTrigger }: SessionSidebarP
               <ListItemButton
                 selected={currentSessionId === session.sessionId}
                 onClick={() => navigate(`/chat/${session.sessionId}`)}
-                sx={{ pr: 10 }}
+                sx={{
+                  pr: 10,
+                  bgcolor: currentSessionId === session.sessionId ? 'primary.main' : 'transparent',
+                  color: currentSessionId === session.sessionId ? 'primary.contrastText' : 'inherit',
+                  '&:hover': {
+                    bgcolor: currentSessionId === session.sessionId ? 'primary.dark' : 'action.hover',
+                  },
+                  '&.Mui-selected': {
+                    bgcolor: 'primary.main',
+                    color: 'primary.contrastText',
+                    '&:hover': {
+                      bgcolor: 'primary.dark',
+                    },
+                  },
+                }}
               >
                 <ListItemIcon sx={{ minWidth: 36 }}>
                   <Chat fontSize="small" />
