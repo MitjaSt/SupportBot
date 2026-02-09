@@ -1,8 +1,9 @@
 # Dependencies
 node_modules/
 
-# Build output
+# Outputs
 dist/
+.cache/
 
 # Environment
 .env
@@ -14,7 +15,6 @@ dist/
 
 # OS
 .DS_Store
-Thumbs.db
 
 # Logs
 *.log

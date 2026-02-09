@@ -17,9 +17,6 @@ dist/
 # Environment variables
 .env
 
-# Cache directories
-**/.cache/
-
 # Node modules
 **/node_modules/
 
