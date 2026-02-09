@@ -20,6 +20,9 @@ dist/
 # Cache directories
 **/.cache/
 
+# Node modules
+**/node_modules/
+
 # Docker
 docker/storage/
 
