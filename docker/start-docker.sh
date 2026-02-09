@@ -10,15 +10,3 @@ docker compose \
   --file $PROJECT_DIR/docker/docker-compose.yml \
   --env-file $PROJECT_DIR/.env \
   up --detach
-
-# Pull model
-curl -X POST http://localhost:11434/api/pull -d '{"name": "'$OLLAMA_MODEL'"}'
-
-# Test model
-RESPONSE=$(curl --fail --insecure --silent --request POST http://localhost:11434/api/generate -d '{
-  "model": "'$OLLAMA_MODEL'",
-  "stream": false,
-  "prompt": "Are you running fine?"
-}')
-
-echo $RESPONSE | jq .response

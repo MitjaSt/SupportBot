@@ -1,5 +1,5 @@
 SHELL := /bin/bash
-.PHONY: help setup activate clean test lint format docker-start docker-stop docker-restart pipeline query validate install-hooks requirements-update api api-prod
+.PHONY: help setup clean test lint format docker-start docker-stop docker-restart pipeline query validate install-hooks requirements-update api api-prod
 
 # Colors for output
 BLUE := \033[0;34m
@@ -180,10 +180,6 @@ install-hooks: ## Install git pre-commit hooks
 	@echo "$(BLUE)Installing pre-commit hooks...$(NC)"
 	pre-commit install
 	@echo "$(GREEN)Pre-commit hooks installed!$(NC)"
-
-activate: ## Start a shell with venv activated
-	@echo "$(YELLOW)Starting activated shell...$(NC)"
-	@bash --init-file <(echo ". ~/.bashrc; source .venv/bin/activate; echo 'Virtual environment activated'")
 
 requirements-update: ## Update requirements.txt from current venv
 	@echo "$(BLUE)Updating requirements.txt...$(NC)"
