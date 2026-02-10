@@ -57,11 +57,13 @@ clean-cache: ## Remove only cache directories
 
 ##@ Docker
 
-docker-start: ## Start Docker services (Postgres)
+docker-start: docker-network ## Start Docker services (Postgres, Whisper, Piper)
 	@echo "$(BLUE)Starting Docker services...$(NC)"
 	@$(COMPOSE) --file docker/docker-compose.yml up -d
 	@echo "$(GREEN)Docker services started!$(NC)"
 	@echo "$(YELLOW)Postgres: localhost:5432$(NC)"
+	@echo "$(YELLOW)Whisper:  localhost:3040$(NC)"
+	@echo "$(YELLOW)Piper:    localhost:3050$(NC)"
 
 docker-stop: ## Stop Docker services
 	@echo "$(BLUE)Stopping Docker services...$(NC)"
@@ -75,6 +77,38 @@ docker-logs: ## Tail Docker logs
 
 docker-status: ## Show Docker services status
 	@$(COMPOSE) --file docker/docker-compose.yml ps
+
+docker-network: ## Create Docker network for services
+	@echo "$(BLUE)Creating Docker network...$(NC)"
+	@docker network create macular-network 2>/dev/null || echo "$(YELLOW)Network already exists$(NC)"
+	@echo "$(GREEN)Network ready!$(NC)"
+
+##@ Monitoring
+
+monitoring-start: docker-network ## Start Prometheus and Grafana
+	@echo "$(BLUE)Starting monitoring services...$(NC)"
+	@$(COMPOSE) --file docker/docker-compose.yml up -d prometheus grafana
+	@echo "$(GREEN)Monitoring services started!$(NC)"
+	@echo "$(YELLOW)Prometheus: http://localhost:3060$(NC)"
+	@echo "$(YELLOW)Grafana: http://localhost:3070 (admin/admin)$(NC)"
+
+monitoring-stop: ## Stop Prometheus and Grafana
+	@echo "$(BLUE)Stopping monitoring services...$(NC)"
+	@$(COMPOSE) --file docker/docker-compose.yml stop prometheus grafana
+	@echo "$(GREEN)Monitoring services stopped!$(NC)"
+
+monitoring-restart: monitoring-stop monitoring-start ## Restart monitoring services
+
+monitoring-logs: ## Tail monitoring service logs
+	@$(COMPOSE) --file docker/docker-compose.yml logs -f prometheus grafana
+
+prometheus: ## Open Prometheus in browser
+	@echo "$(BLUE)Opening Prometheus...$(NC)"
+	@open http://localhost:3060 || xdg-open http://localhost:3060 2>/dev/null || echo "$(YELLOW)Open http://localhost:3060 in your browser$(NC)"
+
+grafana: ## Open Grafana in browser
+	@echo "$(BLUE)Opening Grafana...$(NC)"
+	@open http://localhost:3070 || xdg-open http://localhost:3070 2>/dev/null || echo "$(YELLOW)Open http://localhost:3070 in your browser (admin/admin)$(NC)"
 
 ##@ Pipeline Execution
 

@@ -10,10 +10,12 @@ import { RagModule } from './modules/rag/rag.module';
 import { ChatModule } from './modules/chat/chat.module';
 import { PipelineModule } from './modules/pipeline/pipeline.module';
 import { SystemModule } from './modules/system/system.module';
+import { MetricsModule } from './modules/metrics/metrics.module';
 
 @Module({
   imports: [
     ConfigModule,
+    MetricsModule,
     ObservabilityModule,
     DatabaseModule,
     EmbeddingsModule,

@@ -17,6 +17,11 @@ export function ChatView({ onSessionUpdate }: ChatViewProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(sessionId ?? null);
+  const [voiceEnabled, setVoiceEnabled] = useState(() => {
+    // Load voice preference from localStorage, default to false
+    const saved = localStorage.getItem('voiceEnabled');
+    return saved === 'true';
+  });
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const isStreamingRef = useRef(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -57,7 +62,20 @@ export function ChatView({ onSessionUpdate }: ChatViewProps) {
     }
   };
 
+  const toggleVoice = () => {
+    setVoiceEnabled((prev) => {
+      const newValue = !prev;
+      localStorage.setItem('voiceEnabled', String(newValue));
+      return newValue;
+    });
+  };
+
   const playAudio = async (text: string) => {
+    // Only play if voice is enabled
+    if (!voiceEnabled) {
+      return;
+    }
+
     try {
       // Stop any currently playing audio
       if (audioRef.current) {
@@ -285,7 +303,13 @@ export function ChatView({ onSessionUpdate }: ChatViewProps) {
       )}
 
       {/* Input area */}
-      <ChatInput onSend={handleSend} onVoiceSend={handleVoiceSend} loading={loading} />
+      <ChatInput
+        onSend={handleSend}
+        onVoiceSend={handleVoiceSend}
+        loading={loading}
+        voiceEnabled={voiceEnabled}
+        onToggleVoice={toggleVoice}
+      />
     </Box>
   );
 }

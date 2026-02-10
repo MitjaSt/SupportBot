@@ -1,0 +1,38 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'macular-society'
+    environment: 'development'
+
+scrape_configs:
+  # NestJS API metrics
+  - job_name: 'macular-api'
+    static_configs:
+      - targets: ['host.docker.internal:3030']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  # Whisper (STT) metrics
+  - job_name: 'whisper'
+    static_configs:
+      - targets: ['whisper:8000']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  # Piper (TTS) metrics
+  - job_name: 'piper'
+    static_configs:
+      - targets: ['piper:8001']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # PostgreSQL exporter (optional - can be added later)
+  # - job_name: 'postgres'
+  #   static_configs:
+  #     - targets: ['postgres-exporter:9187']

@@ -1,6 +1,6 @@
 import { useState, KeyboardEvent, useRef, useEffect } from 'react';
 import { Box, TextField, IconButton, CircularProgress, Tooltip } from '@mui/material';
-import { Send, Mic, Stop } from '@mui/icons-material';
+import { Send, Mic, Stop, VolumeUp, VolumeOff } from '@mui/icons-material';
 import { keyframes } from '@mui/system';
 
 const pulse = keyframes`
@@ -20,9 +20,11 @@ interface ChatInputProps {
   onVoiceSend?: (audioBlob: Blob) => void;
   disabled?: boolean;
   loading?: boolean;
+  voiceEnabled?: boolean;
+  onToggleVoice?: () => void;
 }
 
-export function ChatInput({ onSend, onVoiceSend, disabled, loading }: ChatInputProps) {
+export function ChatInput({ onSend, onVoiceSend, disabled, loading, voiceEnabled, onToggleVoice }: ChatInputProps) {
   const [input, setInput] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -124,6 +126,20 @@ export function ChatInput({ onSend, onVoiceSend, disabled, loading }: ChatInputP
             sx={{ alignSelf: 'flex-end' }}
           >
             {isRecording ? <Stop /> : <Mic />}
+          </IconButton>
+        </Tooltip>
+      )}
+
+      {/* Voice response toggle */}
+      {onToggleVoice && (
+        <Tooltip title={voiceEnabled ? 'Voice responses ON' : 'Voice responses OFF'}>
+          <IconButton
+            color={voiceEnabled ? 'primary' : 'default'}
+            onClick={onToggleVoice}
+            disabled={disabled || loading}
+            sx={{ alignSelf: 'flex-end' }}
+          >
+            {voiceEnabled ? <VolumeUp /> : <VolumeOff />}
           </IconButton>
         </Tooltip>
       )}

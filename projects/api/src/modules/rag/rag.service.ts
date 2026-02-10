@@ -6,6 +6,7 @@ import { VectorDbService, SearchResult } from '../vector-db/vector-db.service';
 import { PromptLoggerService } from '../prompt-logger/prompt-logger.service';
 import { ObservabilityService } from '../observability/observability.service';
 import { ToolHandlerService } from './services/tool-handler.service';
+import { MetricsService } from '../metrics/metrics.service';
 import { RAG_TOOLS, TOOL_USAGE_INSTRUCTIONS } from './tools';
 
 export interface RagResponse {
@@ -60,6 +61,7 @@ export class RagService {
     private readonly promptLogger: PromptLoggerService,
     private readonly observability: ObservabilityService,
     private readonly toolHandler: ToolHandlerService,
+    private readonly metrics: MetricsService,
   ) {
     this.openaiClient = new OpenAI({
       apiKey: config.openai.apiKey,
@@ -166,6 +168,8 @@ Rewritten: "How does photodynamic therapy (PDT) work?"`,
   }
 
   async retrieve(query: string): Promise<SearchResult[]> {
+    const retrievalTimer = this.metrics.ragRetrievalDuration.startTimer();
+
     const queryVector = await this.embeddings.embed(query);
 
     const results = await this.vectorDb.search(
@@ -173,6 +177,19 @@ Rewritten: "How does photodynamic therapy (PDT) work?"`,
       this.topK,
       this.scoreThreshold,
     );
+
+    retrievalTimer();
+
+    // Record metrics
+    this.metrics.ragChunksRetrieved.observe(results.length);
+    results.forEach(result => {
+      this.metrics.ragRetrievalScore.observe(result.score);
+    });
+
+    if (results.length === 0) {
+      this.metrics.ragFailedRetrievals.inc();
+    }
+
     return results;
   }
 
@@ -208,6 +225,9 @@ Rewritten: "How does photodynamic therapy (PDT) work?"`,
     messages.push({ role: 'user', content: userMessage });
 
     // Generate response with tool calling support
+    const apiTimer = this.metrics.openaiApiDuration.startTimer({ operation: 'chat', model: this.config.openai.chatModel });
+    this.metrics.openaiApiCalls.inc({ operation: 'chat', model: this.config.openai.chatModel });
+
     const response = await this.openaiClient.chat.completions.create({
       model: this.config.openai.chatModel,
       messages,
@@ -217,8 +237,21 @@ Rewritten: "How does photodynamic therapy (PDT) work?"`,
       tool_choice: 'auto',
     });
 
+    apiTimer();
+
     const choice = response.choices[0];
     const message = choice?.message;
+
+    // Record token usage
+    if (response.usage) {
+      const { prompt_tokens, completion_tokens, total_tokens } = response.usage;
+      this.metrics.tokensInputTotal.inc({ model: this.config.openai.chatModel, endpoint: 'chat' }, prompt_tokens);
+      this.metrics.tokensOutputTotal.inc({ model: this.config.openai.chatModel, endpoint: 'chat' }, completion_tokens);
+      this.metrics.tokensTotal.inc({ model: this.config.openai.chatModel, endpoint: 'chat' }, total_tokens);
+      this.metrics.tokensPerRequest.observe({ type: 'input', model: this.config.openai.chatModel }, prompt_tokens);
+      this.metrics.tokensPerRequest.observe({ type: 'output', model: this.config.openai.chatModel }, completion_tokens);
+      this.metrics.recordTokenCost(this.config.openai.chatModel, prompt_tokens, completion_tokens);
+    }
 
     // Handle tool calls
     if (message?.tool_calls && message.tool_calls.length > 0) {
@@ -389,6 +422,7 @@ Rewritten: "How does photodynamic therapy (PDT) work?"`,
     sessionId?: string,
   ): Promise<RagResponse> {
     const startTime = Date.now();
+    this.metrics.ragQueriesTotal.inc({ status: 'started' });
 
     // Create observability trace
     const trace = await this.observability.createTrace({
@@ -500,6 +534,8 @@ Rewritten: "How does photodynamic therapy (PDT) work?"`,
     this.promptLogger
       .log(logEntry)
       .catch((err) => console.error('Failed to write prompt log:', err));
+
+    this.metrics.ragQueriesTotal.inc({ status: 'success' });
 
     return result;
   }

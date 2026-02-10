@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@/config/config.service';
+import { MetricsService } from '../metrics/metrics.service';
 
 export interface TranscriptionResult {
   text: string;
@@ -12,7 +13,10 @@ export class WhisperService {
   private readonly logger = new Logger(WhisperService.name);
   private readonly whisperUrl: string;
 
-  constructor(private readonly config: ConfigService) {
+  constructor(
+    private readonly config: ConfigService,
+    private readonly metrics: MetricsService,
+  ) {
     this.whisperUrl = config.whisper.url;
     this.logger.log(`Whisper service URL: ${this.whisperUrl}`);
   }
@@ -24,6 +28,8 @@ export class WhisperService {
    * @returns Transcription result
    */
   async transcribe(audioBuffer: Buffer, filename: string): Promise<TranscriptionResult> {
+    const transcriptionTimer = this.metrics.whisperTranscriptionDuration.startTimer();
+
     // Create FormData with native Node.js 18+ API
     const formData = new FormData();
     // Create a new Uint8Array from the buffer
@@ -38,15 +44,21 @@ export class WhisperService {
 
       if (!response.ok) {
         const errorText = await response.text();
+        this.metrics.whisperTranscriptionErrors.inc({ error_type: 'http_error' });
         throw new Error(`Whisper transcription failed: ${response.statusText} - ${errorText}`);
       }
 
       const result = await response.json() as TranscriptionResult;
       this.logger.log(`Transcribed audio (${result.language}): ${result.text.substring(0, 50)}...`);
 
+      transcriptionTimer();
+      this.metrics.whisperTranscriptionTotal.inc({ model: 'whisper-base', language: result.language });
+
       return result;
     } catch (error) {
       this.logger.error(`Transcription error: ${error}`);
+      this.metrics.whisperTranscriptionErrors.inc({ error_type: 'exception' });
+      transcriptionTimer();
       throw error;
     }
   }
