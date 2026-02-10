@@ -109,6 +109,9 @@ export class RagService {
       .join('\n');
 
     try {
+      const apiTimer = this.metrics.openaiApiDuration.startTimer({ operation: 'query_rewrite', model: 'gpt-4o-mini' });
+      this.metrics.openaiApiCalls.inc({ operation: 'query_rewrite', model: 'gpt-4o-mini' });
+
       const response = await this.openaiClient.chat.completions.create({
         model: 'gpt-4o-mini', // Cheaper model is sufficient for rewriting
         messages: [
@@ -158,6 +161,19 @@ Rewritten: "How does photodynamic therapy (PDT) work?"`,
         max_tokens: 150,
         temperature: 0.3,
       });
+
+      apiTimer();
+
+      // Record token usage
+      if (response.usage) {
+        const { prompt_tokens, completion_tokens, total_tokens } = response.usage;
+        this.metrics.tokensInputTotal.inc({ model: 'gpt-4o-mini', endpoint: 'query_rewrite' }, prompt_tokens);
+        this.metrics.tokensOutputTotal.inc({ model: 'gpt-4o-mini', endpoint: 'query_rewrite' }, completion_tokens);
+        this.metrics.tokensTotal.inc({ model: 'gpt-4o-mini', endpoint: 'query_rewrite' }, total_tokens);
+        this.metrics.tokensPerRequest.observe({ type: 'input', model: 'gpt-4o-mini' }, prompt_tokens);
+        this.metrics.tokensPerRequest.observe({ type: 'output', model: 'gpt-4o-mini' }, completion_tokens);
+        this.metrics.recordTokenCost('gpt-4o-mini', prompt_tokens, completion_tokens);
+      }
 
       const rewritten = response.choices[0]?.message?.content?.trim();
       return rewritten || query;
@@ -321,6 +337,9 @@ Rewritten: "How does photodynamic therapy (PDT) work?"`,
     messages.push({ role: 'user', content: userMessage });
 
     // Generate streaming response with tool calling support
+    const apiTimer = this.metrics.openaiApiDuration.startTimer({ operation: 'chat_stream', model: this.config.openai.chatModel });
+    this.metrics.openaiApiCalls.inc({ operation: 'chat_stream', model: this.config.openai.chatModel });
+
     const stream = await this.openaiClient.chat.completions.create({
       model: this.config.openai.chatModel,
       messages,
@@ -329,6 +348,7 @@ Rewritten: "How does photodynamic therapy (PDT) work?"`,
       tools: RAG_TOOLS,
       tool_choice: 'auto',
       stream: true,
+      stream_options: { include_usage: true },
     });
 
     let fullContent = '';
@@ -359,7 +379,20 @@ Rewritten: "How does photodynamic therapy (PDT) work?"`,
           }
         }
       }
+
+      // Capture token usage from final chunk
+      if (chunk.usage) {
+        const { prompt_tokens, completion_tokens, total_tokens } = chunk.usage;
+        this.metrics.tokensInputTotal.inc({ model: this.config.openai.chatModel, endpoint: 'chat_stream' }, prompt_tokens);
+        this.metrics.tokensOutputTotal.inc({ model: this.config.openai.chatModel, endpoint: 'chat_stream' }, completion_tokens);
+        this.metrics.tokensTotal.inc({ model: this.config.openai.chatModel, endpoint: 'chat_stream' }, total_tokens);
+        this.metrics.tokensPerRequest.observe({ type: 'input', model: this.config.openai.chatModel }, prompt_tokens);
+        this.metrics.tokensPerRequest.observe({ type: 'output', model: this.config.openai.chatModel }, completion_tokens);
+        this.metrics.recordTokenCost(this.config.openai.chatModel, prompt_tokens, completion_tokens);
+      }
     }
+
+    apiTimer();
 
     // Handle tool calls after streaming completes
     if (toolCalls.length > 0) {

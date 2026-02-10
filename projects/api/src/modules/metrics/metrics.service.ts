@@ -316,14 +316,23 @@ export class MetricsService {
 
   /**
    * Calculate estimated cost based on token usage
-   * OpenAI pricing (as of 2024):
-   * - gpt-4o: $5.00 / 1M input tokens, $15.00 / 1M output tokens
+   * OpenAI pricing (as of 2026):
+   * - gpt-5.2: $1.75 / 1M input tokens, $14.00 / 1M output tokens
+   * - gpt-4o-mini: $0.15 / 1M input tokens, $0.60 / 1M output tokens
+   * - gpt-4o: $5.00 / 1M input tokens, $15.00 / 1M output tokens (legacy)
    * - text-embedding-3-small: $0.02 / 1M tokens
    */
   recordTokenCost(model: string, inputTokens: number, outputTokens: number) {
     let cost = 0;
 
-    if (model.includes('gpt-4o')) {
+    if (model.includes('gpt-5.2')) {
+      cost = (inputTokens * 1.75 / 1_000_000) + (outputTokens * 14.0 / 1_000_000);
+    } else if (model.includes('gpt-5')) {
+      // Other gpt-5 models (fallback to gpt-5.2 pricing)
+      cost = (inputTokens * 1.75 / 1_000_000) + (outputTokens * 14.0 / 1_000_000);
+    } else if (model.includes('gpt-4o-mini')) {
+      cost = (inputTokens * 0.15 / 1_000_000) + (outputTokens * 0.60 / 1_000_000);
+    } else if (model.includes('gpt-4o')) {
       cost = (inputTokens * 5.0 / 1_000_000) + (outputTokens * 15.0 / 1_000_000);
     } else if (model.includes('embedding')) {
       cost = (inputTokens + outputTokens) * 0.02 / 1_000_000;

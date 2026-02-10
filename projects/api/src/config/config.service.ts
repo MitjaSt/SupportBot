@@ -86,7 +86,7 @@ export class ConfigService {
       enabled: getBool('OPENAI_ENABLE', false),
       apiKey: getOptional('OPENAI_API_KEY', ''),
       embeddingModel: getOptional('OPENAI_EMBEDDING_MODEL', 'text-embedding-3-small'),
-      chatModel: getOptional('OPENAI_MODEL', 'gpt-4o'),
+      chatModel: getRequired('OPENAI_MODEL'),
       timeout: getInt('OPENAI_TIMEOUT', 120),
     };
 
