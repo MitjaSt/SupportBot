@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { writeFile, mkdir, readdir, readFile, rm } from 'fs/promises';
 import { existsSync } from 'fs';
 import { join } from 'path';
@@ -36,6 +36,7 @@ export interface FlattenedDocument {
 
 @Injectable()
 export class ProcessingService implements OnModuleInit {
+  private readonly logger = new Logger(ProcessingService.name);
   private readonly jsonDir: string;
   private readonly flatDir: string;
   private readonly summariesDir: string;
@@ -194,7 +195,7 @@ export class ProcessingService implements OnModuleInit {
       });
     }
 
-    console.log(`Loaded ${docs.length} documents from ${sourceDir}`);
+    this.logger.log(`Loaded ${docs.length} documents from ${sourceDir}`);
     return docs;
   }
 

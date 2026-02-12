@@ -1,5 +1,5 @@
 import { ConfigService } from '@/config/config.service';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { existsSync } from 'fs';
 import { mkdir, readdir, readFile, writeFile } from 'fs/promises';
 import OpenAI from 'openai';
@@ -107,6 +107,7 @@ export interface SummarizeResult {
 
 @Injectable()
 export class CriteriaGenerationService {
+  private readonly logger = new Logger(CriteriaGenerationService.name);
   private readonly summariesDir: string;
   private readonly criteriaDir: string;
   private readonly openaiClient: OpenAI;
@@ -154,7 +155,7 @@ export class CriteriaGenerationService {
       const parsed = JSON.parse(cleanedContent);
       return JSON.stringify(parsed, null, 2);
     } catch (error) {
-      console.warn('Failed to parse JSON response, returning raw content:', error);
+      this.logger.warn('Failed to parse JSON response, returning raw content:', error);
       return cleanedContent;
     }
   }
@@ -183,7 +184,7 @@ export class CriteriaGenerationService {
 
       return { status: 'success' };
     } catch (error) {
-      console.error(`Failed to generate criteria for ${filename}:`, error);
+      this.logger.error(`Failed to generate criteria for ${filename}:`, error);
       return { status: 'error', reason: String(error) };
     }
   }
@@ -211,7 +212,7 @@ export class CriteriaGenerationService {
     });
 
     const alreadyProcessed = txtFiles.length - filesToProcess.length;
-    console.log(
+    this.logger.log(
       `Found ${txtFiles.length} files, ${filesToProcess.length} to process, ${alreadyProcessed} already done`,
     );
 
@@ -244,16 +245,16 @@ export class CriteriaGenerationService {
     }
 
     // Analyze intents after processing
-    console.log('\nAnalyzing question intents across all criteria files...');
+    this.logger.log('\nAnalyzing question intents across all criteria files...');
     const intentStats = await this.analyzeIntents();
 
     // Log intent statistics
-    console.log('\n📊 Intent Distribution:');
+    this.logger.log('\n📊 Intent Distribution:');
     const sortedIntents = Object.entries(intentStats).sort((a, b) => b[1] - a[1]);
     for (const [intent, count] of sortedIntents) {
-      console.log(`  ${intent}: ${count}`);
+      this.logger.log(`  ${intent}: ${count}`);
     }
-    console.log(`\n  Total questions: ${Object.values(intentStats).reduce((a, b) => a + b, 0)}`);
+    this.logger.log(`\n  Total questions: ${Object.values(intentStats).reduce((a, b) => a + b, 0)}`);
 
     return { summarized, skipped, errors, intentStats };
   }
@@ -295,7 +296,7 @@ export class CriteriaGenerationService {
           }
         }
       } catch (error) {
-        console.warn(`Failed to parse ${file}:`, error);
+        this.logger.warn(`Failed to parse ${file}:`, error);
       }
     }
 

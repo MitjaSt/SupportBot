@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { chromium, Browser, Page } from 'playwright';
 import { writeFile, mkdir, readdir, readFile } from 'fs/promises';
 import { existsSync } from 'fs';
@@ -30,6 +30,7 @@ const EXCLUDED_URL_PREFIXES = [
 
 @Injectable()
 export class ScrapingService {
+  private readonly logger = new Logger(ScrapingService.name);
   private readonly maxConcurrent: number;
   private readonly sitemapUrl: string;
   private readonly cacheDir: string;
@@ -124,7 +125,7 @@ export class ScrapingService {
         scrapedAt: new Date().toISOString(),
       };
     } catch (error) {
-      console.error(`Failed to scrape ${url}:`, error);
+      this.logger.error(`Failed to scrape ${url}:`, error);
       return null;
     } finally {
       if (page) {
@@ -142,7 +143,7 @@ export class ScrapingService {
     }
 
     const urls = await this.fetchSitemap();
-    console.log(`Found ${urls.length} URLs to scrape`);
+    this.logger.log(`Found ${urls.length} URLs to scrape`);
 
     const browser = await chromium.launch({ headless: true });
 

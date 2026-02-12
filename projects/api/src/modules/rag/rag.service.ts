@@ -566,7 +566,7 @@ Rewritten: "How does photodynamic therapy (PDT) work?"`,
     });
     this.promptLogger
       .log(logEntry)
-      .catch((err) => console.error('Failed to write prompt log:', err));
+      .catch((err) => this.logger.error('Failed to write prompt log:', err));
 
     this.metrics.ragQueriesTotal.inc({ status: 'success' });
 
@@ -704,6 +704,6 @@ Rewritten: "How does photodynamic therapy (PDT) work?"`,
     });
     this.promptLogger
       .log(logEntry)
-      .catch((err) => console.error('Failed to write prompt log:', err));
+      .catch((err) => this.logger.error('Failed to write prompt log:', err));
   }
 }

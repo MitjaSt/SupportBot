@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { writeFile, mkdir, readdir, readFile } from 'fs/promises';
 import { existsSync } from 'fs';
 import { join } from 'path';
@@ -23,6 +23,7 @@ export interface SummarizeResult {
 
 @Injectable()
 export class SummarizationService {
+  private readonly logger = new Logger(SummarizationService.name);
   private readonly flatDir: string;
   private readonly summariesDir: string;
   private readonly openaiClient: OpenAI;
@@ -74,7 +75,7 @@ export class SummarizationService {
 
       return { status: 'success' };
     } catch (error) {
-      console.error(`Failed to summarize ${filename}:`, error);
+      this.logger.error(`Failed to summarize ${filename}:`, error);
       return { status: 'error', reason: String(error) };
     }
   }
