@@ -49,7 +49,7 @@ export function SessionSidebar({ onNewSession, refreshTrigger }: SessionSidebarP
       const data = await listSessions();
       setSessions(data);
     } catch (err) {
-      console.error('Failed to load sessions:', err);
+      // Error loading sessions - fail silently as this is not critical
     } finally {
       setLoading(false);
     }
@@ -65,7 +65,7 @@ export function SessionSidebar({ onNewSession, refreshTrigger }: SessionSidebarP
           navigate('/');
         }
       } catch (err) {
-        console.error('Failed to delete session:', err);
+        // Error deleting session - fail silently
       }
     }
   };

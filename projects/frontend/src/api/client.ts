@@ -89,7 +89,7 @@ export async function* sendQueryStream(
             const event: StreamEvent = JSON.parse(jsonStr);
             yield event;
           } catch (e) {
-            console.error('Failed to parse SSE message:', jsonStr, e);
+            // Skip malformed SSE messages
           }
         }
       }

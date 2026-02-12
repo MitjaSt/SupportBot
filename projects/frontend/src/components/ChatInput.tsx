@@ -81,7 +81,6 @@ export function ChatInput({ onSend, onVoiceSend, disabled, loading, voiceEnabled
       mediaRecorder.start();
       setIsRecording(true);
     } catch (error) {
-      console.error('Failed to start recording:', error);
       alert('Could not access microphone. Please check permissions.');
     }
   };

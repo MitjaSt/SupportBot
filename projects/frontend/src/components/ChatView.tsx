@@ -57,7 +57,6 @@ export function ChatView({ onSessionUpdate }: ChatViewProps) {
         navigate('/');
       }
     } catch (err) {
-      console.error('Failed to load session:', err);
       setError('Failed to load conversation');
     }
   };
@@ -98,7 +97,6 @@ export function ChatView({ onSessionUpdate }: ChatViewProps) {
 
       await audio.play();
     } catch (err) {
-      console.error('Failed to play audio:', err);
       // Don't show error to user - TTS is optional enhancement
     }
   };
@@ -197,7 +195,6 @@ export function ChatView({ onSessionUpdate }: ChatViewProps) {
         }
       }
     } catch (err) {
-      console.error('Failed to send message:', err);
       setError('Failed to send message. Please try again.');
       // Remove optimistic user message (and assistant message if it was added)
       setMessages((prev) => {
@@ -248,7 +245,6 @@ export function ChatView({ onSessionUpdate }: ChatViewProps) {
       // Play audio response
       playAudio(response.answer);
     } catch (err) {
-      console.error('Failed to send voice message:', err);
       setError('Failed to process voice message. Please try again.');
     } finally {
       setLoading(false);
