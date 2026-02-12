@@ -1,5 +1,5 @@
 import { useState, KeyboardEvent, useRef, useEffect } from 'react';
-import { Box, TextField, IconButton, CircularProgress, Tooltip } from '@mui/material';
+import { Box, TextField, IconButton, CircularProgress, Tooltip, Alert } from '@mui/material';
 import { Send, Mic, Stop, VolumeUp, VolumeOff } from '@mui/icons-material';
 import { keyframes } from '@mui/system';
 
@@ -27,6 +27,7 @@ interface ChatInputProps {
 export function ChatInput({ onSend, onVoiceSend, disabled, loading, voiceEnabled, onToggleVoice }: ChatInputProps) {
   const [input, setInput] = useState('');
   const [isRecording, setIsRecording] = useState(false);
+  const [micError, setMicError] = useState<string | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
 
@@ -81,7 +82,7 @@ export function ChatInput({ onSend, onVoiceSend, disabled, loading, voiceEnabled
       mediaRecorder.start();
       setIsRecording(true);
     } catch (error) {
-      alert('Could not access microphone. Please check permissions.');
+      setMicError('Could not access microphone. Please check permissions.');
     }
   };
 
@@ -93,7 +94,15 @@ export function ChatInput({ onSend, onVoiceSend, disabled, loading, voiceEnabled
   };
 
   return (
-    <Box sx={{ display: 'flex', gap: 1, p: 2, borderTop: 1, borderColor: 'divider' }}>
+    <>
+      {/* Microphone error alert */}
+      {micError && (
+        <Alert severity="error" onClose={() => setMicError(null)} sx={{ mx: 2, mb: 1 }}>
+          {micError}
+        </Alert>
+      )}
+
+      <Box sx={{ display: 'flex', gap: 1, p: 2, borderTop: 1, borderColor: 'divider' }}>
       <TextField
         fullWidth
         multiline
@@ -153,5 +162,6 @@ export function ChatInput({ onSend, onVoiceSend, disabled, loading, voiceEnabled
         {loading ? <CircularProgress size={24} /> : <Send />}
       </IconButton>
     </Box>
+    </>
   );
 }
