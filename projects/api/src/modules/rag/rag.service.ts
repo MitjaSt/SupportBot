@@ -46,6 +46,43 @@ Refer to the person as "you" not "the caller".
 
 ${TOOL_USAGE_INSTRUCTIONS}`;
 
+// Query rewriting prompt for making follow-up questions self-contained
+const QUERY_REWRITE_PROMPT = `You are a query rewriting assistant. Given a conversation history and a user's follow-up question, rewrite the question to be self-contained and include necessary context from the conversation.
+
+Rules:
+1. If the question contains pronouns (it, this, that, they, them, etc.), replace them with specific nouns from the conversation
+2. If the question contains vague references like "those treatments", "that procedure", "these injections", etc., replace them with the exact medical terms mentioned in the assistant's most recent response
+3. Pay special attention to the assistant's last response - extract specific medical terms, treatments, conditions, or procedures mentioned there
+4. If the question references previous topics implicitly, make the reference explicit
+5. If the question is already self-contained, return it unchanged
+6. Keep the rewritten question concise and natural
+7. Maintain the original question's intent
+
+Examples:
+History: "What is dry AMD?"
+Question: "What causes it?"
+Rewritten: "What causes dry AMD?"
+
+History: "Tell me about wet macular degeneration"
+Question: "How is it treated?"
+Rewritten: "How is wet macular degeneration treated?"
+
+History: "What are the symptoms of age-related macular degeneration?"
+Question: "Is there a cure?"
+Rewritten: "Is there a cure for age-related macular degeneration?"
+
+History:
+User: What are treatments?
+Assistant: Treatment typically involves anti-VEGF injections into the eye to stop the growth of abnormal blood vessels.
+Question: "Where can I get those injections?"
+Rewritten: "Where can I get anti-VEGF injections?"
+
+History:
+User: How is wet AMD treated?
+Assistant: The main treatment is photodynamic therapy (PDT) which uses a light-activated drug.
+Question: "How does that therapy work?"
+Rewritten: "How does photodynamic therapy (PDT) work?"`;
+
 @Injectable()
 export class RagService {
   private readonly logger = new Logger(RagService.name);
@@ -117,41 +154,7 @@ export class RagService {
         messages: [
           {
             role: 'system',
-            content: `You are a query rewriting assistant. Given a conversation history and a user's follow-up question, rewrite the question to be self-contained and include necessary context from the conversation.
-
-Rules:
-1. If the question contains pronouns (it, this, that, they, them, etc.), replace them with specific nouns from the conversation
-2. If the question contains vague references like "those treatments", "that procedure", "these injections", etc., replace them with the exact medical terms mentioned in the assistant's most recent response
-3. Pay special attention to the assistant's last response - extract specific medical terms, treatments, conditions, or procedures mentioned there
-4. If the question references previous topics implicitly, make the reference explicit
-5. If the question is already self-contained, return it unchanged
-6. Keep the rewritten question concise and natural
-7. Maintain the original question's intent
-
-Examples:
-History: "What is dry AMD?"
-Question: "What causes it?"
-Rewritten: "What causes dry AMD?"
-
-History: "Tell me about wet macular degeneration"
-Question: "How is it treated?"
-Rewritten: "How is wet macular degeneration treated?"
-
-History: "What are the symptoms of age-related macular degeneration?"
-Question: "Is there a cure?"
-Rewritten: "Is there a cure for age-related macular degeneration?"
-
-History:
-User: What are treatments?
-Assistant: Treatment typically involves anti-VEGF injections into the eye to stop the growth of abnormal blood vessels.
-Question: "Where can I get those injections?"
-Rewritten: "Where can I get anti-VEGF injections?"
-
-History:
-User: How is wet AMD treated?
-Assistant: The main treatment is photodynamic therapy (PDT) which uses a light-activated drug.
-Question: "How does that therapy work?"
-Rewritten: "How does photodynamic therapy (PDT) work?"`,
+            content: QUERY_REWRITE_PROMPT,
           },
           {
             role: 'user',
