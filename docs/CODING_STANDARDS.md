@@ -191,6 +191,60 @@ function getSession(id: string): Session { ... }
 function embed(text: string): number[] { ... }
 ```
 
+### Avoid Index Signatures with `unknown` (They're Just `any` in Disguise)
+
+Using `{ [key: string]: unknown }` or `Record<string, unknown>` provides almost zero type safety. You can't access properties without type assertions, making it nearly equivalent to `any`.
+
+**Bad:**
+```typescript
+// ❌ False sense of type safety - can't use properties without assertions
+interface ToolArguments {
+  [key: string]: unknown;
+}
+
+function handle(args: ToolArguments) {
+  const phone = args.phone; // Type is 'unknown', must cast
+  const email = args.email as string; // Forced to use 'as'
+}
+```
+
+**Good:**
+```typescript
+// ✅ Define the actual shape you expect
+interface CollectContactArgs {
+  phone?: string;
+  email?: string;
+  name?: string;
+  preferredCallTime?: string;
+}
+
+function handle(args: CollectContactArgs) {
+  const phone = args.phone; // Type is 'string | undefined', safe!
+  if (args.email) {
+    // TypeScript knows email is string here
+  }
+}
+```
+
+**When it's acceptable:**
+```typescript
+// ✅ OK: When you truly need a dynamic object for metadata/extensions
+interface ToolResult {
+  success: boolean;
+  message: string;
+  // Extension point for future metadata
+  metadata?: Record<string, unknown>;
+}
+
+// ✅ OK: When parsing unknown JSON that will be validated
+function parseAndValidate(json: Record<string, unknown>): ValidatedData {
+  // Validate and transform to proper type
+  return validateSchema(json);
+}
+```
+
+**Rule of thumb:** If you can define the structure (even partially with optional properties), do it. Only use index signatures when you truly have no idea what keys will exist.
+
 ---
 
 ## NestJS Standards
