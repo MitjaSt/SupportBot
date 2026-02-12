@@ -4,6 +4,8 @@ import {
   IToolHandler,
   ToolExecutionContext,
   ToolResult,
+  CollectContactArgs,
+  ContactCollectionMetadata,
 } from '../interfaces/tool-handler.interface';
 
 interface ConversationTurn {
@@ -16,13 +18,18 @@ interface ConversationTurn {
  * Handler for the collect_contact_information tool
  */
 @Injectable()
-export class ContactCollectionToolHandler implements IToolHandler {
+export class ContactCollectionToolHandler
+  implements IToolHandler<CollectContactArgs, ContactCollectionMetadata>
+{
   readonly name = 'collect_contact_information';
   private readonly logger = new Logger(ContactCollectionToolHandler.name);
 
   constructor(private readonly contactCollection: ContactCollectionService) {}
 
-  async handle(args: any, context: ToolExecutionContext): Promise<ToolResult> {
+  async handle(
+    args: CollectContactArgs,
+    context: ToolExecutionContext,
+  ): Promise<ToolResult<ContactCollectionMetadata>> {
     const contactValue = args.contact_value;
 
     this.logger.log(`Validating contact: ${contactValue}`);

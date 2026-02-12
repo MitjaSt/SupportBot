@@ -3,6 +3,7 @@ import {
   IToolHandler,
   ToolExecutionContext,
   ToolResult,
+  ToolCall,
 } from '../interfaces/tool-handler.interface';
 
 /**
@@ -39,7 +40,7 @@ export class ToolHandlerService implements OnModuleInit {
   /**
    * Execute a tool call
    */
-  async execute(toolCall: any, context: ToolExecutionContext): Promise<ToolResult> {
+  async execute(toolCall: ToolCall, context: ToolExecutionContext): Promise<ToolResult> {
     const toolName = toolCall.function.name;
     const handler = this.handlers.get(toolName);
 

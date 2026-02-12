@@ -1,4 +1,34 @@
 /**
+ * OpenAI tool call structure
+ */
+export interface ToolCall {
+  id: string;
+  type: 'function';
+  function: {
+    name: string;
+    arguments: string;
+  };
+}
+
+/**
+ * Arguments for collect_contact_information tool
+ */
+export interface CollectContactArgs {
+  contact_value: string;
+  user_message?: string;
+}
+
+/**
+ * Contact collection metadata
+ */
+export interface ContactCollectionMetadata {
+  contactCollected: {
+    type: 'phone' | 'email';
+    value: string;
+  };
+}
+
+/**
  * Context passed to tool handlers during execution
  */
 export interface ToolExecutionContext {
@@ -13,15 +43,15 @@ export interface ToolExecutionContext {
 /**
  * Result returned by tool handlers
  */
-export interface ToolResult {
+export interface ToolResult<TMetadata = Record<string, unknown>> {
   answer: string;
-  metadata?: Record<string, any>;
+  metadata?: TMetadata;
 }
 
 /**
  * Interface that all tool handlers must implement
  */
-export interface IToolHandler {
+export interface IToolHandler<TArgs = unknown, TMetadata = Record<string, unknown>> {
   /**
    * The OpenAI function name this handler responds to
    */
@@ -30,5 +60,5 @@ export interface IToolHandler {
   /**
    * Execute the tool with given arguments and context
    */
-  handle(args: any, context: ToolExecutionContext): Promise<ToolResult>;
+  handle(args: TArgs, context: ToolExecutionContext): Promise<ToolResult<TMetadata>>;
 }
