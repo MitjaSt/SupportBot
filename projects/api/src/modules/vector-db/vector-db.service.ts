@@ -23,6 +23,18 @@ export interface SearchResult {
   chunkIndex: number;
 }
 
+interface SearchQueryRow {
+  id: unknown;
+  text: unknown;
+  source: unknown;
+  chunkIndex: unknown;
+  score: unknown;
+}
+
+interface CountQueryRow {
+  count: unknown;
+}
+
 @Injectable()
 export class VectorDbService implements OnModuleInit {
   private readonly logger = new Logger(VectorDbService.name);
@@ -114,7 +126,7 @@ export class VectorDbService implements OnModuleInit {
       const results = await this.db.execute(query);
 
       // Map and filter by score threshold if provided
-      const mapped = results.rows.map((r: any) => ({
+      const mapped = (results.rows as unknown as SearchQueryRow[]).map((r) => ({
         id: String(r.id),
         score: Number(r.score),
         text: String(r.text),
@@ -142,7 +154,7 @@ export class VectorDbService implements OnModuleInit {
         SELECT COUNT(*) as count FROM ${vectors}
       `);
 
-      const count = Number(result.rows[0]?.count ?? 0);
+      const count = Number((result.rows as unknown as CountQueryRow[])[0]?.count ?? 0);
 
       return {
         pointsCount: count,
