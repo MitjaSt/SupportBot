@@ -4,6 +4,52 @@
       "WebSearch",
       "WebFetch"
     ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/protect-files.sh \"$FILE_PATH\"",
+            "statusMessage": "Checking file protection..."
+          }
+        ]
+      },
+      {
+        "matcher": "Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/protect-files.sh \"$FILE_PATH\"",
+            "statusMessage": "Checking file protection..."
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/format-code.sh \"$FILE_PATH\"",
+            "statusMessage": "Formatting code..."
+          }
+        ]
+      },
+      {
+        "matcher": "Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/format-code.sh \"$FILE_PATH\"",
+            "statusMessage": "Formatting code..."
+          }
+        ]
+      }
+    ]
   }
 }
 

@@ -183,29 +183,57 @@ Watch for these architectural anti-patterns:
 - **Tight Coupling**: Components too dependent
 - **God Object**: One class/component does everything
 
-## Project-Specific Architecture (Example)
+## Project-Specific Architecture
 
-Example architecture for an AI-powered SaaS platform:
+This is a **RAG (Retrieval-Augmented Generation) system** for medical Q&A about macular degeneration.
 
 ### Current Architecture
-- **Frontend**: Next.js 15 (Vercel/Cloud Run)
-- **Backend**: FastAPI or Express (Cloud Run/Railway)
-- **Database**: PostgreSQL (Supabase)
-- **Cache**: Redis (Upstash/Railway)
-- **AI**: Claude API with structured output
-- **Real-time**: Supabase subscriptions
+- **Frontend**: React 18 + Vite + TypeScript + Material-UI (Port 5173)
+- **Backend**: NestJS (TypeScript) + REST API (Port 3030)
+- **Database**: PostgreSQL with pgvector extension
+- **ORM**: Drizzle ORM with custom pgvector types
+- **LLM**: OpenAI GPT-5.2-chat-latest with streaming and function calling
+- **Embeddings**: OpenAI text-embedding-3-small (1536 dimensions)
+- **Voice Pipeline**:
+  - Whisper (Speech-to-Text) - Port 3040
+  - Piper (Text-to-Speech) - Port 3050
+- **Monitoring**: Prometheus (3060) + Grafana (3070)
+- **Infrastructure**: Docker Compose for local dev
 
 ### Key Design Decisions
-1. **Hybrid Deployment**: Vercel (frontend) + Cloud Run (backend) for optimal performance
-2. **AI Integration**: Structured output with Pydantic/Zod for type safety
-3. **Real-time Updates**: Supabase subscriptions for live data
-4. **Immutable Patterns**: Spread operators for predictable state
-5. **Many Small Files**: High cohesion, low coupling
+1. **pgvector over specialized vector DBs**: Simplicity, persistent storage, good for <1M vectors
+2. **Streaming responses**: Better UX for long-form answers
+3. **Function calling for tools**: Contact collection via OpenAI native tools
+4. **Query rewriting**: Handles follow-up questions with context
+5. **Conversation history**: Stored in Postgres for session management
+6. **Metrics instrumentation**: All OpenAI calls tracked for cost monitoring
+
+### RAG Pipeline Architecture
+```
+User Query → Embed (OpenAI) → Vector Search (pgvector) →
+Top-K Chunks → Prompt + Context → GPT-5.2 Stream → Response
+```
+
+### Module Structure (NestJS)
+- **ChatModule**: HTTP endpoints for chat interactions
+- **RagModule**: Core RAG logic (retrieve + generate)
+- **EmbeddingsModule**: OpenAI embedding generation
+- **VectorDbModule**: Postgres pgvector operations
+- **PipelineModule**: Data ingestion (scrape → process → embed)
+- **WhisperModule**: Speech-to-text integration
+- **PiperModule**: Text-to-speech integration
+- **MetricsModule**: Prometheus instrumentation
 
 ### Scalability Plan
-- **10K users**: Current architecture sufficient
-- **100K users**: Add Redis clustering, CDN for static assets
-- **1M users**: Microservices architecture, separate read/write databases
-- **10M users**: Event-driven architecture, distributed caching, multi-region
+- **Current (1K queries/day)**: Current architecture sufficient
+- **10K queries/day**: Add Redis caching for frequent queries
+- **100K queries/day**: Separate read replica, CDN for frontend
+- **1M queries/day**: Dedicated vector DB (Weaviate/Pinecone), microservices
 
-**Remember**: Good architecture enables rapid development, easy maintenance, and confident scaling. The best architecture is simple, clear, and follows established patterns.
+### Key Constraints
+- Medical domain requires high accuracy (no hallucinations)
+- Retrieval threshold (0.7) filters low-confidence results
+- Context window management (4096 tokens max)
+- Voice pipeline adds latency (~3-5s)
+
+**Remember**: RAG systems balance retrieval quality vs generation quality. Monitor both similarity scores and response accuracy.

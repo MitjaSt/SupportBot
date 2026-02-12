@@ -123,60 +123,65 @@ For each category, check:
     - Are alerts configured?
 ```
 
-### 3. Example Project-Specific Security Checks
+### 3. RAG-Specific Security Checks
 
-**CRITICAL - Platform Handles Real Money:**
+**This project is a medical RAG system handling sensitive health queries:**
 
 ```
-Financial Security:
-- [ ] All market trades are atomic transactions
-- [ ] Balance checks before any withdrawal/trade
-- [ ] Rate limiting on all financial endpoints
-- [ ] Audit logging for all money movements
-- [ ] Double-entry bookkeeping validation
-- [ ] Transaction signatures verified
-- [ ] No floating-point arithmetic for money
+OpenAI API Security:
+- [ ] API keys stored in environment variables only
+- [ ] API keys never logged or exposed
+- [ ] Timeout configured to prevent hanging requests
+- [ ] Rate limiting on all OpenAI API calls
+- [ ] Cost monitoring via Prometheus metrics
+- [ ] Token usage tracked and alerted on anomalies
 
-Solana/Blockchain Security:
-- [ ] Wallet signatures properly validated
-- [ ] Transaction instructions verified before sending
-- [ ] Private keys never logged or stored
-- [ ] RPC endpoints rate limited
-- [ ] Slippage protection on all trades
-- [ ] MEV protection considerations
-- [ ] Malicious instruction detection
+Prompt Injection Prevention:
+- [ ] User input sanitized before embedding
+- [ ] System prompt protected from user manipulation
+- [ ] Function calling parameters validated
+- [ ] No user input in system role messages
+- [ ] Retrieval context sanitized before including in prompts
+- [ ] No eval() or dynamic code execution from user input
 
-Authentication Security:
-- [ ] Privy authentication properly implemented
-- [ ] JWT tokens validated on every request
-- [ ] Session management secure
-- [ ] No authentication bypass paths
-- [ ] Wallet signature verification
-- [ ] Rate limiting on auth endpoints
+Database Security (PostgreSQL + pgvector):
+- [ ] All queries parameterized (using Drizzle ORM)
+- [ ] No raw SQL with string concatenation
+- [ ] Database credentials in environment variables
+- [ ] Connection pooling properly configured
+- [ ] No PII (phone/email) in embeddings or logs
+- [ ] Session expiry enforced (24 hours default)
+- [ ] Vector search inputs validated
 
-Database Security (Supabase):
-- [ ] Row Level Security (RLS) enabled on all tables
-- [ ] No direct database access from client
-- [ ] Parameterized queries only
-- [ ] No PII in logs
-- [ ] Backup encryption enabled
-- [ ] Database credentials rotated regularly
+Data Privacy (Medical Domain):
+- [ ] User conversations not sent to third parties
+- [ ] Contact information (phone/email) encrypted at rest
+- [ ] Conversation history saved locally only when explicitly collected
+- [ ] No medical advice given outside retrieved context
+- [ ] Logs sanitized to remove PII
+- [ ] Embeddings don't contain identifiable information
 
 API Security:
-- [ ] All endpoints require authentication (except public)
-- [ ] Input validation on all parameters
-- [ ] Rate limiting per user/IP
-- [ ] CORS properly configured
-- [ ] No sensitive data in URLs
-- [ ] Proper HTTP methods (GET safe, POST/PUT/DELETE idempotent)
+- [ ] CORS configured for frontend origin only
+- [ ] Input validation on all endpoints
+- [ ] Rate limiting on chat endpoints
+- [ ] Voice upload size limits enforced
+- [ ] File type validation for audio uploads
+- [ ] Streaming responses properly closed on error
 
-Search Security (Redis + OpenAI):
-- [ ] Redis connection uses TLS
-- [ ] OpenAI API key server-side only
-- [ ] Search queries sanitized
-- [ ] No PII sent to OpenAI
-- [ ] Rate limiting on search endpoints
-- [ ] Redis AUTH enabled
+Voice Pipeline Security:
+- [ ] Audio files validated before processing
+- [ ] Whisper/Piper services isolated in Docker
+- [ ] No audio files stored permanently
+- [ ] Voice data not logged or persisted
+- [ ] Service-to-service communication authenticated
+
+Secrets Management:
+- [ ] .env not committed to git
+- [ ] .env.example has no real secrets
+- [ ] OpenAI API key has usage limits set
+- [ ] Database password rotated regularly
+- [ ] Monitoring credentials secured (Grafana)
 ```
 
 ## Vulnerability Patterns to Detect
