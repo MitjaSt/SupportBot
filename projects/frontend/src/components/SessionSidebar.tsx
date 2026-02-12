@@ -8,6 +8,11 @@ import {
 import {
   Box,
   Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   Divider,
   IconButton,
   List,
@@ -32,6 +37,8 @@ interface SessionSidebarProps {
 export function SessionSidebar({ onNewSession, refreshTrigger }: SessionSidebarProps) {
   const [sessions, setSessions] = useState<(Session & { messageCount: number })[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [sessionToDelete, setSessionToDelete] = useState<string | null>(null);
   const { togglePin, isPinned } = usePinnedSessions();
   const navigate = useNavigate();
   const location = useLocation();
@@ -55,19 +62,32 @@ export function SessionSidebar({ onNewSession, refreshTrigger }: SessionSidebarP
     }
   };
 
-  const handleDelete = async (sessionId: string, e: React.MouseEvent) => {
+  const handleDeleteClick = (sessionId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (confirm('Delete this conversation?')) {
-      try {
-        await deleteSession(sessionId);
-        setSessions((prev) => prev.filter((s) => s.sessionId !== sessionId));
-        if (currentSessionId === sessionId) {
-          navigate('/');
-        }
-      } catch (err) {
-        // Error deleting session - fail silently
+    setSessionToDelete(sessionId);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!sessionToDelete) return;
+
+    try {
+      await deleteSession(sessionToDelete);
+      setSessions((prev) => prev.filter((s) => s.sessionId !== sessionToDelete));
+      if (currentSessionId === sessionToDelete) {
+        navigate('/');
       }
+    } catch (err) {
+      // Error deleting session - fail silently
+    } finally {
+      setDeleteDialogOpen(false);
+      setSessionToDelete(null);
     }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteDialogOpen(false);
+    setSessionToDelete(null);
   };
 
   // Sort: pinned first, then by updatedAt
@@ -162,7 +182,7 @@ export function SessionSidebar({ onNewSession, refreshTrigger }: SessionSidebarP
                   <Tooltip title="Delete">
                     <IconButton
                       size="small"
-                      onClick={(e) => handleDelete(session.sessionId, e)}
+                      onClick={(e) => handleDeleteClick(session.sessionId, e)}
                     >
                       <Delete fontSize="small" />
                     </IconButton>
@@ -209,6 +229,27 @@ export function SessionSidebar({ onNewSession, refreshTrigger }: SessionSidebarP
           ))
         )}
       </List>
+
+      {/* Delete confirmation dialog */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={handleDeleteCancel}
+        aria-labelledby="delete-dialog-title"
+        aria-describedby="delete-dialog-description"
+      >
+        <DialogTitle id="delete-dialog-title">Delete Conversation</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="delete-dialog-description">
+            Are you sure you want to delete this conversation? This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDeleteCancel}>Cancel</Button>
+          <Button onClick={handleDeleteConfirm} color="error" autoFocus>
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
