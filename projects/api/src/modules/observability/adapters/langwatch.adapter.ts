@@ -1,14 +1,14 @@
-import { Logger } from '@nestjs/common';
-import { getLangWatchTracer, attributes } from 'langwatch';
-import type { Tracer, Span } from '@opentelemetry/api';
 import { ConfigService } from '@/config/config.service';
+import { Logger } from '@nestjs/common';
+import type { Span, Tracer } from '@opentelemetry/api';
+import { attributes, FetchPolicy, getLangWatchTracer, LangWatch } from 'langwatch';
 import type {
+  CreateTraceOptions,
+  LogEventOptions,
+  LogGenerationOptions,
+  LogRetrievalOptions,
   ObservabilityAdapter,
   TraceHandle,
-  CreateTraceOptions,
-  LogRetrievalOptions,
-  LogGenerationOptions,
-  LogEventOptions,
   UpdateTraceOptions,
 } from '../observability.interface';
 
@@ -23,6 +23,7 @@ export class LangwatchAdapter implements ObservabilityAdapter {
   private _enabled: boolean;
   private readonly logger = new Logger(LangwatchAdapter.name);
   private readonly tracer: Tracer;
+  private readonly client: LangWatch;
 
   constructor(private readonly config: ConfigService) {
     this._enabled = config.langwatch.enabled;
@@ -30,6 +31,7 @@ export class LangwatchAdapter implements ObservabilityAdapter {
     // Set API key via env var before creating tracer
     process.env.LANGWATCH_API_KEY = config.langwatch.apiKey;
     this.tracer = getLangWatchTracer('macular-society-api');
+    this.client = new LangWatch({ apiKey: config.langwatch.apiKey });
   }
 
   get enabled(): boolean {
@@ -37,9 +39,20 @@ export class LangwatchAdapter implements ObservabilityAdapter {
   }
 
   async getPrompt(): Promise<string | null> {
-    // LangWatch JS SDK prompt management is limited compared to Python.
-    // Return null and let the fallback handle it.
-    return null;
+    const promptHandle = this.config.langwatch.promptSystem;
+    if (!promptHandle) return null;
+
+    try {
+      const prompt = await this.client.prompts.get(promptHandle, {
+        fetchPolicy: FetchPolicy.ALWAYS_FETCH,
+      });
+      const systemMessage = prompt.messages.find((m) => m.role === 'system');
+
+      return systemMessage?.content ?? null;
+    } catch (error) {
+      this.logger.error(`Failed to fetch prompt from LangWatch: ${error}`);
+      return null;
+    }
   }
 
   async createTrace(options: CreateTraceOptions): Promise<TraceHandle | null> {
