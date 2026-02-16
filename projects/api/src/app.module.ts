@@ -1,4 +1,6 @@
+import { join } from 'path';
 import { Module } from '@nestjs/common';
+import { ServeStaticModule } from '@nestjs/serve-static';
 import { ConfigModule } from './config/config.module';
 import { ObservabilityModule } from './modules/observability/observability.module';
 import { DatabaseModule } from './modules/database/database.module';
@@ -14,6 +16,12 @@ import { MetricsModule } from './modules/metrics/metrics.module';
 
 @Module({
   imports: [
+    // Serve the Vite-built frontend. The public/ dir is populated by the Docker build.
+    // In local dev this folder won't exist, which is fine — NestJS skips it gracefully.
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'public'),
+      exclude: ['/api/(.*)'],
+    }),
     ConfigModule,
     MetricsModule,
     ObservabilityModule,

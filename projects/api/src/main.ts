@@ -1,3 +1,4 @@
+import { RequestMethod } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import {
   FastifyAdapter,
@@ -14,6 +15,12 @@ async function bootstrap() {
 
   // Register multipart plugin for file uploads
   await app.register(multipart);
+
+  // All API routes live under /api — matches the frontend's fetch calls in production.
+  // /metrics is excluded so Prometheus can still scrape it at the bare path.
+  app.setGlobalPrefix('api', {
+    exclude: [{ path: 'metrics', method: RequestMethod.GET }],
+  });
 
   // Enable CORS for development
   app.enableCors();

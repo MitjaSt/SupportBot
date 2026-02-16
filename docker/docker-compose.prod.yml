@@ -1,0 +1,25 @@
+include:
+  - docker-compose.postgres.yml
+  - docker-compose.whisper.yml
+  - docker-compose.piper.yml
+  - docker-compose.prometheus.yml
+  - docker-compose.grafana.yml
+
+services:
+  api:
+    image: ${DOCKERHUB_REPO}:latest
+    container_name: macular-api
+    restart: unless-stopped
+    ports:
+      - "3030:3030"
+    env_file:
+      - ../.env
+    environment:
+      NODE_ENV: production
+      # Point to the postgres container by name, not localhost
+      POSTGRES_HOST: postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - macular-network

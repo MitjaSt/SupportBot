@@ -26,10 +26,12 @@
   },
   "dependencies": {
     "@fastify/multipart": "^8.3.1",
+    "@fastify/static": "^7.0.4",
     "@nestjs/common": "^10.3.0",
     "@nestjs/config": "^3.1.1",
     "@nestjs/core": "^10.3.0",
     "@nestjs/platform-fastify": "^10.3.0",
+    "@nestjs/serve-static": "^4.0.2",
     "@sinclair/typebox": "^0.32.0",
     "@willsoto/nestjs-prometheus": "^6.0.2",
     "chonkie": "^0.1.0",

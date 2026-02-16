@@ -1,0 +1,21 @@
+# Dependencies
+**/node_modules
+
+# Build outputs
+**/dist
+projects/api/public
+
+# Dev / test artefacts
+**/.env*
+**/coverage
+**/.vitest-*
+
+# Docs / local tooling
+docs/
+docker/
+*.sh
+*.md
+
+# Git
+.git
+.gitignore
