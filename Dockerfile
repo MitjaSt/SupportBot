@@ -36,6 +36,9 @@ COPY --from=api-build /app/dist ./dist
 # Compiled frontend served as static files by NestJS ServeStaticModule
 COPY --from=frontend-build /app/dist ./public
 
+# Pre-computed summaries for embedding generation
+COPY projects/api/.cache/summaries ./.cache/summaries
+
 ENV NODE_ENV=production
 EXPOSE 3030
 
