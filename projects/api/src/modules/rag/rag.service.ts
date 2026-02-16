@@ -1,12 +1,12 @@
+import { ConfigService } from '@/config/config.service';
 import { Injectable, Logger } from '@nestjs/common';
 import OpenAI from 'openai';
-import { ConfigService } from '@/config/config.service';
 import { EmbeddingsService } from '../embeddings/embeddings.service';
-import { VectorDbService, SearchResult } from '../vector-db/vector-db.service';
-import { PromptLoggerService } from '../prompt-logger/prompt-logger.service';
-import { ObservabilityService } from '../observability/observability.service';
-import { ToolHandlerService } from './services/tool-handler.service';
 import { MetricsService } from '../metrics/metrics.service';
+import { ObservabilityService } from '../observability/observability.service';
+import { PromptLoggerService } from '../prompt-logger/prompt-logger.service';
+import { SearchResult, VectorDbService } from '../vector-db/vector-db.service';
+import { ToolHandlerService } from './services/tool-handler.service';
 import { RAG_TOOLS, TOOL_USAGE_INSTRUCTIONS } from './tools';
 
 export interface RagResponse {
@@ -355,7 +355,7 @@ export class RagService {
     });
 
     let fullContent = '';
-    let toolCalls: OpenAI.ChatCompletionMessageToolCall[] = [];
+    const toolCalls: OpenAI.ChatCompletionMessageToolCall[] = [];
 
     // Stream the response
     for await (const chunk of stream) {
@@ -473,6 +473,8 @@ export class RagService {
       tags: ['rag', 'api'],
     });
 
+    console.warn({trace});
+
     // Query rewriting phase (if needed)
     const rewrittenQuery = await this.rewriteQuery(query, conversationHistory || []);
 
@@ -514,6 +516,7 @@ export class RagService {
       );
       if (fetchedPrompt) {
         systemPrompt = fetchedPrompt;
+        // TODO: Add information about which adaptor it is
         this.logger.debug('Using prompt from observability adapter');
       }
     } catch (e) {

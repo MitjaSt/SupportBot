@@ -1,18 +1,18 @@
-import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
 import { ConfigService } from '@/config/config.service';
-import type {
-  ObservabilityAdapter,
-  TraceHandle,
-  CreateTraceOptions,
-  LogRetrievalOptions,
-  LogGenerationOptions,
-  LogEventOptions,
-  UpdateTraceOptions,
-} from './observability.interface';
-import { NullAdapter } from './adapters/null.adapter';
+import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { DeepEvalAdapter } from './adapters/deepeval.adapter';
 import { LangfuseAdapter } from './adapters/langfuse.adapter';
 import { LangwatchAdapter } from './adapters/langwatch.adapter';
-import { DeepEvalAdapter } from './adapters/deepeval.adapter';
+import { NullAdapter } from './adapters/null.adapter';
+import type {
+  CreateTraceOptions,
+  LogEventOptions,
+  LogGenerationOptions,
+  LogRetrievalOptions,
+  ObservabilityAdapter,
+  TraceHandle,
+  UpdateTraceOptions,
+} from './observability.interface';
 
 /** Composite trace wrapping handles from multiple adapters. */
 interface CompositeHandle {
@@ -78,6 +78,7 @@ export class ObservabilityService implements OnModuleInit, OnModuleDestroy {
       if (!adapter.enabled) continue;
       try {
         const prompt = await adapter.getPrompt(chunks, conversationHistory);
+        console.warn({prompt});
         if (prompt !== null) return prompt;
       } catch (e) {
         this.logger.warn(`${adapter.name}.getPrompt failed: ${e}`);

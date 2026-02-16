@@ -1,7 +1,17 @@
 import { ConfigService } from '@/config/config.service';
 import { Logger } from '@nestjs/common';
+import { context, trace } from '@opentelemetry/api';
 import type { Span, Tracer } from '@opentelemetry/api';
-import { attributes, FetchPolicy, getLangWatchTracer, LangWatch } from 'langwatch';
+import { FetchPolicy, getLangWatchTracer, LangWatch } from 'langwatch';
+// langwatch/observability/node is a valid package export but TypeScript's moduleResolution: "node"
+// doesn't understand package exports fields. Using require() so Node.js resolves it at runtime.
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { setupObservability } = require('langwatch/observability/node') as {
+  setupObservability: (options: {
+    langwatch: { apiKey: string };
+    serviceName: string;
+  }) => { shutdown: () => Promise<void> };
+};
 import type {
   CreateTraceOptions,
   LogEventOptions,
@@ -12,10 +22,22 @@ import type {
   UpdateTraceOptions,
 } from '../observability.interface';
 
+/**
+ * The LangWatch SDK returns LangWatchSpanInternal from startSpan(), which extends the standard
+ * OTEL Span with typed helper methods. Declaring the subset we use here avoids importing from
+ * the SDK's internal dist paths.
+ */
+interface LangWatchSpan extends Span {
+  setType(type: string): this;
+  setInput(input: string): this;
+  setOutput(output: string): this;
+  setRAGContexts(contexts: Array<{ documentId: string; content: string; score?: number }>): this;
+}
+
 /** Internal state stored in trace handle. */
 interface LangwatchTraceState {
   tracer: Tracer;
-  rootSpan: Span;
+  rootSpan: LangWatchSpan;
 }
 
 export class LangwatchAdapter implements ObservabilityAdapter {
@@ -24,12 +46,22 @@ export class LangwatchAdapter implements ObservabilityAdapter {
   private readonly logger = new Logger(LangwatchAdapter.name);
   private readonly tracer: Tracer;
   private readonly client: LangWatch;
+  private shutdownFn: (() => Promise<void>) | undefined;
+  private cachedPromptTemplate: string | null | undefined = undefined;
+  private promptCachedAt = 0;
+  private readonly PROMPT_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
   constructor(private readonly config: ConfigService) {
     this._enabled = config.langwatch.enabled;
 
-    // Set API key via env var before creating tracer
-    process.env.LANGWATCH_API_KEY = config.langwatch.apiKey;
+    // Initialize LangWatch SDK - registers the OTEL exporter that sends spans to LangWatch.
+    // Must be called before getLangWatchTracer() so the global provider has the exporter configured.
+    const { shutdown } = setupObservability({
+      langwatch: { apiKey: config.langwatch.apiKey },
+      serviceName: 'macular-society-api',
+    });
+    this.shutdownFn = shutdown;
+
     this.tracer = getLangWatchTracer('macular-society-api');
     this.client = new LangWatch({ apiKey: config.langwatch.apiKey });
   }
@@ -38,17 +70,28 @@ export class LangwatchAdapter implements ObservabilityAdapter {
     return this._enabled;
   }
 
-  async getPrompt(): Promise<string | null> {
+  async getPrompt(chunks: string[], conversationHistory?: string): Promise<string | null> {
     const promptHandle = this.config.langwatch.promptSystem;
     if (!promptHandle) return null;
 
     try {
-      const prompt = await this.client.prompts.get(promptHandle, {
-        fetchPolicy: FetchPolicy.ALWAYS_FETCH,
-      });
-      const systemMessage = prompt.messages.find((m) => m.role === 'system');
+      const cacheExpired = Date.now() - this.promptCachedAt > this.PROMPT_CACHE_TTL_MS;
+      if (this.cachedPromptTemplate === undefined || cacheExpired) {
+        const prompt = await this.client.prompts.get(promptHandle, {
+          fetchPolicy: FetchPolicy.MATERIALIZED_FIRST,
+        });
+        const systemMessage = prompt.messages.find((m) => m.role === 'system');
+        this.cachedPromptTemplate = systemMessage?.content ?? null;
+        this.promptCachedAt = Date.now();
+        this.logger.debug(`Fetched and cached '${promptHandle}' prompt from LangWatch`);
+      }
 
-      return systemMessage?.content ?? null;
+      if (!this.cachedPromptTemplate) return null;
+
+      // Substitute template variables ({{rag_context}}, {{conversation_history}})
+      return this.cachedPromptTemplate
+        .replace(/\{\{rag_context\}\}/g, chunks.join('\n'))
+        .replace(/\{\{conversation_history\}\}/g, conversationHistory ?? '');
     } catch (error) {
       this.logger.error(`Failed to fetch prompt from LangWatch: ${error}`);
       return null;
@@ -59,23 +102,21 @@ export class LangwatchAdapter implements ObservabilityAdapter {
     if (!this._enabled) return null;
 
     try {
-      const rootSpan = this.tracer.startSpan(options.name);
+      const rootSpan = this.tracer.startSpan(options.name) as LangWatchSpan;
 
-      // Set LangWatch-specific attributes
       if (options.input) {
-        rootSpan.setAttribute(
-          attributes.ATTR_LANGWATCH_INPUT,
+        rootSpan.setInput(
           typeof options.input === 'string' ? options.input : JSON.stringify(options.input),
         );
       }
       if (options.sessionId) {
-        rootSpan.setAttribute(attributes.ATTR_LANGWATCH_THREAD_ID, options.sessionId);
+        rootSpan.setAttribute('langwatch.thread.id', options.sessionId);
       }
       if (options.userId) {
-        rootSpan.setAttribute(attributes.ATTR_LANGWATCH_USER_ID, options.userId);
+        rootSpan.setAttribute('langwatch.user.id', options.userId);
       }
       if (options.tags) {
-        rootSpan.setAttribute(attributes.ATTR_LANGWATCH_TAGS, JSON.stringify(options.tags));
+        rootSpan.setAttribute('langwatch.tags', JSON.stringify(options.tags));
       }
 
       const state: LangwatchTraceState = { tracer: this.tracer, rootSpan };
@@ -91,31 +132,19 @@ export class LangwatchAdapter implements ObservabilityAdapter {
     if (!state) return;
 
     try {
-      const span = state.tracer.startSpan('retrieval');
-      span.setAttribute(attributes.ATTR_LANGWATCH_SPAN_TYPE, 'rag');
-      span.setAttribute(
-        attributes.ATTR_LANGWATCH_INPUT,
-        JSON.stringify({ query: options.query }),
-      );
-      span.setAttribute(
-        attributes.ATTR_LANGWATCH_OUTPUT,
-        JSON.stringify({
-          chunks: options.chunks.slice(0, 3),
-          chunk_count: options.chunks.length,
-          scores: options.scores,
-          document_ids: options.documentIds,
-        }),
-      );
+      const ctx = trace.setSpan(context.active(), state.rootSpan);
+      const span = state.tracer.startSpan('retrieval', {}, ctx) as LangWatchSpan;
+
+      span.setType('rag');
+      span.setInput(options.query);
 
       if (options.chunks.length > 0) {
-        const ragContexts = options.chunks.map((text, i) => ({
-          documentId: options.documentIds?.[i] ?? `chunk_${i}`,
-          content: text,
-          score: options.scores?.[i],
-        }));
-        span.setAttribute(
-          attributes.ATTR_LANGWATCH_RAG_CONTEXTS,
-          JSON.stringify(ragContexts),
+        span.setRAGContexts(
+          options.chunks.map((text, i) => ({
+            documentId: options.documentIds?.[i] ?? `chunk_${i}`,
+            content: text,
+            score: options.scores?.[i],
+          })),
         );
       }
 
@@ -130,20 +159,21 @@ export class LangwatchAdapter implements ObservabilityAdapter {
     if (!state) return;
 
     try {
-      const span = state.tracer.startSpan('llm_generation');
-      span.setAttribute(attributes.ATTR_LANGWATCH_SPAN_TYPE, 'llm');
-      span.setAttribute(
-        attributes.ATTR_LANGWATCH_INPUT,
+      const ctx = trace.setSpan(context.active(), state.rootSpan);
+      const span = state.tracer.startSpan('llm_generation', {}, ctx) as LangWatchSpan;
+
+      span.setType('llm');
+      span.setInput(
         typeof options.prompt === 'string' ? options.prompt : JSON.stringify(options.prompt),
       );
-      span.setAttribute(attributes.ATTR_LANGWATCH_OUTPUT, options.response);
+      span.setOutput(options.response);
 
       if (options.model) {
-        span.setAttribute('llm.model', options.model);
+        span.setAttribute('langwatch.request.model', options.model);
       }
       if (options.usage) {
         span.setAttribute(
-          attributes.ATTR_LANGWATCH_METRICS,
+          'langwatch.metrics',
           JSON.stringify({
             prompt_tokens: options.usage.promptTokens,
             completion_tokens: options.usage.completionTokens,
@@ -162,18 +192,14 @@ export class LangwatchAdapter implements ObservabilityAdapter {
     if (!state) return;
 
     try {
-      const span = state.tracer.startSpan(options.name);
+      const ctx = trace.setSpan(context.active(), state.rootSpan);
+      const span = state.tracer.startSpan(options.name, {}, ctx) as LangWatchSpan;
+
       if (options.inputData) {
-        span.setAttribute(
-          attributes.ATTR_LANGWATCH_INPUT,
-          JSON.stringify(options.inputData),
-        );
+        span.setInput(JSON.stringify(options.inputData));
       }
       if (options.outputData) {
-        span.setAttribute(
-          attributes.ATTR_LANGWATCH_OUTPUT,
-          JSON.stringify(options.outputData),
-        );
+        span.setOutput(JSON.stringify(options.outputData));
       }
       span.end();
     } catch (e) {
@@ -187,8 +213,7 @@ export class LangwatchAdapter implements ObservabilityAdapter {
 
     try {
       if (options.output) {
-        state.rootSpan.setAttribute(
-          attributes.ATTR_LANGWATCH_OUTPUT,
+        state.rootSpan.setOutput(
           typeof options.output === 'string' ? options.output : JSON.stringify(options.output),
         );
       }
@@ -203,6 +228,6 @@ export class LangwatchAdapter implements ObservabilityAdapter {
   }
 
   async shutdown(): Promise<void> {
-    // LangWatch SDK cleanup handled by OpenTelemetry
+    await this.shutdownFn?.();
   }
 }
