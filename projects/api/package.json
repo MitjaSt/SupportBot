@@ -39,6 +39,7 @@
     "js-yaml": "^4.1.1",
     "langfuse": "^3.38.6",
     "langwatch": "^0.13.0",
+    "node-cache": "^5.1.2",
     "openai": "^4.28.0",
     "pg": "^8.11.3",
     "playwright": "^1.41.0",

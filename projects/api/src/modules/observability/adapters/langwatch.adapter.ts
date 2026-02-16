@@ -1,17 +1,9 @@
 import { ConfigService } from '@/config/config.service';
 import { Logger } from '@nestjs/common';
-import { context, trace } from '@opentelemetry/api';
 import type { Span, Tracer } from '@opentelemetry/api';
+import { context, trace } from '@opentelemetry/api';
 import { FetchPolicy, getLangWatchTracer, LangWatch } from 'langwatch';
-// langwatch/observability/node is a valid package export but TypeScript's moduleResolution: "node"
-// doesn't understand package exports fields. Using require() so Node.js resolves it at runtime.
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const { setupObservability } = require('langwatch/observability/node') as {
-  setupObservability: (options: {
-    langwatch: { apiKey: string };
-    serviceName: string;
-  }) => { shutdown: () => Promise<void> };
-};
+import NodeCache from 'node-cache';
 import type {
   CreateTraceOptions,
   LogEventOptions,
@@ -21,6 +13,15 @@ import type {
   TraceHandle,
   UpdateTraceOptions,
 } from '../observability.interface';
+// langwatch/observability/node is a valid package export but TypeScript's moduleResolution: "node"
+// doesn't understand package exports fields. Using require() so Node.js resolves it at runtime.
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { setupObservability } = require('langwatch/observability/node') as {
+  setupObservability: (options: {
+    langwatch: { apiKey: string };
+    serviceName: string;
+  }) => { shutdown: () => Promise<void> };
+};
 
 /**
  * The LangWatch SDK returns LangWatchSpanInternal from startSpan(), which extends the standard
@@ -47,9 +48,7 @@ export class LangwatchAdapter implements ObservabilityAdapter {
   private readonly tracer: Tracer;
   private readonly client: LangWatch;
   private shutdownFn: (() => Promise<void>) | undefined;
-  private cachedPromptTemplate: string | null | undefined = undefined;
-  private promptCachedAt = 0;
-  private readonly PROMPT_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+  private readonly cache = new NodeCache({ stdTTL: 5 * 60 });
 
   constructor(private readonly config: ConfigService) {
     this._enabled = config.langwatch.enabled;
@@ -75,21 +74,22 @@ export class LangwatchAdapter implements ObservabilityAdapter {
     if (!promptHandle) return null;
 
     try {
-      const cacheExpired = Date.now() - this.promptCachedAt > this.PROMPT_CACHE_TTL_MS;
-      if (this.cachedPromptTemplate === undefined || cacheExpired) {
+      let template = this.cache.get<string>(promptHandle);
+      if (template === undefined) {
         const prompt = await this.client.prompts.get(promptHandle, {
           fetchPolicy: FetchPolicy.MATERIALIZED_FIRST,
         });
         const systemMessage = prompt.messages.find((m) => m.role === 'system');
-        this.cachedPromptTemplate = systemMessage?.content ?? null;
-        this.promptCachedAt = Date.now();
-        this.logger.debug(`Fetched and cached '${promptHandle}' prompt from LangWatch`);
+        template = systemMessage?.content ?? undefined;
+        if (template) {
+          this.cache.set(promptHandle, template);
+          this.logger.debug(`Fetched and cached '${promptHandle}' prompt from LangWatch`);
+        }
       }
 
-      if (!this.cachedPromptTemplate) return null;
+      if (!template) return null;
 
-      // Substitute template variables ({{rag_context}}, {{conversation_history}})
-      return this.cachedPromptTemplate
+      return template
         .replace(/\{\{rag_context\}\}/g, chunks.join('\n'))
         .replace(/\{\{conversation_history\}\}/g, conversationHistory ?? '');
     } catch (error) {
