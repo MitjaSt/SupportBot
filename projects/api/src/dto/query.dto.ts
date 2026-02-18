@@ -1,7 +1,7 @@
 import { Type, Static } from '@sinclair/typebox';
 
 export const QueryRequestSchema = Type.Object({
-  query: Type.String({ minLength: 1 }).transform((value: string) => value.trim()),
+  query: Type.String({ minLength: 1 }),
   sessionId: Type.String({ minLength: 1 }),
 });
 
