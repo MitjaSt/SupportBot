@@ -4,7 +4,17 @@ import { existsSync } from 'fs';
 import { join } from 'path';
 import { get_encoding, type Tiktoken } from 'tiktoken';
 import { ConfigService } from '@/config/config.service';
-import type { ScrapedPage } from '../scraping/scraping.service';
+
+export interface ScrapedPage {
+  url: string;
+  title: string;
+  content: Array<{
+    type: 'heading' | 'paragraph';
+    level?: number;
+    text: string;
+  }>;
+  scrapedAt: string;
+}
 
 // File prefixes to exclude (matching Python implementation)
 const EXCLUDED_FILE_PREFIXES = [

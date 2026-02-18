@@ -6,7 +6,6 @@ import { ObservabilityModule } from './modules/observability/observability.modul
 import { DatabaseModule } from './modules/database/database.module';
 import { EmbeddingsModule } from './modules/embeddings/embeddings.module';
 import { VectorDbModule } from './modules/vector-db/vector-db.module';
-import { ScrapingModule } from './modules/scraping/scraping.module';
 import { ProcessingModule } from './modules/processing/processing.module';
 import { RagModule } from './modules/rag/rag.module';
 import { ChatModule } from './modules/chat/chat.module';
@@ -28,7 +27,6 @@ import { MetricsModule } from './modules/metrics/metrics.module';
     DatabaseModule,
     EmbeddingsModule,
     VectorDbModule,
-    ScrapingModule,
     ProcessingModule,
     RagModule,
     ChatModule,

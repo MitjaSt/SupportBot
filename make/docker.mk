@@ -1,4 +1,5 @@
 .PHONY: docker-network docker-start docker-stop docker-restart docker-logs docker-status \
+        docker-start-prod docker-stop-prod docker-restart-prod docker-logs-prod docker-status-prod \
         docker-login docker-build docker-push docker-release
 
 ##@ Docker Services
@@ -29,6 +30,30 @@ docker-logs: ## Tail Docker logs
 docker-status: ## Show Docker services status
 	@$(COMPOSE) --file docker/docker-compose.yml ps
 
+##@ Production Stack
+
+docker-start-prod: docker-network ## Start production stack (API + all services)
+	@echo "$(BLUE)Starting production stack...$(NC)"
+	@$(COMPOSE) --file docker/docker-compose.prod.yml up -d
+	@echo "$(GREEN)Production stack started!$(NC)"
+	@echo "$(YELLOW)API:      localhost:3030$(NC)"
+	@echo "$(YELLOW)Postgres: localhost:5432$(NC)"
+	@echo "$(YELLOW)Whisper:  localhost:3040$(NC)"
+	@echo "$(YELLOW)Piper:    localhost:3050$(NC)"
+
+docker-stop-prod: ## Stop production stack
+	@echo "$(BLUE)Stopping production stack...$(NC)"
+	@$(COMPOSE) --file docker/docker-compose.prod.yml down
+	@echo "$(GREEN)Production stack stopped!$(NC)"
+
+docker-restart-prod: docker-stop-prod docker-start-prod ## Restart production stack
+
+docker-logs-prod: ## Tail production stack logs
+	@$(COMPOSE) --file docker/docker-compose.prod.yml logs -f
+
+docker-status-prod: ## Show production stack status
+	@$(COMPOSE) --file docker/docker-compose.prod.yml ps
+
 ##@ Deployment
 
 docker-login: ## Login to Docker Hub using credentials from .env
@@ -39,7 +64,7 @@ docker-login: ## Login to Docker Hub using credentials from .env
 docker-build: ## Build production image (tag: git SHA + latest)
 	@echo "$(BLUE)Building $(DOCKERHUB_REPO):$(DOCKER_IMAGE_TAG)...$(NC)"
 	docker build \
-		-t "$(DOCKERHUB_REPO):$(DOCKER_IMAGE_TAG)"
+		-t "$(DOCKERHUB_REPO):$(DOCKER_IMAGE_TAG)" \
 		.
 	@echo "$(GREEN)Built $(DOCKERHUB_REPO):$(DOCKER_IMAGE_TAG)$(NC)"
 

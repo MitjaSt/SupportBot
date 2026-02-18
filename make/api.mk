@@ -38,10 +38,9 @@ frontend-preview: ## Preview the production build
 
 ##@ Pipeline Execution
 
-scrape: ## Run Step 1: Scrape website via API
+scrape: ## Run Step 1: Scrape website (standalone script, requires playwright)
 	@echo "$(BLUE)Running Step 1: Scraping website...$(NC)"
-	@curl -X POST $(API_URL)/api/pipeline/scrape -H "Content-Type: application/json"
-	@echo ""
+	cd $(API_DIR) && npm run scrape
 	@echo "$(GREEN)Scraping complete!$(NC)"
 
 process: ## Run Step 2: Process and flatten content via API

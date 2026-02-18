@@ -3,13 +3,11 @@ import type {
   CollectionInfo,
   EmbedResult,
   ProcessResult,
-  ScrapeResult,
   SummarizeResult,
 } from '@/dto/pipeline.dto';
 import { EmbeddingsService } from '@/modules/embeddings/embeddings.service';
 import { ProcessingService } from '@/modules/processing/processing.service';
 import { SummarizationService } from '@/modules/processing/summarization.service';
-import { ScrapingService } from '@/modules/scraping/scraping.service';
 import { VectorDbService } from '@/modules/vector-db/vector-db.service';
 import { Controller, Get, Post } from '@nestjs/common';
 import { CriteriaGenerationService } from '../processing/criteria-generation.service';
@@ -17,7 +15,6 @@ import { CriteriaGenerationService } from '../processing/criteria-generation.ser
 @Controller('pipeline')
 export class PipelineController {
   constructor(
-    private readonly scraping: ScrapingService,
     private readonly processing: ProcessingService,
     private readonly summarization: SummarizationService,
     private readonly criteriaGeneration: CriteriaGenerationService,
@@ -25,18 +22,6 @@ export class PipelineController {
     private readonly vectorDb: VectorDbService,
     private readonly config: ConfigService,
   ) {}
-
-  @Post('scrape')
-  async scrape(): Promise<ScrapeResult> {
-    const start = Date.now();
-    const result = await this.scraping.scrapeAll((current, total) => {
-      console.log(`Scraping progress: ${current}/${total}`);
-    });
-    return {
-      ...result,
-      duration: (Date.now() - start) / 1000,
-    };
-  }
 
   @Post('process')
   async process(): Promise<ProcessResult> {
@@ -97,7 +82,6 @@ export class PipelineController {
     };
   }
 
-
   @Post('criteria-generation')
   async criteria(): Promise<SummarizeResult> {
     const start = Date.now();
@@ -112,10 +96,8 @@ export class PipelineController {
     };
   }
 
-
   @Post('full')
   async fullPipeline(): Promise<{
-    scrape: ScrapeResult;
     process: ProcessResult;
     summarize: SummarizeResult;
     embed: EmbedResult;
@@ -123,13 +105,11 @@ export class PipelineController {
   }> {
     const start = Date.now();
 
-    const scrape = await this.scrape();
     const process = await this.process();
     const summarize = await this.summarize();
     const embed = await this.embed();
 
     return {
-      scrape,
       process,
       summarize,
       embed,
