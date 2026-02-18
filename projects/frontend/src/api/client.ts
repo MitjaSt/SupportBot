@@ -134,22 +134,23 @@ export async function deleteSession(sessionId: string): Promise<void> {
 }
 
 /**
- * Send voice query (audio file) and get text response with transcription
+ * Send voice query (audio file) and get text response with transcription.
+ * Audio is sent as a raw binary body with the session ID in the query string —
+ * this avoids multipart parsing entirely and works reliably across environments.
  */
 export async function sendVoiceQuery(
   audioBlob: Blob,
   sessionId?: string
 ): Promise<QueryResponse & { transcription?: { text: string; language: string } }> {
-  const formData = new FormData();
-  formData.append('audio', audioBlob, 'recording.webm');
-
+  const url = new URL(`${API_BASE}/chat/query/voice`, window.location.origin);
   if (sessionId) {
-    formData.append('sessionId', sessionId);
+    url.searchParams.set('sessionId', sessionId);
   }
 
-  const response = await fetch(`${API_BASE}/chat/query/voice`, {
+  const response = await fetch(url.toString(), {
     method: 'POST',
-    body: formData,
+    headers: { 'Content-Type': audioBlob.type || 'audio/webm' },
+    body: audioBlob,
   });
 
   if (!response.ok) {

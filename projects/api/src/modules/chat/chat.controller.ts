@@ -62,26 +62,26 @@ export class ChatController {
   @Post('query/voice')
   async voiceQuery(
     @Req() request: FastifyRequest,
+    @Query('sessionId') sessionId?: string,
   ): Promise<QueryResponse & { transcription?: { text: string; language: string } }> {
-    // Handle multipart/form-data with Fastify
-    const parts = request.parts();
+    // Audio is sent as a raw binary body (Content-Type: audio/webm etc.)
+    // with sessionId as a query parameter — avoids @fastify/multipart entirely.
+    const audioBuffer = request.body as Buffer;
 
-    let audioBuffer: Buffer | null = null;
-    let filename = 'audio.webm';
-    let sessionId: string | undefined;
-
-    for await (const part of parts) {
-      if (part.type === 'file') {
-        audioBuffer = await part.toBuffer();
-        filename = part.filename || 'audio.webm';
-      } else if (part.type === 'field' && part.fieldname === 'sessionId') {
-        sessionId = part.value as string;
-      }
+    if (!audioBuffer || audioBuffer.length === 0) {
+      throw new BadRequestException('No audio data provided');
     }
 
-    if (!audioBuffer) {
-      throw new BadRequestException('No audio file provided');
-    }
+    // Derive a filename that Whisper can use to detect the format.
+    const contentType = (request.headers['content-type'] ?? 'audio/webm').split(';')[0].trim();
+    const extMap: Record<string, string> = {
+      'audio/ogg': 'ogg',
+      'audio/mp4': 'm4a',
+      'audio/mpeg': 'mp3',
+      'audio/wav': 'wav',
+    };
+    const ext = extMap[contentType] ?? 'webm';
+    const filename = `recording.${ext}`;
 
     // Transcribe audio to text using Whisper
     const transcription = await this.whisper.transcribe(audioBuffer, filename);

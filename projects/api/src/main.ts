@@ -4,19 +4,36 @@ import {
   FastifyAdapter,
   NestFastifyApplication,
 } from '@nestjs/platform-fastify';
-import multipart from '@fastify/multipart';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  // Register multipart plugin on the raw Fastify instance before NestJS
-  // initialises its module system — ensures the content-type parser is in
-  // place when routes are registered.
-  const adapter = new FastifyAdapter();
-  await adapter.getInstance().register(multipart);
+  // Allow up to 50 MB bodies (audio uploads).
+  const adapter = new FastifyAdapter({ bodyLimit: 50 * 1024 * 1024 });
 
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
     adapter,
+  );
+
+  // Register binary content-type parsers for audio uploads.
+  // The voice route reads request.body as a Buffer — no multipart plugin needed.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const instance = app.getHttpAdapter().getInstance() as any;
+  instance.addContentTypeParser(
+    [
+      'audio/webm',
+      'audio/ogg',
+      'audio/mp4',
+      'audio/mpeg',
+      'video/webm',
+      'audio/wav',
+    ],
+    {
+      parseAs: 'buffer',
+      bodyLimit: 50 * 1024 * 1024,
+    },
+    (_req: unknown, body: Buffer, done: (err: Error | null, body?: Buffer) => void) =>
+      done(null, body),
   );
 
   // All API routes live under /api — matches the frontend's fetch calls in production.
