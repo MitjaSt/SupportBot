@@ -20,6 +20,7 @@ services:
       POSTGRES_HOST: postgres
     volumes:
       - ../projects/api/.cache:/app/.cache
+      - ../projects/api/drizzle:/app/drizzle
     depends_on:
       postgres:
         condition: service_healthy

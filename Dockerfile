@@ -36,10 +36,13 @@ COPY --from=api-build /app/dist ./dist
 # Compiled frontend served as static files by NestJS ServeStaticModule
 COPY --from=frontend-build /app/dist ./public
 
+# Drizzle migration files (needed by dist/migrate at runtime)
+COPY projects/api/drizzle ./drizzle
+
 # Pre-computed summaries for embedding generation
 COPY projects/api/.cache/summaries ./.cache/summaries
 
 ENV NODE_ENV=production
 EXPOSE 3030
 
-CMD ["node", "dist/main"]
+CMD ["sh", "-c", "node dist/migrate && node dist/main"]
