@@ -1,6 +1,7 @@
 import { ConfigService } from '@/config/config.service';
 import { Injectable, Logger } from '@nestjs/common';
 import OpenAI from 'openai';
+import { get_encoding } from 'tiktoken';
 import { EmbeddingsService } from '../embeddings/embeddings.service';
 import { MetricsService } from '../metrics/metrics.service';
 import { ObservabilityService } from '../observability/observability.service';
@@ -8,6 +9,9 @@ import { PromptLoggerService } from '../prompt-logger/prompt-logger.service';
 import { SearchResult, VectorDbService } from '../vector-db/vector-db.service';
 import { ToolHandlerService } from './services/tool-handler.service';
 import { RAG_TOOLS, TOOL_USAGE_INSTRUCTIONS } from './tools';
+
+const PROMPT_TOKEN_WARN_THRESHOLD = 2000;
+const PROMPT_TOKEN_REJECT_THRESHOLD = 3000;
 
 export interface RagResponse {
   answer: string;
@@ -92,6 +96,7 @@ export class RagService {
   private readonly topK: number;
   private readonly scoreThreshold: number;
   private readonly maxTokens: number;
+  private readonly tokenEncoder = get_encoding('cl100k_base');
 
   constructor(
     private readonly config: ConfigService,
@@ -186,6 +191,10 @@ export class RagService {
       this.logger.warn(`Query rewriting failed, using original: ${error}`);
       return query;
     }
+  }
+
+  private countTokens(text: string): number {
+    return this.tokenEncoder.encode(text).length;
   }
 
   async retrieve(query: string): Promise<SearchResult[]> {
@@ -523,12 +532,31 @@ export class RagService {
       this.logger.warn(`Failed to fetch prompt from observability, using default: ${e}`);
     }
 
+    const fullPrompt = this.buildFullPrompt(query, chunks, conversationHistory, systemPrompt);
+
+    const promptTokenCount = this.countTokens(fullPrompt);
+    if (promptTokenCount > PROMPT_TOKEN_REJECT_THRESHOLD) {
+      this.logger.error(`Prompt rejected: ${promptTokenCount} tokens exceeds ${PROMPT_TOKEN_REJECT_THRESHOLD} limit`);
+      const logEntry = this.promptLogger.buildLogEntry({
+        startTime: new Date(startTime),
+        endTime: new Date(),
+        model: this.config.openai.chatModel,
+        prompt: fullPrompt,
+        chunks: chunks.map((c) => c.text),
+        query,
+        response: `[REJECTED: prompt too long (${promptTokenCount} tokens > ${PROMPT_TOKEN_REJECT_THRESHOLD} limit)]`,
+      });
+      this.promptLogger.log(logEntry).catch((err) => this.logger.error('Failed to write prompt log:', err));
+      this.metrics.ragQueriesTotal.inc({ status: 'error' });
+      throw new Error(`Prompt too long: ${promptTokenCount} tokens (limit: ${PROMPT_TOKEN_REJECT_THRESHOLD})`);
+    } else if (promptTokenCount > PROMPT_TOKEN_WARN_THRESHOLD) {
+      this.logger.warn(`Prompt is large: ${promptTokenCount} tokens`);
+    }
+
     // Generation phase (timed)
     const generationStart = Date.now();
     const result = await this.generateAnswer(query, chunks, conversationHistory, systemPrompt, sessionId);
     const generationDurationMs = Date.now() - generationStart;
-
-    const fullPrompt = this.buildFullPrompt(query, chunks, conversationHistory, systemPrompt);
 
     if (trace) {
       this.observability
@@ -654,6 +682,24 @@ export class RagService {
     const generationStart = Date.now();
     let fullAnswer = '';
     const fullPrompt = this.buildFullPrompt(query, chunks, conversationHistory, systemPrompt);
+
+    const promptTokenCount = this.countTokens(fullPrompt);
+    if (promptTokenCount > PROMPT_TOKEN_REJECT_THRESHOLD) {
+      this.logger.error(`Prompt rejected: ${promptTokenCount} tokens exceeds ${PROMPT_TOKEN_REJECT_THRESHOLD} limit`);
+      const logEntry = this.promptLogger.buildLogEntry({
+        startTime: new Date(startTime),
+        endTime: new Date(),
+        model: this.config.openai.chatModel,
+        prompt: fullPrompt,
+        chunks: chunks.map((c) => c.text),
+        query,
+        response: `[REJECTED: prompt too long (${promptTokenCount} tokens > ${PROMPT_TOKEN_REJECT_THRESHOLD} limit)]`,
+      });
+      this.promptLogger.log(logEntry).catch((err) => this.logger.error('Failed to write prompt log:', err));
+      throw new Error(`Prompt too long: ${promptTokenCount} tokens (limit: ${PROMPT_TOKEN_REJECT_THRESHOLD})`);
+    } else if (promptTokenCount > PROMPT_TOKEN_WARN_THRESHOLD) {
+      this.logger.warn(`Prompt is large: ${promptTokenCount} tokens`);
+    }
 
     // Stream the response
     for await (const event of this.generateAnswerStream(query, chunks, conversationHistory, systemPrompt, sessionId)) {
