@@ -78,7 +78,6 @@ export class ObservabilityService implements OnModuleInit, OnModuleDestroy {
       if (!adapter.enabled) continue;
       try {
         const prompt = await adapter.getPrompt(chunks, conversationHistory);
-        console.warn({prompt});
         if (prompt !== null) return prompt;
       } catch (e) {
         this.logger.warn(`${adapter.name}.getPrompt failed: ${e}`);

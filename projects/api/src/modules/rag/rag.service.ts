@@ -475,8 +475,6 @@ export class RagService {
       tags: ['rag', 'api'],
     });
 
-    console.warn({trace});
-
     // Query rewriting phase (if needed)
     const rewrittenQuery = await this.rewriteQuery(query, conversationHistory || []);
 
