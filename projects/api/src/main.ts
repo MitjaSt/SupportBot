@@ -36,6 +36,24 @@ async function bootstrap() {
       done(null, body),
   );
 
+  // index.html must never be cached — Vite hashes JS/CSS filenames so those
+  // are safe to cache, but a stale index.html points at old bundle hashes.
+  instance.addHook(
+    'onSend',
+    (
+      _req: unknown,
+      reply: { getHeader: (k: string) => string | undefined; header: (k: string, v: string) => void },
+      _payload: unknown,
+      done: () => void,
+    ) => {
+      const ct = reply.getHeader('content-type');
+      if (ct?.startsWith('text/html')) {
+        reply.header('Cache-Control', 'no-cache, no-store, must-revalidate');
+      }
+      done();
+    },
+  );
+
   // All API routes live under /api — matches the frontend's fetch calls in production.
   // /metrics is excluded so Prometheus can still scrape it at the bare path.
   app.setGlobalPrefix('api', {
