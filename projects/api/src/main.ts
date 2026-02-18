@@ -8,13 +8,16 @@ import multipart from '@fastify/multipart';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
+  // Register multipart plugin on the raw Fastify instance before NestJS
+  // initialises its module system — ensures the content-type parser is in
+  // place when routes are registered.
+  const adapter = new FastifyAdapter();
+  await adapter.getInstance().register(multipart);
+
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
-    new FastifyAdapter(),
+    adapter,
   );
-
-  // Register multipart plugin for file uploads
-  await app.register(multipart);
 
   // All API routes live under /api — matches the frontend's fetch calls in production.
   // /metrics is excluded so Prometheus can still scrape it at the bare path.
