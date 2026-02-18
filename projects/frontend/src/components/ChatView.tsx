@@ -183,8 +183,20 @@ export function ChatView({ onSessionUpdate }: ChatViewProps) {
           }
         }
 
-        // Done streaming
+        // Done streaming — attach chunks and fullPrompt to the assistant message
         if (event.type === 'done') {
+          if (event.metadata?.sources || event.metadata?.fullPrompt) {
+            setMessages((prev) => {
+              const updated = [...prev];
+              updated[updated.length - 1] = {
+                ...updated[updated.length - 1],
+                chunks: event.metadata?.sources,
+                fullPrompt: event.metadata?.fullPrompt,
+              };
+              return updated;
+            });
+          }
+
           // Notify sidebar to refresh
           onSessionUpdate();
 
@@ -236,6 +248,8 @@ export function ChatView({ onSessionUpdate }: ChatViewProps) {
         role: 'assistant',
         content: response.answer,
         createdAt: new Date().toISOString(),
+        chunks: response.sources,
+        fullPrompt: response.fullPrompt,
       };
       setMessages((prev) => [...prev, assistantMessage]);
 

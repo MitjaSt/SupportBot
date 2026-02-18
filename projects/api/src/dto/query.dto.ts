@@ -24,6 +24,7 @@ export const QueryResponseSchema = Type.Object({
   backend: Type.Literal('openai'),
   sessionId: Type.String(),
   collectionState: Type.String(),
+  fullPrompt: Type.Optional(Type.String()),
 });
 
 export type QueryResponse = Static<typeof QueryResponseSchema>;

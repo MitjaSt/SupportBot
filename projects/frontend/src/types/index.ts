@@ -4,6 +4,8 @@ export interface Message {
   role: 'user' | 'assistant';
   content: string;
   createdAt: string | Date;
+  chunks?: Source[];
+  fullPrompt?: string;
 }
 
 export interface Session {
@@ -34,6 +36,7 @@ export interface QueryResponse {
   backend: 'openai';
   sessionId: string;
   collectionState: string;
+  fullPrompt?: string;
 }
 
 export interface SessionWithHistory {

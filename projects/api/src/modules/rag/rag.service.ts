@@ -14,6 +14,7 @@ export interface RagResponse {
   sources: SearchResult[];
   model: string;
   backend: 'openai';
+  fullPrompt?: string;
   contactCollected?: {
     type: 'phone' | 'email';
     value: string;
@@ -28,6 +29,7 @@ export interface StreamEvent {
     model?: string;
     backend?: string;
     fullContent?: string;
+    fullPrompt?: string;
     contactCollected?: {
       type: 'phone' | 'email';
       value: string;
@@ -576,7 +578,7 @@ export class RagService {
 
     this.metrics.ragQueriesTotal.inc({ status: 'success' });
 
-    return result;
+    return { ...result, fullPrompt };
   }
 
   /**
@@ -653,18 +655,21 @@ export class RagService {
     // Generation phase (streaming)
     const generationStart = Date.now();
     let fullAnswer = '';
+    const fullPrompt = this.buildFullPrompt(query, chunks, conversationHistory, systemPrompt);
 
     // Stream the response
     for await (const event of this.generateAnswerStream(query, chunks, conversationHistory, systemPrompt, sessionId)) {
       if (event.type === 'chunk' && event.content) {
         fullAnswer += event.content;
       }
-      yield event;
+      if (event.type === 'done') {
+        yield { ...event, metadata: { ...event.metadata, fullPrompt } };
+      } else {
+        yield event;
+      }
     }
 
     const generationDurationMs = Date.now() - generationStart;
-
-    const fullPrompt = this.buildFullPrompt(query, chunks, conversationHistory, systemPrompt);
 
     // Log to observability (fire-and-forget)
     if (trace) {

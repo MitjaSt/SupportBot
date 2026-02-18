@@ -7,6 +7,7 @@ import {
   pgEnum,
   index,
   customType,
+  jsonb,
 } from 'drizzle-orm/pg-core';
 import { relations, sql } from 'drizzle-orm';
 
@@ -58,6 +59,8 @@ export const messages = pgTable('messages', {
     .references(() => sessions.sessionId, { onDelete: 'cascade' }),
   role: messageRoleEnum('role').notNull(),
   content: text('content').notNull(),
+  chunks: jsonb('chunks'),
+  fullPrompt: text('full_prompt'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
 

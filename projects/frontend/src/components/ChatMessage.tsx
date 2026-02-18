@@ -1,6 +1,8 @@
-import { Box, Paper, Typography } from '@mui/material';
-import { SmartToy, Person } from '@mui/icons-material';
+import { useState } from 'react';
+import { Box, Paper, Typography, IconButton, Tooltip } from '@mui/material';
+import { SmartToy, Person, InfoOutlined } from '@mui/icons-material';
 import type { Message } from '../types';
+import { QueryDebugDialog } from './QueryDebugDialog';
 
 interface ChatMessageProps {
   message: Message;
@@ -8,6 +10,8 @@ interface ChatMessageProps {
 
 export function ChatMessage({ message }: ChatMessageProps) {
   const isUser = message.role === 'user';
+  const [debugOpen, setDebugOpen] = useState(false);
+  const hasDebugData = !isUser && (message.chunks?.length || message.fullPrompt);
 
   return (
     <Box
@@ -41,31 +45,52 @@ export function ChatMessage({ message }: ChatMessageProps) {
         >
           {isUser ? <Person fontSize="small" /> : <SmartToy fontSize="small" />}
         </Box>
-        <Paper
-          elevation={1}
-          sx={{
-            p: 2,
-            bgcolor: isUser ? 'primary.light' : 'grey.100',
-            borderRadius: 2,
-          }}
-        >
-          <Typography
-            variant="body1"
-            sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
+        <Box>
+          <Paper
+            elevation={1}
+            sx={{
+              p: 2,
+              bgcolor: isUser ? 'primary.light' : 'grey.100',
+              borderRadius: 2,
+            }}
           >
-            {message.content}
-          </Typography>
-          {message.createdAt && (
             <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{ display: 'block', mt: 0.5 }}
+              variant="body1"
+              sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
             >
-              {new Date(message.createdAt).toLocaleTimeString()}
+              {message.content}
             </Typography>
+            {message.createdAt && (
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ display: 'block', mt: 0.5 }}
+              >
+                {new Date(message.createdAt).toLocaleTimeString()}
+              </Typography>
+            )}
+          </Paper>
+
+          {hasDebugData && (
+            <Box sx={{ mt: 0.5 }}>
+              <Tooltip title="View sources & prompt">
+                <IconButton size="small" onClick={() => setDebugOpen(true)} sx={{ opacity: 0.5, '&:hover': { opacity: 1 } }}>
+                  <InfoOutlined fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </Box>
           )}
-        </Paper>
+        </Box>
       </Box>
+
+      {hasDebugData && (
+        <QueryDebugDialog
+          open={debugOpen}
+          onClose={() => setDebugOpen(false)}
+          chunks={message.chunks ?? []}
+          fullPrompt={message.fullPrompt ?? ''}
+        />
+      )}
     </Box>
   );
 }

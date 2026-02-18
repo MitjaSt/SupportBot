@@ -119,11 +119,15 @@ export class SessionRepository {
     sessionId: string,
     role: 'user' | 'assistant',
     content: string,
+    chunks?: object[] | null,
+    fullPrompt?: string | null,
   ): Promise<void> {
     await this.db.insert(messages).values({
       sessionId,
       role,
       content,
+      chunks: chunks ?? null,
+      fullPrompt: fullPrompt ?? null,
     });
 
     // Trim old messages if over limit - keep newest ones

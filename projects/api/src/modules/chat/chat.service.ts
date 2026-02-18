@@ -39,7 +39,7 @@ export class ChatService {
     const response = await this.rag.query(message, conversationHistory, sessionId);
 
     // Add assistant response to history
-    await this.sessions.addMessage(sessionId, 'assistant', response.answer);
+    await this.sessions.addMessage(sessionId, 'assistant', response.answer, response.sources, response.fullPrompt);
 
     return {
       ...response,
@@ -88,12 +88,17 @@ export class ChatService {
 
     // Stream RAG response
     let fullAnswer = '';
+    let chunks: object[] | undefined;
+    let fullPrompt: string | undefined;
     for await (const event of this.rag.queryStream(message, conversationHistory, sessionId)) {
       // Collect full answer for storage
       if (event.type === 'chunk' && event.content) {
         fullAnswer += event.content;
       } else if (event.type === 'tool' && event.content) {
         fullAnswer = event.content;
+      } else if (event.type === 'done' && event.metadata) {
+        chunks = event.metadata.sources;
+        fullPrompt = event.metadata.fullPrompt;
       }
 
       // Yield event to client with sessionId
@@ -101,6 +106,6 @@ export class ChatService {
     }
 
     // Add assistant response to history after streaming completes
-    await this.sessions.addMessage(sessionId, 'assistant', fullAnswer);
+    await this.sessions.addMessage(sessionId, 'assistant', fullAnswer, chunks, fullPrompt);
   }
 }

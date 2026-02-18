@@ -10,6 +10,7 @@ export interface StreamEvent {
     sources?: any[];
     model?: string;
     backend?: string;
+    fullPrompt?: string;
     contactCollected?: {
       type: 'phone' | 'email';
       value: string;

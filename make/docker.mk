@@ -32,7 +32,7 @@ docker-status: ## Show Docker services status
 
 ##@ Production Stack
 
-docker-start-prod: docker-network ## Start production stack (API + all services)
+docker-start-prod: docker-login docker-network ## Start production stack (API + all services)
 	@echo "$(BLUE)Starting production stack...$(NC)"
 	@$(COMPOSE) --file docker/docker-compose.prod.yml up -d
 	@echo "$(GREEN)Production stack started!$(NC)"
