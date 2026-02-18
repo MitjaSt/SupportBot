@@ -18,15 +18,31 @@ export interface StreamEvent {
   };
 }
 
+/**
+ * Thin fetch wrapper that injects X-Rag-Session-Id when a session ID is provided.
+ * nginx logs this as $http_rag_session_id.
+ */
+function apiFetch(url: string | URL, init: RequestInit = {}, sessionId?: string): Promise<Response> {
+  const headers: Record<string, string> = {
+    ...(init.headers as Record<string, string>),
+    ...(sessionId ? { 'X-Rag-Session-Id': sessionId } : {}),
+  };
+  return fetch(url, { ...init, headers });
+}
+
 export async function sendQuery(
   query: string,
   sessionId?: string
 ): Promise<QueryResponse> {
-  const response = await fetch(`${API_BASE}/chat/query`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ query, sessionId }),
-  });
+  const response = await apiFetch(
+    `${API_BASE}/chat/query`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query, sessionId }),
+    },
+    sessionId
+  );
 
   if (!response.ok) {
     throw new Error(`Query failed: ${response.statusText}`);
@@ -43,11 +59,15 @@ export async function* sendQueryStream(
   query: string,
   sessionId?: string
 ): AsyncGenerator<StreamEvent> {
-  const response = await fetch(`${API_BASE}/chat/query/stream`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ query, sessionId }),
-  });
+  const response = await apiFetch(
+    `${API_BASE}/chat/query/stream`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query, sessionId }),
+    },
+    sessionId
+  );
 
   if (!response.ok) {
     throw new Error(`Query failed: ${response.statusText}`);
@@ -101,7 +121,7 @@ export async function* sendQueryStream(
 }
 
 export async function listSessions(): Promise<(Session & { messageCount: number })[]> {
-  const response = await fetch(`${API_BASE}/chat/sessions`);
+  const response = await apiFetch(`${API_BASE}/chat/sessions`);
 
   if (!response.ok) {
     throw new Error(`Failed to fetch sessions: ${response.statusText}`);
@@ -111,7 +131,7 @@ export async function listSessions(): Promise<(Session & { messageCount: number 
 }
 
 export async function getSession(sessionId: string): Promise<SessionWithHistory | null> {
-  const response = await fetch(`${API_BASE}/chat/sessions/${sessionId}`);
+  const response = await apiFetch(`${API_BASE}/chat/sessions/${sessionId}`, {}, sessionId);
 
   if (!response.ok) {
     if (response.status === 404) {
@@ -124,9 +144,11 @@ export async function getSession(sessionId: string): Promise<SessionWithHistory 
 }
 
 export async function deleteSession(sessionId: string): Promise<void> {
-  const response = await fetch(`${API_BASE}/chat/sessions/${sessionId}`, {
-    method: 'DELETE',
-  });
+  const response = await apiFetch(
+    `${API_BASE}/chat/sessions/${sessionId}`,
+    { method: 'DELETE' },
+    sessionId
+  );
 
   if (!response.ok) {
     throw new Error(`Failed to delete session: ${response.statusText}`);
@@ -145,11 +167,15 @@ export async function sendVoiceQuery(
   const url = new URL(`${API_BASE}/chat/query/voice`, window.location.origin);
   url.searchParams.set('sessionId', sessionId ?? crypto.randomUUID());
 
-  const response = await fetch(url.toString(), {
-    method: 'POST',
-    headers: { 'Content-Type': audioBlob.type || 'audio/webm' },
-    body: audioBlob,
-  });
+  const response = await apiFetch(
+    url,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': audioBlob.type || 'audio/webm' },
+      body: audioBlob,
+    },
+    sessionId
+  );
 
   if (!response.ok) {
     throw new Error(`Voice query failed: ${response.statusText}`);
@@ -163,7 +189,7 @@ export async function sendVoiceQuery(
  * Returns an audio blob (WAV format)
  */
 export async function synthesizeSpeech(text: string): Promise<Blob> {
-  const response = await fetch(`${API_BASE}/chat/synthesize`, {
+  const response = await apiFetch(`${API_BASE}/chat/synthesize`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ text }),
