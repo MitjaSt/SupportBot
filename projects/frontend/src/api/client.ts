@@ -143,9 +143,7 @@ export async function sendVoiceQuery(
   sessionId?: string
 ): Promise<QueryResponse & { transcription?: { text: string; language: string } }> {
   const url = new URL(`${API_BASE}/chat/query/voice`, window.location.origin);
-  if (sessionId) {
-    url.searchParams.set('sessionId', sessionId);
-  }
+  url.searchParams.set('sessionId', sessionId ?? crypto.randomUUID());
 
   const response = await fetch(url.toString(), {
     method: 'POST',
