@@ -1,0 +1,28 @@
+import 'dotenv/config';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { migrate } from 'drizzle-orm/node-postgres/migrator';
+import { Pool } from 'pg';
+import { resolve } from 'path';
+
+async function main() {
+  const pool = new Pool({
+    host: process.env.POSTGRES_HOST || 'localhost',
+    port: parseInt(process.env.POSTGRES_PORT || '5432', 10),
+    user: process.env.POSTGRES_USER || 'macular',
+    password: process.env.POSTGRES_PASSWORD || 'macular_dev',
+    database: process.env.POSTGRES_DATABASE || 'macular_society',
+  });
+
+  const db = drizzle(pool);
+
+  console.log('Running database migrations...');
+  await migrate(db, { migrationsFolder: resolve(__dirname, '../drizzle') });
+  console.log('Migrations complete.');
+
+  await pool.end();
+}
+
+main().catch((err) => {
+  console.error('Migration failed:', err);
+  process.exit(1);
+});
