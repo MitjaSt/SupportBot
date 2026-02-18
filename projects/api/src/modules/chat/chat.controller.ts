@@ -1,4 +1,7 @@
 import type { QueryRequest, QueryResponse } from '@/dto/query.dto';
+import { QueryRequestSchema } from '@/dto/query.dto';
+import { Type } from '@sinclair/typebox';
+import { TypeBoxPipe } from '@/pipes/typebox-validation.pipe';
 import {
   Body,
   Controller,
@@ -13,7 +16,6 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import { v4 as uuidv4 } from 'uuid';
 import { ChatService } from './chat.service';
 import { WhisperService } from '../whisper/whisper.service';
 import { PiperService } from '../piper/piper.service';
@@ -27,14 +29,13 @@ export class ChatController {
   ) {}
 
   @Post('query')
-  async query(@Body() body: QueryRequest): Promise<QueryResponse> {
-    const sessionId = body.sessionId ?? uuidv4();
-    return this.chat.chat(sessionId, body.query);
+  async query(@Body(TypeBoxPipe(QueryRequestSchema)) body: QueryRequest): Promise<QueryResponse> {
+    return this.chat.chat(body.sessionId, body.query);
   }
 
   @Post('query/stream')
-  async queryStream(@Body() body: QueryRequest, @Res() reply: FastifyReply) {
-    const sessionId = body.sessionId ?? uuidv4();
+  async queryStream(@Body(TypeBoxPipe(QueryRequestSchema)) body: QueryRequest, @Res() reply: FastifyReply) {
+    const sessionId = body.sessionId;
 
     // Set SSE headers for Fastify
     reply.raw.setHeader('Content-Type', 'text/event-stream');
@@ -62,7 +63,7 @@ export class ChatController {
   @Post('query/voice')
   async voiceQuery(
     @Req() request: FastifyRequest,
-    @Query('sessionId') sessionId?: string,
+    @Query('sessionId', TypeBoxPipe(Type.String({ minLength: 1 }))) sessionId: string,
   ): Promise<QueryResponse & { transcription?: { text: string; language: string } }> {
     // Audio is sent as a raw binary body (Content-Type: audio/webm etc.)
     // with sessionId as a query parameter — avoids @fastify/multipart entirely.
@@ -87,8 +88,7 @@ export class ChatController {
     const transcription = await this.whisper.transcribe(audioBuffer, filename);
 
     // Process the query using existing chat logic
-    const sid = sessionId ?? uuidv4();
-    const response = await this.chat.chat(sid, transcription.text);
+    const response = await this.chat.chat(sessionId, transcription.text);
 
     return {
       ...response,
