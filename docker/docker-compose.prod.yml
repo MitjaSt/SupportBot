@@ -18,6 +18,8 @@ services:
       NODE_ENV: production
       # Point to the postgres container by name, not localhost
       POSTGRES_HOST: postgres
+    volumes:
+      - ../projects/api/.cache:/app/.cache
     depends_on:
       postgres:
         condition: service_healthy
