@@ -18,6 +18,8 @@ export const RagConfigSchema = Type.Object({
   topK: Type.Number(),
   scoreThreshold: Type.Number(),
   maxTokens: Type.Number(),
+  promptTokenWarnThreshold: Type.Number(),
+  promptTokenRejectThreshold: Type.Number(),
 });
 
 export const ChunkingConfigSchema = Type.Object({

@@ -10,8 +10,6 @@ import { SearchResult, VectorDbService } from '../vector-db/vector-db.service';
 import { ToolHandlerService } from './services/tool-handler.service';
 import { RAG_TOOLS, TOOL_USAGE_INSTRUCTIONS } from './tools';
 
-const PROMPT_TOKEN_WARN_THRESHOLD = 2000;
-const PROMPT_TOKEN_REJECT_THRESHOLD = 3000;
 
 export interface RagResponse {
   answer: string;
@@ -535,8 +533,8 @@ export class RagService {
     const fullPrompt = this.buildFullPrompt(query, chunks, conversationHistory, systemPrompt);
 
     const promptTokenCount = this.countTokens(fullPrompt);
-    if (promptTokenCount > PROMPT_TOKEN_REJECT_THRESHOLD) {
-      this.logger.error(`Prompt rejected: ${promptTokenCount} tokens exceeds ${PROMPT_TOKEN_REJECT_THRESHOLD} limit`);
+    if (promptTokenCount > this.config.rag.promptTokenRejectThreshold) {
+      this.logger.error(`Prompt rejected: ${promptTokenCount} tokens exceeds ${this.config.rag.promptTokenRejectThreshold} limit`);
       const logEntry = this.promptLogger.buildLogEntry({
         startTime: new Date(startTime),
         endTime: new Date(),
@@ -544,12 +542,12 @@ export class RagService {
         prompt: fullPrompt,
         chunks: chunks.map((c) => c.text),
         query,
-        response: `[REJECTED: prompt too long (${promptTokenCount} tokens > ${PROMPT_TOKEN_REJECT_THRESHOLD} limit)]`,
+        response: `[REJECTED: prompt too long (${promptTokenCount} tokens > ${this.config.rag.promptTokenRejectThreshold} limit)]`,
       });
       this.promptLogger.log(logEntry).catch((err) => this.logger.error('Failed to write prompt log:', err));
       this.metrics.ragQueriesTotal.inc({ status: 'error' });
-      throw new Error(`Prompt too long: ${promptTokenCount} tokens (limit: ${PROMPT_TOKEN_REJECT_THRESHOLD})`);
-    } else if (promptTokenCount > PROMPT_TOKEN_WARN_THRESHOLD) {
+      throw new Error(`Prompt too long: ${promptTokenCount} tokens (limit: ${this.config.rag.promptTokenRejectThreshold})`);
+    } else if (promptTokenCount > this.config.rag.promptTokenWarnThreshold) {
       this.logger.warn(`Prompt is large: ${promptTokenCount} tokens`);
     }
 
@@ -684,8 +682,8 @@ export class RagService {
     const fullPrompt = this.buildFullPrompt(query, chunks, conversationHistory, systemPrompt);
 
     const promptTokenCount = this.countTokens(fullPrompt);
-    if (promptTokenCount > PROMPT_TOKEN_REJECT_THRESHOLD) {
-      this.logger.error(`Prompt rejected: ${promptTokenCount} tokens exceeds ${PROMPT_TOKEN_REJECT_THRESHOLD} limit`);
+    if (promptTokenCount > this.config.rag.promptTokenRejectThreshold) {
+      this.logger.error(`Prompt rejected: ${promptTokenCount} tokens exceeds ${this.config.rag.promptTokenRejectThreshold} limit`);
       const logEntry = this.promptLogger.buildLogEntry({
         startTime: new Date(startTime),
         endTime: new Date(),
@@ -693,11 +691,11 @@ export class RagService {
         prompt: fullPrompt,
         chunks: chunks.map((c) => c.text),
         query,
-        response: `[REJECTED: prompt too long (${promptTokenCount} tokens > ${PROMPT_TOKEN_REJECT_THRESHOLD} limit)]`,
+        response: `[REJECTED: prompt too long (${promptTokenCount} tokens > ${this.config.rag.promptTokenRejectThreshold} limit)]`,
       });
       this.promptLogger.log(logEntry).catch((err) => this.logger.error('Failed to write prompt log:', err));
-      throw new Error(`Prompt too long: ${promptTokenCount} tokens (limit: ${PROMPT_TOKEN_REJECT_THRESHOLD})`);
-    } else if (promptTokenCount > PROMPT_TOKEN_WARN_THRESHOLD) {
+      throw new Error(`Prompt too long: ${promptTokenCount} tokens (limit: ${this.config.rag.promptTokenRejectThreshold})`);
+    } else if (promptTokenCount > this.config.rag.promptTokenWarnThreshold) {
       this.logger.warn(`Prompt is large: ${promptTokenCount} tokens`);
     }
 

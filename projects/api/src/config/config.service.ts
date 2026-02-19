@@ -75,6 +75,8 @@ export class ConfigService {
       topK: getInt('RAG_TOP_K', 3),
       scoreThreshold: getFloat('RAG_SCORE_THRESHOLD', 0.5),
       maxTokens: getInt('RAG_MAX_TOKENS', 4096),
+      promptTokenWarnThreshold: getInt('RAG_PROMPT_TOKEN_WARN_THRESHOLD', 2000),
+      promptTokenRejectThreshold: getInt('RAG_PROMPT_TOKEN_REJECT_THRESHOLD', 4000),
     };
 
     const chunking: ChunkingConfig = {
