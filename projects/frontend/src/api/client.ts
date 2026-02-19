@@ -1,4 +1,4 @@
-import type { QueryResponse, Session, SessionWithHistory } from '../types';
+import type { QueryResponse, Session, SessionWithHistory, Source } from '../types';
 
 const API_BASE = '/api';
 
@@ -7,7 +7,7 @@ export interface StreamEvent {
   content?: string;
   sessionId?: string;
   metadata?: {
-    sources?: any[];
+    sources?: Source[];
     model?: string;
     backend?: string;
     fullPrompt?: string;
@@ -109,7 +109,7 @@ export async function* sendQueryStream(
           try {
             const event: StreamEvent = JSON.parse(jsonStr);
             yield event;
-          } catch (e) {
+          } catch {
             // Skip malformed SSE messages
           }
         }

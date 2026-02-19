@@ -1,7 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@/config/config.service';
-import { writeFile, mkdir } from 'fs/promises';
+import { Injectable, Logger } from '@nestjs/common';
 import { existsSync } from 'fs';
+import { mkdir, writeFile } from 'fs/promises';
 import { join } from 'path';
 
 export interface ContactInfo {
@@ -31,7 +31,7 @@ export class ContactCollectionService {
    * Accepts formats: +44..., 07..., 01..., 02..., 03...
    */
   validatePhoneNumber(phone: string): ContactInfo {
-    const cleaned = phone.replace(/[\s\-\(\)]/g, '');
+    const cleaned = phone.replace(/[\s\-()]/g, '');
 
     // UK mobile (07...)
     const ukMobileRegex = /^(\+44|0)7\d{9}$/;

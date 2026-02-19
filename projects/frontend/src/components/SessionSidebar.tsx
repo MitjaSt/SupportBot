@@ -55,7 +55,7 @@ export function SessionSidebar({ onNewSession, refreshTrigger }: SessionSidebarP
     try {
       const data = await listSessions();
       setSessions(data);
-    } catch (err) {
+    } catch {
       // Error loading sessions - fail silently as this is not critical
     } finally {
       setLoading(false);
@@ -77,7 +77,7 @@ export function SessionSidebar({ onNewSession, refreshTrigger }: SessionSidebarP
       if (currentSessionId === sessionToDelete) {
         navigate('/');
       }
-    } catch (err) {
+    } catch {
       // Error deleting session - fail silently
     } finally {
       setDeleteDialogOpen(false);

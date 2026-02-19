@@ -1,15 +1,14 @@
+import { relations } from 'drizzle-orm';
 import {
+  customType,
+  integer,
+  jsonb,
+  pgEnum,
   pgTable,
   text,
   timestamp,
-  integer,
   uuid,
-  pgEnum,
-  index,
-  customType,
-  jsonb,
 } from 'drizzle-orm/pg-core';
-import { relations, sql } from 'drizzle-orm';
 
 // Custom pgvector type for Drizzle ORM
 const vector = (name: string, config: { dimensions: number }) =>

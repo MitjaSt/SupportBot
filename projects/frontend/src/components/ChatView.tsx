@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Box, Typography, Alert } from '@mui/material';
-import { ChatMessage } from './ChatMessage';
-import { ChatInput } from './ChatInput';
-import { sendQueryStream, sendVoiceQuery, getSession, synthesizeSpeech } from '../api/client';
+import { Alert, Box, Typography } from '@mui/material';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { getSession, sendQueryStream, sendVoiceQuery, synthesizeSpeech } from '../api/client';
 import type { Message } from '../types';
+import { ChatInput } from './ChatInput';
+import { ChatMessage } from './ChatMessage';
 
 interface ChatViewProps {
   onSessionUpdate: () => void;
@@ -26,6 +26,20 @@ export function ChatView({ onSessionUpdate }: ChatViewProps) {
   const isStreamingRef = useRef(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
+  const loadSession = useCallback(async (id: string) => {
+    try {
+      const data = await getSession(id);
+      if (data) {
+        setMessages(data.history);
+      } else {
+        setError('Session not found');
+        navigate('/');
+      }
+    } catch (err) {
+      setError('Failed to load conversation: ' + (err as Error).message);
+    }
+  }, [navigate]);
+
   // Load existing session if navigating to one (but not during streaming)
   useEffect(() => {
     // Skip loading if we're currently streaming (prevents race condition)
@@ -40,26 +54,12 @@ export function ChatView({ onSessionUpdate }: ChatViewProps) {
       setMessages([]);
       setCurrentSessionId(null);
     }
-  }, [sessionId]);
+  }, [sessionId, loadSession]);
 
   // Scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
-
-  const loadSession = async (id: string) => {
-    try {
-      const data = await getSession(id);
-      if (data) {
-        setMessages(data.history);
-      } else {
-        setError('Session not found');
-        navigate('/');
-      }
-    } catch (err) {
-      setError('Failed to load conversation');
-    }
-  };
 
   const toggleVoice = () => {
     setVoiceEnabled((prev) => {
@@ -96,7 +96,7 @@ export function ChatView({ onSessionUpdate }: ChatViewProps) {
       };
 
       await audio.play();
-    } catch (err) {
+    } catch {
       // Don't show error to user - TTS is optional enhancement
     }
   };
@@ -206,7 +206,7 @@ export function ChatView({ onSessionUpdate }: ChatViewProps) {
           }
         }
       }
-    } catch (err) {
+    } catch {
       setError('Failed to send message. Please try again.');
       // Remove optimistic user message (and assistant message if it was added)
       setMessages((prev) => {
@@ -258,7 +258,7 @@ export function ChatView({ onSessionUpdate }: ChatViewProps) {
 
       // Play audio response
       playAudio(response.answer);
-    } catch (err) {
+    } catch {
       setError('Failed to process voice message. Please try again.');
     } finally {
       setLoading(false);

@@ -1,14 +1,13 @@
+import { ConfigService } from '@/config/config.service';
 import { Logger } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
-import { ConfigService } from '@/config/config.service';
 import type {
+  CreateTraceOptions,
+  LogGenerationOptions,
+  LogRetrievalOptions,
   ObservabilityAdapter,
   TraceHandle,
-  CreateTraceOptions,
-  LogRetrievalOptions,
-  LogGenerationOptions,
-  LogEventOptions,
-  UpdateTraceOptions,
+  UpdateTraceOptions
 } from '../observability.interface';
 
 /**

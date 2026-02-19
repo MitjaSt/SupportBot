@@ -4,6 +4,7 @@ import {
   type AgentInput,
   type AgentReturnTypes,
 } from '@langwatch/scenario';
+import { randomUUID } from 'crypto';
 import { API_BASE_URL } from './constants';
 
 interface ChatApiResponse {
@@ -32,7 +33,7 @@ export interface RagInteraction {
 export class MacularRAGAgent extends AgentAdapter {
   role = AgentRole.AGENT;
   interactions: RagInteraction[] = [];
-  private sessionId: string | undefined;
+  private sessionId: string = randomUUID();
 
   async call(input: AgentInput): Promise<AgentReturnTypes> {
     const lastUserMsg = [...input.newMessages]

@@ -1,10 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import {
-  makeCounterProvider,
-  makeHistogramProvider,
-  makeGaugeProvider,
-} from '@willsoto/nestjs-prometheus';
-import { Counter, Histogram, Gauge, register } from 'prom-client';
+import { Counter, Gauge, Histogram, register } from 'prom-client';
 
 /**
  * MetricsService handles all Prometheus metrics for the RAG system
