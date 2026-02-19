@@ -1,6 +1,5 @@
 .PHONY: api api-prod api-build frontend frontend-build frontend-preview \
         scrape process summarize criteria embed pipeline pipeline-full collection-info \
-        test test-cov test-scenarios test-ragas test-evals \
         lint lint-fix format format-check typecheck check \
         db-generate db-migrate db-push db-studio
 
@@ -77,28 +76,6 @@ collection-info: ## Get vector collection info from API
 	@echo "$(BLUE)Fetching collection info...$(NC)"
 	@curl -X GET $(API_URL)/api/pipeline/collection -H "Content-Type: application/json"
 	@echo ""
-
-##@ Testing
-
-test: ## Run all tests
-	@echo "$(BLUE)Running all tests...$(NC)"
-	cd $(API_DIR) && npm test
-
-test-cov: ## Run tests with coverage
-	@echo "$(BLUE)Running tests with coverage...$(NC)"
-	cd $(API_DIR) && npm run test:cov
-
-test-scenarios: ## Run scenario (multi-turn judge) eval tests
-	@echo "$(BLUE)Running scenario eval tests...$(NC)"
-	cd $(API_DIR) && npm run test:scenarios
-
-test-ragas: ## Run Ragas metric eval tests
-	@echo "$(BLUE)Running Ragas eval tests...$(NC)"
-	cd $(API_DIR) && npm run test:ragas
-
-test-evals: ## Run all eval tests (scenarios + ragas)
-	@echo "$(BLUE)Running all eval tests...$(NC)"
-	cd $(API_DIR) && npm run test:evals
 
 ##@ Code Quality
 

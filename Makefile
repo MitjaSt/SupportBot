@@ -37,6 +37,7 @@ include make/docker.mk
 include make/stack.mk
 include make/monitoring.mk
 include make/api.mk
+include make/testing.mk
 include make/misc.mk
 
 ##@ General
