@@ -22,14 +22,22 @@ interface ChatInputProps {
   loading?: boolean;
   voiceEnabled?: boolean;
   onToggleVoice?: () => void;
+  pendingValue?: string;
 }
 
-export function ChatInput({ onSend, onVoiceSend, disabled, loading, voiceEnabled, onToggleVoice }: ChatInputProps) {
+export function ChatInput({ onSend, onVoiceSend, disabled, loading, voiceEnabled, onToggleVoice, pendingValue }: ChatInputProps) {
   const [input, setInput] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [micError, setMicError] = useState<string | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+
+  // Repopulate input when a send fails
+  useEffect(() => {
+    if (pendingValue) {
+      setInput(pendingValue);
+    }
+  }, [pendingValue]);
 
   // Cleanup on unmount
   useEffect(() => {

@@ -16,6 +16,7 @@ export function ChatView({ onSessionUpdate }: ChatViewProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [failedInput, setFailedInput] = useState<string | undefined>(undefined);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(sessionId ?? null);
   const [voiceEnabled, setVoiceEnabled] = useState(() => {
     // Load voice preference from localStorage, default to false
@@ -103,8 +104,16 @@ export function ChatView({ onSessionUpdate }: ChatViewProps) {
 
   const handleSend = async (content: string) => {
     setError(null);
+    setFailedInput(undefined);
     setLoading(true);
     isStreamingRef.current = true;
+
+    // Ensure session ID is always set before the API call
+    const sessionId = currentSessionId ?? crypto.randomUUID();
+    if (!currentSessionId) {
+      setCurrentSessionId(sessionId);
+      navigate(`/chat/${sessionId}`, { replace: true });
+    }
 
     // Optimistically add user message
     const userMessage: Message = {
@@ -116,20 +125,12 @@ export function ChatView({ onSessionUpdate }: ChatViewProps) {
 
     try {
       let fullContent = '';
-      let newSessionId: string | null = null;
       let assistantMessageAdded = false;
 
       // Stream the response
-      for await (const event of sendQueryStream(content, currentSessionId ?? undefined)) {
+      for await (const event of sendQueryStream(content, sessionId)) {
         if (event.type === 'error') {
           throw new Error(event.content || 'Stream error');
-        }
-
-        // Update sessionId if this is a new session
-        if (event.sessionId && !currentSessionId && !newSessionId) {
-          newSessionId = event.sessionId;
-          setCurrentSessionId(newSessionId);
-          navigate(`/chat/${newSessionId}`, { replace: true });
         }
 
         // Accumulate content chunks
@@ -208,6 +209,7 @@ export function ChatView({ onSessionUpdate }: ChatViewProps) {
       }
     } catch {
       setError('Failed to send message. Please try again.');
+      setFailedInput(content);
       // Remove optimistic user message (and assistant message if it was added)
       setMessages((prev) => {
         // If we added an assistant message, remove both user and assistant
@@ -225,15 +227,16 @@ export function ChatView({ onSessionUpdate }: ChatViewProps) {
     setError(null);
     setLoading(true);
 
+    // Ensure session ID is always set before the API call
+    const sessionId = currentSessionId ?? crypto.randomUUID();
+    if (!currentSessionId) {
+      setCurrentSessionId(sessionId);
+      navigate(`/chat/${sessionId}`, { replace: true });
+    }
+
     try {
       // Send voice query
-      const response = await sendVoiceQuery(audioBlob, currentSessionId ?? undefined);
-
-      // If this is a new session, update the URL
-      if (!currentSessionId) {
-        setCurrentSessionId(response.sessionId);
-        navigate(`/chat/${response.sessionId}`, { replace: true });
-      }
+      const response = await sendVoiceQuery(audioBlob, sessionId);
 
       // Add user message (transcribed text)
       const userMessage: Message = {
@@ -319,6 +322,7 @@ export function ChatView({ onSessionUpdate }: ChatViewProps) {
         loading={loading}
         voiceEnabled={voiceEnabled}
         onToggleVoice={toggleVoice}
+        pendingValue={failedInput}
       />
     </Box>
   );

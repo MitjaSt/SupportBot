@@ -32,7 +32,7 @@ function apiFetch(url: string | URL, init: RequestInit = {}, sessionId?: string)
 
 export async function sendQuery(
   query: string,
-  sessionId?: string
+  sessionId: string
 ): Promise<QueryResponse> {
   const response = await apiFetch(
     `${API_BASE}/chat/query`,
@@ -57,7 +57,7 @@ export async function sendQuery(
  */
 export async function* sendQueryStream(
   query: string,
-  sessionId?: string
+  sessionId: string
 ): AsyncGenerator<StreamEvent> {
   const response = await apiFetch(
     `${API_BASE}/chat/query/stream`,
@@ -162,10 +162,10 @@ export async function deleteSession(sessionId: string): Promise<void> {
  */
 export async function sendVoiceQuery(
   audioBlob: Blob,
-  sessionId?: string
+  sessionId: string
 ): Promise<QueryResponse & { transcription?: { text: string; language: string } }> {
   const url = new URL(`${API_BASE}/chat/query/voice`, window.location.origin);
-  url.searchParams.set('sessionId', sessionId ?? crypto.randomUUID());
+  url.searchParams.set('sessionId', sessionId);
 
   const response = await apiFetch(
     url,
