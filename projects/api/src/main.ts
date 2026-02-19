@@ -5,8 +5,10 @@ import {
   NestFastifyApplication,
 } from '@nestjs/platform-fastify';
 import { AppModule } from './app.module';
+import { checkEnv } from './check-env';
 
 async function bootstrap() {
+  checkEnv();
   // Allow up to 50 MB bodies (audio uploads).
   const adapter = new FastifyAdapter({ bodyLimit: 50 * 1024 * 1024 });
 

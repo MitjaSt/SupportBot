@@ -184,7 +184,7 @@ export function ChatView({ onSessionUpdate }: ChatViewProps) {
           }
         }
 
-        // Done streaming — attach chunks and fullPrompt to the assistant message
+        // Done streaming — attach chunks, fullPrompt, and promptTokenCount to the assistant message
         if (event.type === 'done') {
           if (event.metadata?.sources || event.metadata?.fullPrompt) {
             setMessages((prev) => {
@@ -193,6 +193,7 @@ export function ChatView({ onSessionUpdate }: ChatViewProps) {
                 ...updated[updated.length - 1],
                 chunks: event.metadata?.sources,
                 fullPrompt: event.metadata?.fullPrompt,
+                promptTokenCount: event.metadata?.promptTokenCount,
               };
               return updated;
             });

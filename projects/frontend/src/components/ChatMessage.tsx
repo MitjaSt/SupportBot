@@ -1,6 +1,6 @@
+import { InfoOutlined, Person, SmartToy } from '@mui/icons-material';
+import { Box, IconButton, Paper, Tooltip, Typography } from '@mui/material';
 import { useState } from 'react';
-import { Box, Paper, Typography, IconButton, Tooltip } from '@mui/material';
-import { SmartToy, Person, InfoOutlined } from '@mui/icons-material';
 import type { Message } from '../types';
 import { QueryDebugDialog } from './QueryDebugDialog';
 
@@ -75,7 +75,16 @@ export function ChatMessage({ message }: ChatMessageProps) {
             <Box sx={{ mt: 0.5 }}>
               <Tooltip title="View sources & prompt">
                 <IconButton size="small" onClick={() => setDebugOpen(true)} sx={{ opacity: 0.5, '&:hover': { opacity: 1 } }}>
-                  <InfoOutlined fontSize="small" />
+                  <InfoOutlined
+                    fontSize="small"
+                    sx={{
+                      color: (message.promptTokenCount ?? 0) > 2500
+                        ? 'error.main'
+                        : (message.promptTokenCount ?? 0) > 1500
+                          ? 'warning.main'
+                          : 'inherit',
+                    }}
+                  />
                 </IconButton>
               </Tooltip>
             </Box>
@@ -89,6 +98,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
           onClose={() => setDebugOpen(false)}
           chunks={message.chunks ?? []}
           fullPrompt={message.fullPrompt ?? ''}
+          promptTokenCount={message.promptTokenCount}
         />
       )}
     </Box>

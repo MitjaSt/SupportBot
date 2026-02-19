@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { eq, gt, desc, sql, count, asc, inArray } from 'drizzle-orm';
+import { eq, gt, desc, sql, count, asc } from 'drizzle-orm';
 import { ConfigService } from '@/config/config.service';
 import { DatabaseService } from './database.service';
 import {
@@ -16,14 +16,12 @@ export type { Session, Message, CollectionState } from '@/db/schema';
 @Injectable()
 export class SessionRepository {
   private readonly expiryHours: number;
-  private readonly maxHistory: number;
 
   constructor(
     private readonly dbService: DatabaseService,
     private readonly config: ConfigService,
   ) {
     this.expiryHours = config.postgres.sessionExpiryHours;
-    this.maxHistory = config.postgres.maxHistoryMessages;
   }
 
   private get db() {
@@ -121,6 +119,7 @@ export class SessionRepository {
     content: string,
     chunks?: object[] | null,
     fullPrompt?: string | null,
+    promptTokenCount?: number | null,
   ): Promise<void> {
     await this.db.insert(messages).values({
       sessionId,
@@ -128,25 +127,8 @@ export class SessionRepository {
       content,
       chunks: chunks ?? null,
       fullPrompt: fullPrompt ?? null,
+      promptTokenCount: promptTokenCount ?? null,
     });
-
-    // Trim old messages if over limit - keep newest ones
-    const allMessages = await this.db
-      .select({ id: messages.id })
-      .from(messages)
-      .where(eq(messages.sessionId, sessionId))
-      .orderBy(desc(messages.createdAt));
-
-    if (allMessages.length > this.maxHistory) {
-      const idsToDelete = allMessages
-        .slice(this.maxHistory)
-        .map((m: { id: number }) => m.id);
-      if (idsToDelete.length > 0) {
-        await this.db
-          .delete(messages)
-          .where(inArray(messages.id, idsToDelete));
-      }
-    }
   }
 
   async getMessages(sessionId: string): Promise<Message[]> {
@@ -154,8 +136,7 @@ export class SessionRepository {
       .select()
       .from(messages)
       .where(eq(messages.sessionId, sessionId))
-      .orderBy(asc(messages.createdAt))
-      .limit(this.maxHistory);
+      .orderBy(asc(messages.createdAt));
   }
 
   async deleteSession(sessionId: string): Promise<void> {

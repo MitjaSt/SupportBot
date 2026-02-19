@@ -6,6 +6,7 @@ export interface Message {
   createdAt: string | Date;
   chunks?: Source[];
   fullPrompt?: string;
+  promptTokenCount?: number;
 }
 
 export interface Session {

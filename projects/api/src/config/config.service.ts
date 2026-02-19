@@ -77,6 +77,7 @@ export class ConfigService {
       maxTokens: getInt('RAG_MAX_TOKENS', 4096),
       promptTokenWarnThreshold: getInt('RAG_PROMPT_TOKEN_WARN_THRESHOLD', 2000),
       promptTokenRejectThreshold: getInt('RAG_PROMPT_TOKEN_REJECT_THRESHOLD', 4000),
+      contextHistoryMessages: parseInt(getRequired('RAG_CONTEXT_HISTORY_MESSAGES'), 10),
     };
 
     const chunking: ChunkingConfig = {
@@ -100,7 +101,6 @@ export class ConfigService {
       user: getOptional('POSTGRES_USER', 'macular'),
       password: getOptional('POSTGRES_PASSWORD', 'macular_dev'),
       sessionExpiryHours: getInt('POSTGRES_SESSION_EXPIRY_HOURS', 24),
-      maxHistoryMessages: getInt('MAX_HISTORY_MESSAGES', 20),
     };
 
     const scraping: ScrapingConfig = {

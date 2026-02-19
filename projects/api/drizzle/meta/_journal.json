@@ -22,6 +22,13 @@
       "when": 1771387197351,
       "tag": "0002_steady_sphinx",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1771525918848,
+      "tag": "0003_breezy_nico_minoru",
+      "breakpoints": true
     }
   ]
 }

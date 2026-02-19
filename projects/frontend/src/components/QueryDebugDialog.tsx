@@ -20,15 +20,16 @@ interface QueryDebugDialogProps {
   onClose: () => void;
   chunks: Source[];
   fullPrompt: string;
+  promptTokenCount?: number;
 }
 
-export function QueryDebugDialog({ open, onClose, chunks, fullPrompt }: QueryDebugDialogProps) {
+export function QueryDebugDialog({ open, onClose, chunks, fullPrompt, promptTokenCount }: QueryDebugDialogProps) {
   const [tab, setTab] = useState(0);
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 1 }}>
-        <Typography variant="h6">Sources & Prompt</Typography>
+        Sources & Prompt
         <IconButton size="small" onClick={onClose}>
           <Close fontSize="small" />
         </IconButton>
@@ -70,6 +71,13 @@ export function QueryDebugDialog({ open, onClose, chunks, fullPrompt }: QueryDeb
 
         {tab === 1 && (
           <Box sx={{ p: 2 }}>
+            {promptTokenCount != null && (
+              <Chip
+                label={`${promptTokenCount.toLocaleString()} tokens`}
+                size="small"
+                sx={{ mb: 1.5 }}
+              />
+            )}
             {fullPrompt ? (
               <Box
                 component="pre"

@@ -20,6 +20,7 @@ export const RagConfigSchema = Type.Object({
   maxTokens: Type.Number(),
   promptTokenWarnThreshold: Type.Number(),
   promptTokenRejectThreshold: Type.Number(),
+  contextHistoryMessages: Type.Number(),
 });
 
 export const ChunkingConfigSchema = Type.Object({
@@ -43,7 +44,6 @@ export const PostgresConfigSchema = Type.Object({
   user: Type.String(),
   password: Type.String(),
   sessionExpiryHours: Type.Number(),
-  maxHistoryMessages: Type.Number(),
 });
 
 export const ScrapingConfigSchema = Type.Object({

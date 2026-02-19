@@ -17,6 +17,7 @@ export interface RagResponse {
   model: string;
   backend: 'openai';
   fullPrompt?: string;
+  promptTokenCount?: number;
   contactCollected?: {
     type: 'phone' | 'email';
     value: string;
@@ -32,6 +33,7 @@ export interface StreamEvent {
     backend?: string;
     fullContent?: string;
     fullPrompt?: string;
+    promptTokenCount?: number;
     contactCollected?: {
       type: 'phone' | 'email';
       value: string;
@@ -602,7 +604,7 @@ export class RagService {
 
     this.metrics.ragQueriesTotal.inc({ status: 'success' });
 
-    return { ...result, fullPrompt };
+    return { ...result, fullPrompt, promptTokenCount };
   }
 
   /**
@@ -705,7 +707,7 @@ export class RagService {
         fullAnswer += event.content;
       }
       if (event.type === 'done') {
-        yield { ...event, metadata: { ...event.metadata, fullPrompt } };
+        yield { ...event, metadata: { ...event.metadata, fullPrompt, promptTokenCount } };
       } else {
         yield event;
       }

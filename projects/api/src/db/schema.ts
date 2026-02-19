@@ -60,6 +60,7 @@ export const messages = pgTable('messages', {
   content: text('content').notNull(),
   chunks: jsonb('chunks'),
   fullPrompt: text('full_prompt'),
+  promptTokenCount: integer('prompt_token_count'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
 

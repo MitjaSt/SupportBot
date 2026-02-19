@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@/config/config.service';
 import {
   SessionRepository,
   type Session,
@@ -17,6 +18,7 @@ export class ChatService {
   constructor(
     private readonly sessions: SessionRepository,
     private readonly rag: RagService,
+    private readonly config: ConfigService,
   ) {}
 
   async chat(sessionId: string, message: string): Promise<ChatResponse> {
@@ -29,17 +31,16 @@ export class ChatService {
     // Add user message to history
     await this.sessions.addMessage(sessionId, 'user', message);
 
-    // Convert to RAG format
-    const conversationHistory = history.map((m) => ({
-      role: m.role,
-      content: m.content,
-    }));
+    // Convert to RAG format, capped to the configured context window
+    const conversationHistory = history
+      .slice(-this.config.rag.contextHistoryMessages)
+      .map((m) => ({ role: m.role, content: m.content }));
 
     // Get RAG response (pass sessionId for observability tracing)
     const response = await this.rag.query(message, conversationHistory, sessionId);
 
     // Add assistant response to history
-    await this.sessions.addMessage(sessionId, 'assistant', response.answer, response.sources, response.fullPrompt);
+    await this.sessions.addMessage(sessionId, 'assistant', response.answer, response.sources, response.fullPrompt, response.promptTokenCount);
 
     return {
       ...response,
@@ -80,16 +81,16 @@ export class ChatService {
     // Add user message to history
     await this.sessions.addMessage(sessionId, 'user', message);
 
-    // Convert to RAG format
-    const conversationHistory = history.map((m) => ({
-      role: m.role,
-      content: m.content,
-    }));
+    // Convert to RAG format, capped to the configured context window
+    const conversationHistory = history
+      .slice(-this.config.rag.contextHistoryMessages)
+      .map((m) => ({ role: m.role, content: m.content }));
 
     // Stream RAG response
     let fullAnswer = '';
     let chunks: object[] | undefined;
     let fullPrompt: string | undefined;
+    let promptTokenCount: number | undefined;
     for await (const event of this.rag.queryStream(message, conversationHistory, sessionId)) {
       // Collect full answer for storage
       if (event.type === 'chunk' && event.content) {
@@ -99,6 +100,7 @@ export class ChatService {
       } else if (event.type === 'done' && event.metadata) {
         chunks = event.metadata.sources;
         fullPrompt = event.metadata.fullPrompt;
+        promptTokenCount = event.metadata.promptTokenCount;
       }
 
       // Yield event to client with sessionId
@@ -106,6 +108,6 @@ export class ChatService {
     }
 
     // Add assistant response to history after streaming completes
-    await this.sessions.addMessage(sessionId, 'assistant', fullAnswer, chunks, fullPrompt);
+    await this.sessions.addMessage(sessionId, 'assistant', fullAnswer, chunks, fullPrompt, promptTokenCount);
   }
 }

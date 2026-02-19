@@ -11,6 +11,7 @@ export interface StreamEvent {
     model?: string;
     backend?: string;
     fullPrompt?: string;
+    promptTokenCount?: number;
     contactCollected?: {
       type: 'phone' | 'email';
       value: string;
