@@ -16,7 +16,7 @@ export default withScenario(
     test: {
       testTimeout: 180_000,
       retry: 3,
-      setupFiles: ['dotenv/config'],
+      setupFiles: ['./test/setup.ts'],
       include: ['test/**/*.test.ts'],
       watch: false,
     },
