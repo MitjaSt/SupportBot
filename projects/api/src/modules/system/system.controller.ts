@@ -2,6 +2,8 @@ import { Controller, Get } from '@nestjs/common';
 import { DatabaseService } from '@/modules/database/database.service';
 import { VectorDbService } from '@/modules/vector-db/vector-db.service';
 import { ConfigService } from '@/config/config.service';
+import { SystemService } from './system.service';
+import type { OpenAIStats } from './system.service';
 
 interface SystemStatus {
   status: 'healthy' | 'degraded' | 'unhealthy';
@@ -20,6 +22,7 @@ export class SystemController {
     private readonly database: DatabaseService,
     private readonly vectorDb: VectorDbService,
     private readonly config: ConfigService,
+    private readonly systemService: SystemService,
   ) {}
 
   @Get('status')
@@ -44,6 +47,11 @@ export class SystemController {
   @Get('health')
   health(): { status: string } {
     return { status: 'ok' };
+  }
+
+  @Get('openai-stats')
+  getOpenAIStats(): Promise<OpenAIStats> {
+    return this.systemService.getOpenAIStats();
   }
 
   private async checkDatabase(): Promise<{

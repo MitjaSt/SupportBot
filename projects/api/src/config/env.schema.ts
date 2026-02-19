@@ -28,6 +28,7 @@ export const ChunkingConfigSchema = Type.Object({
 export const OpenAIConfigSchema = Type.Object({
   enabled: Type.Boolean(),
   apiKey: Type.String(),
+  adminApiKey: Type.String(),
   embeddingModel: Type.String(),
   chatModel: Type.String(),
   timeout: Type.Number(),
