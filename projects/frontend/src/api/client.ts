@@ -20,12 +20,14 @@ export interface StreamEvent {
 }
 
 /**
- * Thin fetch wrapper that injects X-Rag-Session-Id when a session ID is provided.
- * nginx logs this as $http_rag_session_id.
+ * Thin fetch wrapper that injects X-Rag-Session-Id when a session ID is provided
+ * and a unique X-Request-Id for every request.
+ * nginx logs these as $http_rag_session_id and $http_x_request_id.
  */
 function apiFetch(url: string | URL, init: RequestInit = {}, sessionId?: string): Promise<Response> {
   const headers: Record<string, string> = {
     ...(init.headers as Record<string, string>),
+    'X-Request-Id': crypto.randomUUID(),
     ...(sessionId ? { 'X-Rag-Session-Id': sessionId } : {}),
   };
   return fetch(url, { ...init, headers });
