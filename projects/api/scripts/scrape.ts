@@ -15,7 +15,7 @@ import { writeFile, mkdir } from 'fs/promises';
 import { existsSync } from 'fs';
 import { join, resolve } from 'path';
 
-config({ path: resolve(__dirname, '../../../../.env') });
+config({ path: resolve(__dirname, '../../../.env') });
 
 interface ScrapedPage {
   url: string;

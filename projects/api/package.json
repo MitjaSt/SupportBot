@@ -21,6 +21,7 @@
     "test:ragas": "vitest run test/evals/ragas/ --reporter=verbose",
     "test:evals": "vitest run test/evals/ --reporter=verbose",
     "scrape": "ts-node -r tsconfig-paths/register scripts/scrape.ts",
+    "vapi:upload": "ts-node -r tsconfig-paths/register scripts/upload-to-vapi.ts",
     "test:generate": "ts-node -r tsconfig-paths/register scripts/generate-tests-from-criteria.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
