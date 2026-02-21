@@ -49,7 +49,7 @@ export class MacularRAGAgent extends AgentAdapter {
       return "I didn't receive a message. How can I help you?";
     }
 
-    const response = await fetch(`${API_BASE_URL}/chat/query`, {
+    const response = await fetch(`${API_BASE_URL}/api/chat/query`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
