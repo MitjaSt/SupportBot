@@ -6,6 +6,7 @@ import {
 } from '@nestjs/platform-fastify';
 import { AppModule } from './app.module';
 import { checkEnv } from './check-env';
+import { AllExceptionsFilter } from './filters/all-exceptions.filter';
 
 async function bootstrap() {
   checkEnv();
@@ -55,6 +56,8 @@ async function bootstrap() {
       done();
     },
   );
+
+  app.useGlobalFilters(new AllExceptionsFilter());
 
   // All API routes live under /api — matches the frontend's fetch calls in production.
   // /metrics is excluded so Prometheus can still scrape it at the bare path.
