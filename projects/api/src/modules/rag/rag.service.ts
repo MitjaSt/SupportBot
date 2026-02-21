@@ -8,7 +8,7 @@ import { ObservabilityService } from '../observability/observability.service';
 import { PromptLoggerService } from '../prompt-logger/prompt-logger.service';
 import { SearchResult, VectorDbService } from '../vector-db/vector-db.service';
 import { ToolHandlerService } from './services/tool-handler.service';
-import { RAG_TOOLS, TOOL_USAGE_INSTRUCTIONS } from './tools';
+import { RAG_TOOLS } from './tools';
 
 
 export interface RagResponse {
@@ -41,16 +41,22 @@ export interface StreamEvent {
   };
 }
 
-// System prompt matching Python implementation
-const SYSTEM_PROMPT = `You are a helpful assistant for the Macular Society helpline.
-Answer questions about macular disease based ONLY on the provided context.
-If the context doesn't contain relevant information, say:
-"I do not have information about that. Can I help you with something else?"
+type ConversationMessage = { role: 'user' | 'assistant'; content: string };
 
-Keep responses concise and suitable for a phone conversation.
-Refer to the person as "you" not "the caller".
+interface GenerateAnswerOptions {
+  query: string;
+  chunks: SearchResult[];
+  systemPrompt: string;
+  conversationHistory?: ConversationMessage[];
+  sessionId?: string;
+}
 
-${TOOL_USAGE_INSTRUCTIONS}`;
+interface BuildPromptOptions {
+  query: string;
+  chunks: SearchResult[];
+  systemPrompt: string;
+  conversationHistory?: ConversationMessage[];
+}
 
 // Query rewriting prompt for making follow-up questions self-contained
 const QUERY_REWRITE_PROMPT = `You are a query rewriting assistant. Given a conversation history and a user's follow-up question, rewrite the question to be self-contained and include necessary context from the conversation.
@@ -223,13 +229,13 @@ export class RagService {
     return results;
   }
 
-  async generateAnswer(
-    query: string,
-    chunks: SearchResult[],
-    conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>,
-    systemPrompt: string = SYSTEM_PROMPT,
-    sessionId?: string,
-  ): Promise<RagResponse> {
+  async generateAnswer({
+    query,
+    chunks,
+    systemPrompt,
+    conversationHistory,
+    sessionId,
+  }: GenerateAnswerOptions): Promise<RagResponse> {
     // Build context from chunks
     const context = chunks
       .map((c, i) => `[${i + 1}] ${c.text}`)
@@ -319,13 +325,13 @@ export class RagService {
    * Generate streaming answer using OpenAI chat completions with streaming enabled
    * Returns an async generator that yields text chunks
    */
-  async *generateAnswerStream(
-    query: string,
-    chunks: SearchResult[],
-    conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>,
-    systemPrompt: string = SYSTEM_PROMPT,
-    sessionId?: string,
-  ): AsyncGenerator<StreamEvent> {
+  async *generateAnswerStream({
+    query,
+    chunks,
+    systemPrompt,
+    conversationHistory,
+    sessionId,
+  }: GenerateAnswerOptions): AsyncGenerator<StreamEvent> {
     // Build context from chunks
     const context = chunks
       .map((c, i) => `[${i + 1}] ${c.text}`)
@@ -441,12 +447,12 @@ export class RagService {
     };
   }
 
-  private buildFullPrompt(
-    query: string,
-    chunks: SearchResult[],
-    conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>,
-    systemPrompt: string = SYSTEM_PROMPT,
-  ): string {
+  private buildFullPrompt({
+    query,
+    chunks,
+    systemPrompt,
+    conversationHistory,
+  }: BuildPromptOptions): string {
     const parts = [`INSTRUCTIONS:\n${systemPrompt}`];
 
     if (conversationHistory?.length) {
@@ -514,25 +520,20 @@ export class RagService {
         .catch((err) => this.logger.warn(`Observability logRetrieval failed: ${err}`));
     }
 
-    // Fetch prompt from observability adapter (LangFuse/LangWatch) or fall back to default
+    // Fetch prompt from observability adapters (LangWatch preferred)
     const conversationHistoryStr =
       conversationHistory?.map((m) => `${m.role}: ${m.content}`).join('\n') ?? '';
-    let systemPrompt = SYSTEM_PROMPT;
-    try {
-      const fetchedPrompt = await this.observability.getPrompt(
-        chunks.map((c) => c.text),
-        conversationHistoryStr,
+    const systemPrompt = await this.observability.getPrompt(
+      chunks.map((c) => c.text),
+      conversationHistoryStr,
+    );
+    if (!systemPrompt) {
+      throw new Error(
+        'No system prompt available. Configure a prompt in LangWatch or another enabled observability adapter.',
       );
-      if (fetchedPrompt) {
-        systemPrompt = fetchedPrompt;
-        // TODO: Add information about which adaptor it is
-        this.logger.debug('Using prompt from observability adapter');
-      }
-    } catch (e) {
-      this.logger.warn(`Failed to fetch prompt from observability, using default: ${e}`);
     }
 
-    const fullPrompt = this.buildFullPrompt(query, chunks, conversationHistory, systemPrompt);
+    const fullPrompt = this.buildFullPrompt({ query, chunks, systemPrompt, conversationHistory });
 
     const promptTokenCount = this.countTokens(fullPrompt);
     if (promptTokenCount > this.config.rag.promptTokenRejectThreshold) {
@@ -555,7 +556,7 @@ export class RagService {
 
     // Generation phase (timed)
     const generationStart = Date.now();
-    const result = await this.generateAnswer(query, chunks, conversationHistory, systemPrompt, sessionId);
+    const result = await this.generateAnswer({ query, chunks, systemPrompt, conversationHistory, sessionId });
     const generationDurationMs = Date.now() - generationStart;
 
     if (trace) {
@@ -661,27 +662,23 @@ export class RagService {
         .catch((err) => this.logger.warn(`Observability logRetrieval failed: ${err}`));
     }
 
-    // Fetch prompt from observability adapter
+    // Fetch prompt from observability adapters (LangWatch preferred)
     const conversationHistoryStr =
       conversationHistory?.map((m) => `${m.role}: ${m.content}`).join('\n') ?? '';
-    let systemPrompt = SYSTEM_PROMPT;
-    try {
-      const fetchedPrompt = await this.observability.getPrompt(
-        chunks.map((c) => c.text),
-        conversationHistoryStr,
+    const systemPrompt = await this.observability.getPrompt(
+      chunks.map((c) => c.text),
+      conversationHistoryStr,
+    );
+    if (!systemPrompt) {
+      throw new Error(
+        'No system prompt available. Configure a prompt in LangWatch or another enabled observability adapter.',
       );
-      if (fetchedPrompt) {
-        systemPrompt = fetchedPrompt;
-        this.logger.debug('Using prompt from observability adapter');
-      }
-    } catch (e) {
-      this.logger.warn(`Failed to fetch prompt from observability, using default: ${e}`);
     }
 
     // Generation phase (streaming)
     const generationStart = Date.now();
     let fullAnswer = '';
-    const fullPrompt = this.buildFullPrompt(query, chunks, conversationHistory, systemPrompt);
+    const fullPrompt = this.buildFullPrompt({ query, chunks, systemPrompt, conversationHistory });
 
     const promptTokenCount = this.countTokens(fullPrompt);
     if (promptTokenCount > this.config.rag.promptTokenRejectThreshold) {
@@ -702,7 +699,7 @@ export class RagService {
     }
 
     // Stream the response
-    for await (const event of this.generateAnswerStream(query, chunks, conversationHistory, systemPrompt, sessionId)) {
+    for await (const event of this.generateAnswerStream({ query, chunks, systemPrompt, conversationHistory, sessionId })) {
       if (event.type === 'chunk' && event.content) {
         fullAnswer += event.content;
       }

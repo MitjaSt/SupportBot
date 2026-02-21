@@ -70,15 +70,22 @@ export class ObservabilityService implements OnModuleInit, OnModuleDestroy {
   }
 
   /**
-   * Get a prompt from the first adapter that supports prompt management.
-   * Priority: LangFuse > LangWatch > null.
+   * Get a prompt from the first adapter that returns one.
+   * Priority: LangWatch > all other adapters in registration order.
    */
   async getPrompt(chunks: string[], conversationHistory?: string): Promise<string | null> {
-    for (const adapter of this.adapters) {
+    const ordered = [
+      ...this.adapters.filter((a) => a.name === 'langwatch'),
+      ...this.adapters.filter((a) => a.name !== 'langwatch'),
+    ];
+    for (const adapter of ordered) {
       if (!adapter.enabled) continue;
       try {
         const prompt = await adapter.getPrompt(chunks, conversationHistory);
-        if (prompt !== null) return prompt;
+        if (prompt !== null) {
+          this.logger.debug(`System prompt resolved from adapter: ${adapter.name}`);
+          return prompt;
+        }
       } catch (e) {
         this.logger.warn(`${adapter.name}.getPrompt failed: ${e}`);
       }
