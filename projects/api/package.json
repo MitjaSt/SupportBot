@@ -23,6 +23,8 @@
     "scrape": "ts-node -r tsconfig-paths/register scripts/scrape.ts",
     "vapi:upload": "ts-node -r tsconfig-paths/register scripts/upload-to-vapi.ts",
     "test:generate": "ts-node -r tsconfig-paths/register scripts/generate-tests-from-criteria.ts",
+    "generate:scenario-tests": "ts-node -r tsconfig-paths/register scripts/generate-tests-from-scenarios.ts",
+    "test:scenarios:custom": "vitest run test/evals/scenarios/custom-generated/ --reporter=verbose",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",

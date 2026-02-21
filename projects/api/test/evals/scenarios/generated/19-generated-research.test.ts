@@ -2509,7 +2509,7 @@ describe('Generated Tests - Research', () => {
           systemPrompt:
             `You are someone seeking information about research - explore.
             Ask the following questions naturally in conversation:
-            - What is the main goal of the Macular Society's 2020–2030 Research Strategy?
+            - What is the main goal of the Macular Society's 2020-2030 Research Strategy?
             - How much has the Macular Society invested in research projects since 1987?
             - What is the eccentric viewing technique mentioned in the text?`,
         }),

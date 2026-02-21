@@ -83,7 +83,7 @@ async function main() {
 
   for (const filename of allFiles) {
     if (existingNames.has(filename)) {
-      console.log(`  – ${filename} (already uploaded, skipping)`);
+      console.log(`  - ${filename} (already uploaded, skipping)`);
       continue;
     }
 
