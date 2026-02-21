@@ -1,6 +1,6 @@
 import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
-import { ConfigService } from '@/config/config.service';
-import { createDb, vectors, type Database } from '@/db';
+import { DatabaseService } from '@/modules/database/database.service';
+import { vectors } from '@/db';
 import { sql } from 'drizzle-orm';
 
 export interface VectorPoint {
@@ -38,16 +38,11 @@ interface CountQueryRow {
 @Injectable()
 export class VectorDbService implements OnModuleInit {
   private readonly logger = new Logger(VectorDbService.name);
-  private readonly db: Database;
 
-  constructor(private readonly config: ConfigService) {
-    this.db = createDb({
-      host: config.postgres.host,
-      port: config.postgres.port,
-      database: config.postgres.database,
-      user: config.postgres.user,
-      password: config.postgres.password,
-    });
+  constructor(private readonly database: DatabaseService) {}
+
+  private get db() {
+    return this.database.db;
   }
 
   async onModuleInit(): Promise<void> {
