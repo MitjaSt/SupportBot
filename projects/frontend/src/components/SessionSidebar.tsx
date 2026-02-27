@@ -23,44 +23,34 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate, useLocation, matchPath } from 'react-router-dom';
-import { deleteSession, listSessions } from '../api/client';
+import { useSessions, useDeleteSession } from '../hooks/useSessions';
 import { usePinnedSessions } from '../hooks/usePinnedSessions';
-import type { Session } from '../types';
 
 interface SessionSidebarProps {
   onNewSession: () => void;
-  refreshTrigger?: number;
 }
 
-export function SessionSidebar({ onNewSession, refreshTrigger }: SessionSidebarProps) {
-  const [sessions, setSessions] = useState<(Session & { messageCount: number })[]>([]);
-  const [loading, setLoading] = useState(true);
+export function SessionSidebar({ onNewSession }: SessionSidebarProps) {
+  // useSessions() manages all loading, caching, and background refetching.
+  // Any call to invalidateQueries({ queryKey: sessionsQueryKey() }) elsewhere
+  // in the app (e.g. after a chat stream completes) will trigger this to refetch.
+  const { data: sessions = [], isPending } = useSessions();
+
+  // useDeleteSession() returns a mutation object. Calling mutate(sessionId)
+  // fires the DELETE request, then the onSuccess handler in the hook
+  // invalidates the sessions list and evicts the deleted session from cache.
+  const { mutate: deleteSession } = useDeleteSession();
+
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [sessionToDelete, setSessionToDelete] = useState<string | null>(null);
   const { togglePin, isPinned } = usePinnedSessions();
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Extract sessionId from current route
   const match = matchPath('/chat/:sessionId', location.pathname);
   const currentSessionId = match?.params.sessionId;
-
-  useEffect(() => {
-    loadSessions();
-  }, [refreshTrigger]);
-
-  const loadSessions = async () => {
-    try {
-      const data = await listSessions();
-      setSessions(data);
-    } catch {
-      // Error loading sessions - fail silently as this is not critical
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleDeleteClick = (sessionId: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -68,21 +58,19 @@ export function SessionSidebar({ onNewSession, refreshTrigger }: SessionSidebarP
     setDeleteDialogOpen(true);
   };
 
-  const handleDeleteConfirm = async () => {
+  const handleDeleteConfirm = () => {
     if (!sessionToDelete) return;
 
-    try {
-      await deleteSession(sessionToDelete);
-      setSessions((prev) => prev.filter((s) => s.sessionId !== sessionToDelete));
-      if (currentSessionId === sessionToDelete) {
-        navigate('/');
-      }
-    } catch {
-      // Error deleting session - fail silently
-    } finally {
-      setDeleteDialogOpen(false);
-      setSessionToDelete(null);
-    }
+    deleteSession(sessionToDelete, {
+      onSuccess: () => {
+        if (currentSessionId === sessionToDelete) {
+          navigate('/');
+        }
+      },
+    });
+
+    setDeleteDialogOpen(false);
+    setSessionToDelete(null);
   };
 
   const handleDeleteCancel = () => {
@@ -90,7 +78,7 @@ export function SessionSidebar({ onNewSession, refreshTrigger }: SessionSidebarP
     setSessionToDelete(null);
   };
 
-  // Sort: pinned first, then by updatedAt
+  // Sort: pinned first, then by updatedAt descending
   const sortedSessions = [...sessions].sort((a, b) => {
     const aPinned = isPinned(a.sessionId);
     const bPinned = isPinned(b.sessionId);
@@ -149,7 +137,7 @@ export function SessionSidebar({ onNewSession, refreshTrigger }: SessionSidebarP
       </Typography>
 
       <List sx={{ flex: 1, overflow: 'auto', py: 0 }}>
-        {loading ? (
+        {isPending ? (
           <ListItem>
             <ListItemText secondary="Loading..." />
           </ListItem>

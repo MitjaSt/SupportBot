@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
 import { Box, CssBaseline, ThemeProvider, createTheme } from '@mui/material';
 import { SessionSidebar } from './components/SessionSidebar';
@@ -23,30 +23,22 @@ const theme = createTheme({
 
 export function App() {
   const navigate = useNavigate();
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const handleNewSession = useCallback(() => {
     navigate('/');
   }, [navigate]);
 
-  const handleSessionUpdate = useCallback(() => {
-    setRefreshTrigger((prev) => prev + 1);
-  }, []);
-
+  // No refreshTrigger or onSessionUpdate needed.
+  // ChatView calls queryClient.invalidateQueries() after a stream completes,
+  // which automatically triggers useSessions() in SessionSidebar to refetch.
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Box sx={{ display: 'flex', height: '100vh' }}>
-        <SessionSidebar
-          onNewSession={handleNewSession}
-          refreshTrigger={refreshTrigger}
-        />
+        <SessionSidebar onNewSession={handleNewSession} />
         <Routes>
-          <Route path="/" element={<ChatView onSessionUpdate={handleSessionUpdate} />} />
-          <Route
-            path="/chat/:sessionId"
-            element={<ChatView onSessionUpdate={handleSessionUpdate} />}
-          />
+          <Route path="/" element={<ChatView />} />
+          <Route path="/chat/:sessionId" element={<ChatView />} />
         </Routes>
       </Box>
     </ThemeProvider>

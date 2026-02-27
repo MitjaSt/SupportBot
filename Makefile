@@ -43,7 +43,7 @@ include make/misc.mk
 ##@ General
 
 help:
-	@echo "$(BLUE)Macular Society RAG Pipeline$(NC)"
+	@echo "$(BLUE)RAG Pipeline$(NC)"
 	@echo ""
 	@awk 'BEGIN {FS = ":.*##"; printf "Usage:\n  make $(YELLOW)<target>$(NC)\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  $(GREEN)%-22s$(NC) %s\n", $$1, $$2 } /^##@/ { printf "\n$(BLUE)%s$(NC)\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 

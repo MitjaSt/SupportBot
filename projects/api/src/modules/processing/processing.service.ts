@@ -73,30 +73,61 @@ export class ProcessingService implements OnModuleInit {
 
   /**
    * Split text into sentences using regex patterns.
-   * Handles common abbreviations and edge cases.
+   *
+   * The core challenge: the period character (.) appears in multiple contexts —
+   * sentence endings, decimal numbers (1.5m), and abbreviations (Dr., e.g.).
+   * We must protect non-boundary periods before splitting, then restore them.
+   *
+   * Strategy:
+   * 1. Replace non-boundary periods with a private-use placeholder character.
+   * 2. Run the split regex (which now only sees true sentence-ending periods).
+   * 3. Restore the placeholder back to "." in the output.
    */
   private splitIntoSentences(text: string): string[] {
-    // Split on sentence-ending punctuation followed by space or end
-    // Handles: periods, question marks, exclamation marks
-    // Preserves abbreviations like "Dr.", "Mr.", "e.g.", etc.
-    const sentences: string[] = [];
+    // Private-use Unicode characters as placeholders — safe because they
+    // won't appear in any real medical document text.
+    const DECIMAL_DOT = '\uE000'; // protects: 1.5, 2.3, 0.7
+    const ABBREV_DOT  = '\uE001'; // protects: Dr., Mr., e.g., etc.
 
-    // Pattern matches sentence boundaries
+    let working = text;
+
+    // Protect decimal numbers: digit . digit  →  digit \uE000 digit
+    // Covers: 1.5m, 0.7, 2.3 million, etc.
+    working = working.replace(/(\d)\.(\d)/g, `$1${DECIMAL_DOT}$2`);
+
+    // Protect ordinal / list-item numbers: "1. Early signs" — the period
+    // after a standalone number at the start of a word boundary is often a
+    // list marker, not a sentence end.  We identify these by requiring that
+    // the digit is preceded by whitespace or start-of-string AND the period
+    // is followed by whitespace + lowercase letter.
+    working = working.replace(/((?:^|\s)\d+)\.(\s+[a-z])/g, `$1${DECIMAL_DOT}$2`);
+
+    // Protect common abbreviations.  The list covers the most frequent ones
+    // in medical/charity documents; extend it if new false splits appear.
+    working = working.replace(
+      /\b(Dr|Mr|Mrs|Ms|Prof|St|vs|etc|approx|no|fig|ref|vol|ed|pp|e\.g|i\.e)\.(?=\s)/gi,
+      `$1${ABBREV_DOT}`,
+    );
+
+    // Now split on genuine sentence boundaries:
+    // [^.!?]* — any non-terminal content
+    // [.!?]+  — one or more terminal punctuation marks
+    // (?:\s+|$) — followed by whitespace or end of string
     const pattern = /[^.!?]*[.!?]+(?:\s+|$)|[^.!?]+$/g;
-    const matches = text.match(pattern);
+    const matches = working.match(pattern);
 
     if (!matches) {
       return text.trim() ? [text.trim()] : [];
     }
 
-    for (const match of matches) {
-      const trimmed = match.trim();
-      if (trimmed) {
-        sentences.push(trimmed);
-      }
-    }
-
-    return sentences;
+    return matches
+      .map((m) =>
+        m
+          .replace(new RegExp(DECIMAL_DOT, 'g'), '.')
+          .replace(new RegExp(ABBREV_DOT,  'g'), '.')
+          .trim(),
+      )
+      .filter(Boolean);
   }
 
   async flattenAll(): Promise<{ processed: number; skipped: number }> {

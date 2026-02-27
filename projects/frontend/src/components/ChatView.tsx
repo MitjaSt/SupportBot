@@ -1,25 +1,35 @@
 import { Alert, Box, Typography } from '@mui/material';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { getSession, sendQueryStream, sendVoiceQuery, synthesizeSpeech } from '../api/client';
+import { useQueryClient } from '@tanstack/react-query';
+import { sendQueryStream, sendVoiceQuery, synthesizeSpeech } from '../api/client';
+import { useSession } from '../hooks/useSession';
+import { sessionsQueryKey } from '../hooks/useSessions';
 import type { Message } from '../types';
 import { ChatInput } from './ChatInput';
 import { ChatMessage } from './ChatMessage';
 
-interface ChatViewProps {
-  onSessionUpdate: () => void;
-}
-
-export function ChatView({ onSessionUpdate }: ChatViewProps) {
+export function ChatView() {
   const { sessionId } = useParams();
   const navigate = useNavigate();
+
+  // useQueryClient() gives access to the shared QueryClient instance.
+  // We use it after a stream completes to invalidate the sessions list —
+  // this triggers SessionSidebar's useSessions() to refetch automatically,
+  // with no prop drilling or callback required.
+  const queryClient = useQueryClient();
+
+  // useSession loads the message history for an existing session.
+  // When sessionId is undefined (new chat route "/"), enabled:false means
+  // the query stays idle and no network request is made.
+  const { data: sessionData, isError: sessionLoadError } = useSession(sessionId);
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [failedInput, setFailedInput] = useState<string | undefined>(undefined);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(sessionId ?? null);
   const [voiceEnabled, setVoiceEnabled] = useState(() => {
-    // Load voice preference from localStorage, default to false
     const saved = localStorage.getItem('voiceEnabled');
     return saved === 'true';
   });
@@ -27,37 +37,36 @@ export function ChatView({ onSessionUpdate }: ChatViewProps) {
   const isStreamingRef = useRef(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  const loadSession = useCallback(async (id: string) => {
-    try {
-      const data = await getSession(id);
-      if (data) {
-        setMessages(data.history);
-      } else {
-        setError('Session not found');
-        navigate('/');
-      }
-    } catch (err) {
-      setError('Failed to load conversation: ' + (err as Error).message);
-    }
-  }, [navigate]);
-
-  // Load existing session if navigating to one (but not during streaming)
+  // When sessionData arrives from the cache or network, populate messages.
+  // The isStreamingRef guard prevents overwriting live streaming state
+  // if the query somehow refetches during an active stream.
   useEffect(() => {
-    // Skip loading if we're currently streaming (prevents race condition)
-    if (isStreamingRef.current) {
-      return;
-    }
+    if (isStreamingRef.current) return;
 
-    if (sessionId) {
-      loadSession(sessionId);
-      setCurrentSessionId(sessionId);
-    } else {
+    if (sessionData) {
+      setMessages(sessionData.history);
+    }
+  }, [sessionData]);
+
+  // When sessionLoadError is true (e.g. 404), redirect to the root.
+  // This replaces the manual try/catch + navigate() in the old loadSession callback.
+  useEffect(() => {
+    if (sessionLoadError) {
+      navigate('/');
+    }
+  }, [sessionLoadError, navigate]);
+
+  // Reset to a blank chat when navigating to "/" (no sessionId)
+  useEffect(() => {
+    if (!sessionId) {
       setMessages([]);
       setCurrentSessionId(null);
+    } else {
+      setCurrentSessionId(sessionId);
     }
-  }, [sessionId, loadSession]);
+  }, [sessionId]);
 
-  // Scroll to bottom when messages change
+  // Scroll to bottom whenever the message list changes
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -71,23 +80,17 @@ export function ChatView({ onSessionUpdate }: ChatViewProps) {
   };
 
   const playAudio = async (text: string) => {
-    // Only play if voice is enabled
-    if (!voiceEnabled) {
-      return;
-    }
+    if (!voiceEnabled) return;
 
     try {
-      // Stop any currently playing audio
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current = null;
       }
 
-      // Synthesize speech
       const audioBlob = await synthesizeSpeech(text);
       const audioUrl = URL.createObjectURL(audioBlob);
 
-      // Create and play audio element
       const audio = new Audio(audioUrl);
       audioRef.current = audio;
 
@@ -98,7 +101,7 @@ export function ChatView({ onSessionUpdate }: ChatViewProps) {
 
       await audio.play();
     } catch {
-      // Don't show error to user - TTS is optional enhancement
+      // TTS is optional — don't surface errors to the user
     }
   };
 
@@ -108,15 +111,17 @@ export function ChatView({ onSessionUpdate }: ChatViewProps) {
     setLoading(true);
     isStreamingRef.current = true;
 
-    // Ensure session ID is always set before the API call
     const sessionId = currentSessionId ?? crypto.randomUUID();
     if (!currentSessionId) {
       setCurrentSessionId(sessionId);
       navigate(`/chat/${sessionId}`, { replace: true });
     }
 
-    // Optimistically add user message
+    // Optimistically add the user message before the request fires.
+    // Using crypto.randomUUID() for the key ensures React can correctly
+    // reconcile the list even when items are added or removed mid-stream.
     const userMessage: Message = {
+      id: crypto.randomUUID() as unknown as number,
       role: 'user',
       content,
       createdAt: new Date().toISOString(),
@@ -125,29 +130,28 @@ export function ChatView({ onSessionUpdate }: ChatViewProps) {
 
     try {
       let fullContent = '';
-      let assistantMessageAdded = false;
+      let assistantMessageId: string | null = null;
 
-      // Stream the response
       for await (const event of sendQueryStream(content, sessionId)) {
         if (event.type === 'error') {
           throw new Error(event.content || 'Stream error');
         }
 
-        // Accumulate content chunks
         if (event.type === 'chunk' && event.content) {
           fullContent += event.content;
 
-          // Add assistant message on first chunk
-          if (!assistantMessageAdded) {
+          if (!assistantMessageId) {
+            // First chunk — add the assistant message with a stable id
+            assistantMessageId = crypto.randomUUID();
             const assistantMessage: Message = {
+              id: assistantMessageId as unknown as number,
               role: 'assistant',
               content: fullContent,
               createdAt: new Date().toISOString(),
             };
             setMessages((prev) => [...prev, assistantMessage]);
-            assistantMessageAdded = true;
           } else {
-            // Update the last message (assistant's response) in real-time
+            // Subsequent chunks — update the last message content in place
             setMessages((prev) => {
               const updated = [...prev];
               updated[updated.length - 1] = {
@@ -159,19 +163,18 @@ export function ChatView({ onSessionUpdate }: ChatViewProps) {
           }
         }
 
-        // Handle tool response (replaces streamed content)
         if (event.type === 'tool' && event.content) {
           fullContent = event.content;
 
-          // Add or update assistant message with tool response
-          if (!assistantMessageAdded) {
+          if (!assistantMessageId) {
+            assistantMessageId = crypto.randomUUID();
             const assistantMessage: Message = {
+              id: assistantMessageId as unknown as number,
               role: 'assistant',
               content: fullContent,
               createdAt: new Date().toISOString(),
             };
             setMessages((prev) => [...prev, assistantMessage]);
-            assistantMessageAdded = true;
           } else {
             setMessages((prev) => {
               const updated = [...prev];
@@ -184,8 +187,8 @@ export function ChatView({ onSessionUpdate }: ChatViewProps) {
           }
         }
 
-        // Done streaming — attach chunks, fullPrompt, and promptTokenCount to the assistant message
         if (event.type === 'done') {
+          // Attach RAG metadata to the completed assistant message
           if (event.metadata?.sources || event.metadata?.fullPrompt) {
             setMessages((prev) => {
               const updated = [...prev];
@@ -199,10 +202,10 @@ export function ChatView({ onSessionUpdate }: ChatViewProps) {
             });
           }
 
-          // Notify sidebar to refresh
-          onSessionUpdate();
+          // Invalidate the sessions list so the sidebar reflects the new message count.
+          // This replaces the old onSessionUpdate() prop callback — no prop drilling needed.
+          queryClient.invalidateQueries({ queryKey: sessionsQueryKey() });
 
-          // Play audio response
           if (fullContent) {
             playAudio(fullContent);
           }
@@ -211,10 +214,7 @@ export function ChatView({ onSessionUpdate }: ChatViewProps) {
     } catch {
       setError('Failed to send message. Please try again.');
       setFailedInput(content);
-      // Remove optimistic user message (and assistant message if it was added)
       setMessages((prev) => {
-        // If we added an assistant message, remove both user and assistant
-        // Otherwise just remove the user message
         const messagesToRemove = prev[prev.length - 1]?.role === 'assistant' ? 2 : 1;
         return prev.slice(0, -messagesToRemove);
       });
@@ -228,7 +228,6 @@ export function ChatView({ onSessionUpdate }: ChatViewProps) {
     setError(null);
     setLoading(true);
 
-    // Ensure session ID is always set before the API call
     const sessionId = currentSessionId ?? crypto.randomUUID();
     if (!currentSessionId) {
       setCurrentSessionId(sessionId);
@@ -236,19 +235,18 @@ export function ChatView({ onSessionUpdate }: ChatViewProps) {
     }
 
     try {
-      // Send voice query
       const response = await sendVoiceQuery(audioBlob, sessionId);
 
-      // Add user message (transcribed text)
       const userMessage: Message = {
+        id: crypto.randomUUID() as unknown as number,
         role: 'user',
         content: response.transcription?.text || '[Voice message]',
         createdAt: new Date().toISOString(),
       };
       setMessages((prev) => [...prev, userMessage]);
 
-      // Add assistant message
       const assistantMessage: Message = {
+        id: crypto.randomUUID() as unknown as number,
         role: 'assistant',
         content: response.answer,
         createdAt: new Date().toISOString(),
@@ -257,10 +255,8 @@ export function ChatView({ onSessionUpdate }: ChatViewProps) {
       };
       setMessages((prev) => [...prev, assistantMessage]);
 
-      // Notify sidebar to refresh
-      onSessionUpdate();
+      queryClient.invalidateQueries({ queryKey: sessionsQueryKey() });
 
-      // Play audio response
       playAudio(response.answer);
     } catch {
       setError('Failed to process voice message. Please try again.');
@@ -301,8 +297,11 @@ export function ChatView({ onSessionUpdate }: ChatViewProps) {
           </Box>
         ) : (
           <>
-            {messages.map((message, index) => (
-              <ChatMessage key={index} message={message} />
+            {messages.map((message) => (
+              // Use message.id (assigned at creation time) as the React key.
+              // This is stable across re-renders, unlike array index which would
+              // cause React to remount the wrong nodes when items shift position.
+              <ChatMessage key={message.id ?? message.createdAt.toString()} message={message} />
             ))}
             <div ref={messagesEndRef} />
           </>

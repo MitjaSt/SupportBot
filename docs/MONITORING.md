@@ -1,6 +1,6 @@
 # Monitoring & Observability
 
-This document describes the Prometheus/Grafana monitoring stack for the Macular Society RAG system.
+This document describes the Prometheus/Grafana monitoring stack for the RAG system.
 
 ## Overview
 

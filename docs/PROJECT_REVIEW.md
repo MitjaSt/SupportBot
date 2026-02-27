@@ -1,8 +1,8 @@
-# Macular Society RAG System - Project Review
+# RAG System - Project Review
 
 **Review Date:** 2026-02-20
 **Reviewed by:** Senior Architect, Security Specialist & RAG Product Specialist
-**Project:** Macular Society Helpline RAG System (NestJS + React + pgvector)
+**Project:** Helpline RAG System (NestJS + React + pgvector)
 
 ---
 
@@ -398,7 +398,7 @@ Chunks only carry `source`, `chunk_index`, and `chunk_length`. There's no:
 
 #### ISSUE: No Document Freshness Handling
 
-There's no mechanism to detect when source documents have changed on the Macular Society website and trigger a re-ingestion.
+There's no mechanism to detect when source documents have changed on the website and trigger a re-ingestion.
 
 **Recommendation:** Implement a scheduled job that:
 1. Re-scrapes and compares checksums
@@ -525,7 +525,7 @@ No evidence of database backup configuration. Loss of the `postgres_data` volume
 
 ## 7. RAG Product Feature Suggestions
 
-These are features that would significantly improve the product's value for the Macular Society helpline use case.
+These are features that would significantly improve the product's value for the  helpline use case.
 
 ### 7.1 Confidence Score & Uncertainty Handling
 

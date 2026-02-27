@@ -559,37 +559,6 @@ const session = await db.execute(sql`
 
 ## RAG-Specific Standards
 
-### Prompt Engineering
-
-System prompts live in constants, not scattered in code.
-
-**Good:**
-```typescript
-// ✅ Centralized system prompt
-const SYSTEM_PROMPT = `You are a helpful assistant for the Macular Society helpline.
-Answer questions about macular disease based ONLY on the provided context.
-If the context doesn't contain relevant information, say:
-"I do not have information about that. Can I help you with something else?"
-
-Keep responses concise and suitable for a phone conversation.
-Refer to the person as "you" not "the caller".`;
-
-// Used consistently across all LLM calls
-const messages = [
-  { role: 'system', content: SYSTEM_PROMPT },
-  // ...
-];
-```
-
-**Bad:**
-```typescript
-// ❌ Inline prompts that drift over time
-const messages = [
-  { role: 'system', content: 'You are a helpful assistant. Answer questions.' },
-  // ...
-];
-```
-
 ### Retrieval Thresholds
 
 Make retrieval parameters configurable, not hardcoded.
