@@ -1,19 +1,24 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { writeFile, mkdir, readdir, readFile } from 'fs/promises';
-import { existsSync } from 'fs';
-import { join } from 'path';
-import OpenAI from 'openai';
 import { ConfigService } from '@/config/config.service';
+import { Injectable, Logger } from '@nestjs/common';
+import { existsSync } from 'fs';
+import { mkdir, readdir, readFile, writeFile } from 'fs/promises';
+import OpenAI from 'openai';
+import { join } from 'path';
 
-const SUMMARIZATION_PROMPT = `You are a medical content summarizer for the Macular Society.
-Summarize the following text about macular disease, keeping the key medical information,
-symptoms, treatments, and advice. Keep the summary concise but comprehensive.
-Preserve important medical terms and specific advice.
+const SUMMARIZATION_PROMPT = `You are building a knowledge base for the Macular Society.
+Convert the following source text into a concise knowledge base entry.
 
-Text to summarize:
+Rules:
+- Write in direct, declarative sentences as if stating facts ("Wet AMD is treated with..." not "The text discusses wet AMD treatment...")
+- Never refer to the source material ("the text", "this article", "the page", "the document", "the following" etc.)
+- Preserve all specific medical terms, drug names, statistics, and advice exactly as stated
+- Use present tense
+- Be comprehensive but concise — cover every distinct fact, condition, or piece of advice mentioned
+
+Source text:
 {text}
 
-Summary:`;
+Knowledge base entry:`;
 
 export interface SummarizeResult {
   summarized: number;

@@ -24,6 +24,7 @@
     "vapi:upload": "ts-node -r tsconfig-paths/register scripts/upload-to-vapi.ts",
     "test:generate": "ts-node -r tsconfig-paths/register scripts/generate-tests-from-criteria.ts",
     "generate:scenario-tests": "ts-node -r tsconfig-paths/register scripts/generate-tests-from-scenarios.ts",
+    "inspect:vectors": "ts-node -r tsconfig-paths/register scripts/inspect-vectors.ts",
     "test:scenarios:custom": "vitest run test/evals/scenarios/custom-generated/ --reporter=verbose",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",

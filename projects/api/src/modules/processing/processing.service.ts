@@ -1,9 +1,9 @@
+import { ConfigService } from '@/config/config.service';
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { writeFile, mkdir, readdir, readFile, rm } from 'fs/promises';
 import { existsSync } from 'fs';
+import { mkdir, readdir, readFile, rm, writeFile } from 'fs/promises';
 import { join } from 'path';
 import { get_encoding, type Tiktoken } from 'tiktoken';
-import { ConfigService } from '@/config/config.service';
 
 export interface ScrapedPage {
   url: string;
@@ -242,7 +242,6 @@ export class ProcessingService implements OnModuleInit {
 
   /**
    * Semantic chunking: respects sentence boundaries and uses accurate token counting.
-   * Similar to Python's semantic-text-splitter behavior.
    */
   chunkDocument(doc: FlattenedDocument): TextChunk[] {
     const chunks: TextChunk[] = [];
