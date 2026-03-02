@@ -3,6 +3,7 @@ import {
   BarChart,
   Chat,
   Delete,
+  ManageSearch,
   PushPin,
   PushPinOutlined,
 } from '@mui/icons-material';
@@ -221,28 +222,28 @@ export function SessionSidebar({ onNewSession }: SessionSidebarProps) {
 
       <Divider />
       <List sx={{ py: 0.5 }}>
-        <ListItem disablePadding>
-          <ListItemButton
-            selected={location.pathname === '/admin/analytics'}
-            onClick={() => navigate('/admin/analytics')}
-            sx={{
-              '&.Mui-selected': {
-                bgcolor: 'secondary.main',
-                color: 'secondary.contrastText',
-                '& .MuiListItemIcon-root': { color: 'secondary.contrastText' },
-                '&:hover': { bgcolor: 'secondary.dark' },
-              },
-            }}
-          >
-            <ListItemIcon sx={{ minWidth: 36 }}>
-              <BarChart fontSize="small" />
-            </ListItemIcon>
-            <ListItemText
-              primary="Retrieval Analytics"
-              primaryTypographyProps={{ variant: 'body2' }}
-            />
-          </ListItemButton>
-        </ListItem>
+        {[
+          { label: 'Retrieval Analytics', path: '/admin/analytics', icon: <BarChart fontSize="small" /> },
+          { label: 'Knowledge Base', path: '/admin/knowledge-base', icon: <ManageSearch fontSize="small" /> },
+        ].map(({ label, path, icon }) => (
+          <ListItem key={path} disablePadding>
+            <ListItemButton
+              selected={location.pathname === path}
+              onClick={() => navigate(path)}
+              sx={{
+                '&.Mui-selected': {
+                  bgcolor: 'secondary.main',
+                  color: 'secondary.contrastText',
+                  '& .MuiListItemIcon-root': { color: 'secondary.contrastText' },
+                  '&:hover': { bgcolor: 'secondary.dark' },
+                },
+              }}
+            >
+              <ListItemIcon sx={{ minWidth: 36 }}>{icon}</ListItemIcon>
+              <ListItemText primary={label} primaryTypographyProps={{ variant: 'body2' }} />
+            </ListItemButton>
+          </ListItem>
+        ))}
       </List>
 
       {/* Delete confirmation dialog */}

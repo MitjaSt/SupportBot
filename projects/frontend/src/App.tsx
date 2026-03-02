@@ -4,6 +4,7 @@ import { Box, CssBaseline, ThemeProvider, createTheme } from '@mui/material';
 import { SessionSidebar } from './components/SessionSidebar';
 import { ChatView } from './components/ChatView';
 import { AnalyticsDashboard } from './pages/AnalyticsDashboard';
+import { KnowledgeBaseExplorer } from './pages/KnowledgeBaseExplorer';
 
 const theme = createTheme({
   palette: {
@@ -41,6 +42,7 @@ export function App() {
           <Route path="/" element={<ChatView />} />
           <Route path="/chat/:sessionId" element={<ChatView />} />
           <Route path="/admin/analytics" element={<AnalyticsDashboard />} />
+          <Route path="/admin/knowledge-base" element={<KnowledgeBaseExplorer />} />
         </Routes>
       </Box>
     </ThemeProvider>
