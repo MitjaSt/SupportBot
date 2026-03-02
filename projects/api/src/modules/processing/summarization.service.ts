@@ -50,7 +50,7 @@ export class SummarizationService {
       model: this.config.openai.chatModel,
       messages: [{ role: 'user', content: prompt }],
       max_tokens: 1024,
-      temperature: 0.3,
+      temperature: 0,
     });
 
     return response.choices[0]?.message?.content?.trim() ?? '';
