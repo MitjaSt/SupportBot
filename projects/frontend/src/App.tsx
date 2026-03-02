@@ -5,6 +5,7 @@ import { SessionSidebar } from './components/SessionSidebar';
 import { ChatView } from './components/ChatView';
 import { AnalyticsDashboard } from './pages/AnalyticsDashboard';
 import { KnowledgeBaseExplorer } from './pages/KnowledgeBaseExplorer';
+import { SystemPromptPage } from './pages/SystemPromptPage';
 
 const theme = createTheme({
   palette: {
@@ -43,6 +44,7 @@ export function App() {
           <Route path="/chat/:sessionId" element={<ChatView />} />
           <Route path="/admin/analytics" element={<AnalyticsDashboard />} />
           <Route path="/admin/knowledge-base" element={<KnowledgeBaseExplorer />} />
+          <Route path="/admin/system-prompt" element={<SystemPromptPage />} />
         </Routes>
       </Box>
     </ThemeProvider>

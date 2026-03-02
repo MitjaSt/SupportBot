@@ -60,6 +60,12 @@ export interface UpdateTraceOptions {
   metadata?: Record<string, unknown>;
 }
 
+/** Raw prompt template with its source identifier. */
+export interface PromptTemplate {
+  template: string;
+  source: string;
+}
+
 /**
  * Core adapter interface. Every observability provider implements this.
  * All methods must never throw -- failures are logged internally as warnings.
@@ -68,7 +74,7 @@ export interface ObservabilityAdapter {
   readonly name: string;
   readonly enabled: boolean;
 
-  getPrompt(chunks: string[], conversationHistory?: string): Promise<string | null>;
+  getPrompt(): Promise<PromptTemplate | null>;
   createTrace(options: CreateTraceOptions): Promise<TraceHandle | null>;
   logRetrieval(options: LogRetrievalOptions): Promise<void>;
   logGeneration(options: LogGenerationOptions): Promise<void>;

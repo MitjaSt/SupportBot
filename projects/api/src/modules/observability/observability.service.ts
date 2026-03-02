@@ -8,6 +8,7 @@ import type {
   CreateTraceOptions,
   LogEventOptions,
   LogGenerationOptions,
+  PromptTemplate,
   LogRetrievalOptions,
   ObservabilityAdapter,
   TraceHandle,
@@ -69,11 +70,19 @@ export class ObservabilityService implements OnModuleInit, OnModuleDestroy {
     return this.adapters.some((a) => a.enabled);
   }
 
+  /** Get the system prompt from the first adapter that has one. Priority: LangWatch first. */
+  async getPrompt(): Promise<PromptTemplate | null> {
+    return this.firstResult('getPrompt', (a) => a.getPrompt());
+  }
+
   /**
-   * Get a prompt from the first adapter that returns one.
-   * Priority: LangWatch > all other adapters in registration order.
+   * Try each enabled adapter in LangWatch-first order, returning the first non-null result.
+   * Logs a debug on success and a warn on per-adapter failure.
    */
-  async getPrompt(chunks: string[], conversationHistory?: string): Promise<string | null> {
+  private async firstResult<T>(
+    method: string,
+    call: (adapter: ObservabilityAdapter) => Promise<T | null>,
+  ): Promise<T | null> {
     const ordered = [
       ...this.adapters.filter((a) => a.name === 'langwatch'),
       ...this.adapters.filter((a) => a.name !== 'langwatch'),
@@ -81,13 +90,13 @@ export class ObservabilityService implements OnModuleInit, OnModuleDestroy {
     for (const adapter of ordered) {
       if (!adapter.enabled) continue;
       try {
-        const prompt = await adapter.getPrompt(chunks, conversationHistory);
-        if (prompt !== null) {
-          this.logger.debug(`System prompt resolved from adapter: ${adapter.name}`);
-          return prompt;
+        const result = await call(adapter);
+        if (result !== null) {
+          this.logger.debug(`${method} resolved from adapter: ${adapter.name}`);
+          return result;
         }
       } catch (e) {
-        this.logger.warn(`${adapter.name}.getPrompt failed: ${e}`);
+        this.logger.warn(`${adapter.name}.${method} failed: ${e}`);
       }
     }
     return null;

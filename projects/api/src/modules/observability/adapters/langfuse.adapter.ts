@@ -3,6 +3,7 @@ import { Langfuse } from 'langfuse';
 import { ConfigService } from '@/config/config.service';
 import type {
   ObservabilityAdapter,
+  PromptTemplate,
   TraceHandle,
   CreateTraceOptions,
   LogRetrievalOptions,
@@ -34,21 +35,16 @@ export class LangfuseAdapter implements ObservabilityAdapter {
     return this._enabled;
   }
 
-  async getPrompt(chunks: string[], conversationHistory?: string): Promise<string | null> {
+  async getPrompt(): Promise<PromptTemplate | null> {
     if (!this._enabled) return null;
-
     try {
       if (this.promptTemplate === null) {
         this.promptTemplate = await this.client.getPrompt(this.promptSystem);
         this.logger.debug(`Fetched and cached '${this.promptSystem}' prompt from LangFuse`);
       }
-
-      const compiled = (this.promptTemplate as { compile: (vars: Record<string, string>) => string }).compile({
-        rag_context: chunks.join('\n'),
-        conversation_history: conversationHistory ?? '',
-      });
-
-      return typeof compiled === 'string' ? compiled : String(compiled);
+      const raw = (this.promptTemplate as { prompt: string }).prompt;
+      if (!raw) return null;
+      return { template: raw, source: 'langfuse' };
     } catch (e) {
       this.logger.warn(`Failed to get prompt from LangFuse: ${e}`);
       return null;

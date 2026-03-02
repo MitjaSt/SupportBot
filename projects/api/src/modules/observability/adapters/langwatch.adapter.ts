@@ -10,6 +10,7 @@ import type {
   LogGenerationOptions,
   LogRetrievalOptions,
   ObservabilityAdapter,
+  PromptTemplate,
   TraceHandle,
   UpdateTraceOptions,
 } from '../observability.interface';
@@ -69,7 +70,13 @@ export class LangwatchAdapter implements ObservabilityAdapter {
     return this._enabled;
   }
 
-  async getPrompt(chunks: string[], conversationHistory?: string): Promise<string | null> {
+  async getPrompt(): Promise<PromptTemplate | null> {
+    const template = await this.fetchTemplate();
+    if (!template) return null;
+    return { template, source: 'langwatch' };
+  }
+
+  private async fetchTemplate(): Promise<string | null> {
     const promptHandle = this.config.langwatch.promptSystem;
     if (!promptHandle) return null;
 
@@ -86,12 +93,7 @@ export class LangwatchAdapter implements ObservabilityAdapter {
           this.logger.debug(`Fetched and cached '${promptHandle}' prompt from LangWatch`);
         }
       }
-
-      if (!template) return null;
-
-      return template
-        .replace(/\{\{rag_context\}\}/g, chunks.join('\n'))
-        .replace(/\{\{conversation_history\}\}/g, conversationHistory ?? '');
+      return template ?? null;
     } catch (error) {
       this.logger.error(`Failed to fetch prompt from LangWatch: ${error}`);
       return null;

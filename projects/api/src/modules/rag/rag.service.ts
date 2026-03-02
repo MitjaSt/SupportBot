@@ -521,17 +521,13 @@ export class RagService {
     }
 
     // Fetch prompt from observability adapters (LangWatch preferred)
-    const conversationHistoryStr =
-      conversationHistory?.map((m) => `${m.role}: ${m.content}`).join('\n') ?? '';
-    const systemPrompt = await this.observability.getPrompt(
-      chunks.map((c) => c.text),
-      conversationHistoryStr,
-    );
-    if (!systemPrompt) {
+    const promptResult = await this.observability.getPrompt();
+    if (!promptResult) {
       throw new Error(
         'No system prompt available. Configure a prompt in LangWatch or another enabled observability adapter.',
       );
     }
+    const systemPrompt = promptResult.template;
 
     const fullPrompt = this.buildFullPrompt({ query, chunks, systemPrompt, conversationHistory });
 
@@ -663,17 +659,13 @@ export class RagService {
     }
 
     // Fetch prompt from observability adapters (LangWatch preferred)
-    const conversationHistoryStr =
-      conversationHistory?.map((m) => `${m.role}: ${m.content}`).join('\n') ?? '';
-    const systemPrompt = await this.observability.getPrompt(
-      chunks.map((c) => c.text),
-      conversationHistoryStr,
-    );
-    if (!systemPrompt) {
+    const promptResult = await this.observability.getPrompt();
+    if (!promptResult) {
       throw new Error(
         'No system prompt available. Configure a prompt in LangWatch or another enabled observability adapter.',
       );
     }
+    const systemPrompt = promptResult.template;
 
     // Generation phase (streaming)
     const generationStart = Date.now();

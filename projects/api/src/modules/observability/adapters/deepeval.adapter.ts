@@ -54,7 +54,7 @@ export class DeepEvalAdapter implements ObservabilityAdapter {
     return this._enabled;
   }
 
-  async getPrompt(): Promise<string | null> {
+  async getPrompt(): Promise<null> {
     // DeepEval does not have prompt management
     return null;
   }

@@ -1,8 +1,18 @@
-import { InfoOutlined, Person, SmartToy } from '@mui/icons-material';
-import { Box, IconButton, Paper, Tooltip, Typography } from '@mui/material';
+import { ExpandMore, InfoOutlined, Person, SmartToy } from '@mui/icons-material';
+import { Accordion, AccordionDetails, AccordionSummary, Box, Chip, IconButton, Paper, Tooltip, Typography } from '@mui/material';
 import { useState } from 'react';
 import type { Message } from '../types';
 import { QueryDebugDialog } from './QueryDebugDialog';
+
+function sourceLabel(source: string): string {
+  try {
+    const url = new URL(source);
+    const parts = url.pathname.split('/').filter(Boolean);
+    return parts[parts.length - 1] ?? url.hostname;
+  } catch {
+    return source.split('/').pop() ?? source;
+  }
+}
 
 interface ChatMessageProps {
   message: Message;
@@ -70,6 +80,38 @@ export function ChatMessage({ message }: ChatMessageProps) {
               </Typography>
             )}
           </Paper>
+
+          {message.chunks && message.chunks.length > 0 && (
+            <Accordion disableGutters elevation={0} sx={{ mt: 0.5, bgcolor: 'transparent', '&:before': { display: 'none' } }}>
+              <AccordionSummary expandIcon={<ExpandMore fontSize="small" />} sx={{ px: 0, minHeight: 0, '& .MuiAccordionSummary-content': { my: 0.5 } }}>
+                <Typography variant="caption" color="text.secondary">
+                  Sources ({message.chunks.length})
+                </Typography>
+              </AccordionSummary>
+              <AccordionDetails sx={{ px: 0, pt: 0, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                {message.chunks.map((chunk, i) => (
+                  <Accordion key={chunk.id} disableGutters elevation={0} variant="outlined" sx={{ borderRadius: '6px !important', '&:before': { display: 'none' } }}>
+                    <AccordionSummary expandIcon={<ExpandMore fontSize="small" />} sx={{ px: 1.5, minHeight: 0, '& .MuiAccordionSummary-content': { my: 0.75, alignItems: 'center', gap: 1 } }}>
+                      <Typography variant="caption" sx={{ fontWeight: 500, flex: 1 }}>
+                        {i + 1}. {sourceLabel(chunk.source)}
+                      </Typography>
+                      <Chip
+                        label={chunk.score >= 0.7 ? 'High' : chunk.score >= 0.5 ? 'Medium' : 'Low'}
+                        size="small"
+                        color={chunk.score >= 0.7 ? 'success' : chunk.score >= 0.5 ? 'warning' : 'default'}
+                        sx={{ fontSize: '0.65rem', height: 18 }}
+                      />
+                    </AccordionSummary>
+                    <AccordionDetails sx={{ px: 1.5, pt: 0, pb: 1.5 }}>
+                      <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontSize: '0.78rem' }}>
+                        {chunk.text}
+                      </Typography>
+                    </AccordionDetails>
+                  </Accordion>
+                ))}
+              </AccordionDetails>
+            </Accordion>
+          )}
 
           {hasDebugData && (
             <Box sx={{ mt: 0.5 }}>

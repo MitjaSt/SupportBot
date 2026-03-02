@@ -3,6 +3,7 @@ import {
   BarChart,
   Chat,
   Delete,
+  Description,
   ManageSearch,
   PushPin,
   PushPinOutlined,
@@ -225,6 +226,7 @@ export function SessionSidebar({ onNewSession }: SessionSidebarProps) {
         {[
           { label: 'Retrieval Analytics', path: '/admin/analytics', icon: <BarChart fontSize="small" /> },
           { label: 'Knowledge Base', path: '/admin/knowledge-base', icon: <ManageSearch fontSize="small" /> },
+          { label: 'System Prompt', path: '/admin/system-prompt', icon: <Description fontSize="small" /> },
         ].map(({ label, path, icon }) => (
           <ListItem key={path} disablePadding>
             <ListItemButton

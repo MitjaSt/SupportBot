@@ -5,10 +5,26 @@ import {
   type RetrievalAnalytics,
 } from './analytics.service';
 import type { SearchResult } from '../vector-db/vector-db.service';
+import { ObservabilityService } from '../observability/observability.service';
+import { ConfigService } from '@/config/config.service';
+
+export interface SystemPromptInfo {
+  template: string;
+  source: string;
+  charCount: number;
+  estimatedTokens: number;
+  warnThreshold: number;
+  rejectThreshold: number;
+  maxTokens: number;
+}
 
 @Controller('analytics')
 export class AnalyticsController {
-  constructor(private readonly analytics: AnalyticsService) {}
+  constructor(
+    private readonly analytics: AnalyticsService,
+    private readonly observability: ObservabilityService,
+    private readonly config: ConfigService,
+  ) {}
 
   @Get('retrieval')
   getRetrievalAnalytics(): Promise<RetrievalAnalytics> {
@@ -41,5 +57,24 @@ export class AnalyticsController {
     @Body('limit') limit = 10,
   ): Promise<SearchResult[]> {
     return this.analytics.testRetrieval(query, limit);
+  }
+
+  @Get('system-prompt')
+  async getSystemPrompt(): Promise<SystemPromptInfo | { error: string }> {
+    const result = await this.observability.getPrompt();
+    if (!result) {
+      return { error: 'No prompt configured or available from any observability adapter' };
+    }
+    const { template, source } = result;
+    const charCount = template.length;
+    return {
+      template,
+      source,
+      charCount,
+      estimatedTokens: Math.round(charCount / 4),
+      warnThreshold: this.config.rag.promptTokenWarnThreshold,
+      rejectThreshold: this.config.rag.promptTokenRejectThreshold,
+      maxTokens: this.config.rag.maxTokens,
+    };
   }
 }

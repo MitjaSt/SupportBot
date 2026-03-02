@@ -123,6 +123,24 @@ export async function* sendQueryStream(
   }
 }
 
+export interface SystemPromptInfo {
+  template: string;
+  source: string;
+  charCount: number;
+  estimatedTokens: number;
+  warnThreshold: number;
+  rejectThreshold: number;
+  maxTokens: number;
+}
+
+export async function getSystemPrompt(): Promise<SystemPromptInfo | { error: string }> {
+  const response = await apiFetch(`${API_BASE}/analytics/system-prompt`);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch system prompt: ${response.statusText}`);
+  }
+  return response.json();
+}
+
 export async function listSessions(): Promise<(Session & { messageCount: number })[]> {
   const response = await apiFetch(`${API_BASE}/chat/sessions`);
 
