@@ -1,4 +1,4 @@
-import { Alert, Box, Typography } from '@mui/material';
+import { Alert, Box, Chip, Typography } from '@mui/material';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
@@ -286,14 +286,36 @@ export function ChatView() {
               alignItems: 'center',
               justifyContent: 'center',
               color: 'text.secondary',
+              gap: 3,
             }}
           >
-            <Typography variant="h5" gutterBottom>
-              Macular Society Assistant
-            </Typography>
-            <Typography variant="body2">
-              Ask questions about macular disease, treatments, and support services.
-            </Typography>
+            <Box sx={{ textAlign: 'center' }}>
+              <Typography variant="h5" gutterBottom>
+                Macular Society Assistant
+              </Typography>
+              <Typography variant="body2">
+                Ask questions about macular disease, treatments, and support services.
+              </Typography>
+            </Box>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, justifyContent: 'center', maxWidth: 480 }}>
+              {[
+                'About dry AMD',
+                'About wet AMD',
+                'Treatment options',
+                'Benefits I can claim',
+                'Newly diagnosed – where do I start?',
+                'Living with macular disease',
+              ].map((question) => (
+                <Chip
+                  key={question}
+                  label={question}
+                  onClick={() => handleSend(question)}
+                  clickable
+                  variant="outlined"
+                  color="primary"
+                />
+              ))}
+            </Box>
           </Box>
         ) : (
           <>
