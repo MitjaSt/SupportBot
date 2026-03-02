@@ -1,5 +1,6 @@
 import {
   Add,
+  BarChart,
   Chat,
   Delete,
   PushPin,
@@ -216,6 +217,32 @@ export function SessionSidebar({ onNewSession }: SessionSidebarProps) {
             </ListItem>
           ))
         )}
+      </List>
+
+      <Divider />
+      <List sx={{ py: 0.5 }}>
+        <ListItem disablePadding>
+          <ListItemButton
+            selected={location.pathname === '/admin/analytics'}
+            onClick={() => navigate('/admin/analytics')}
+            sx={{
+              '&.Mui-selected': {
+                bgcolor: 'secondary.main',
+                color: 'secondary.contrastText',
+                '& .MuiListItemIcon-root': { color: 'secondary.contrastText' },
+                '&:hover': { bgcolor: 'secondary.dark' },
+              },
+            }}
+          >
+            <ListItemIcon sx={{ minWidth: 36 }}>
+              <BarChart fontSize="small" />
+            </ListItemIcon>
+            <ListItemText
+              primary="Retrieval Analytics"
+              primaryTypographyProps={{ variant: 'body2' }}
+            />
+          </ListItemButton>
+        </ListItem>
       </List>
 
       {/* Delete confirmation dialog */}

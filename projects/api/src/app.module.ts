@@ -12,6 +12,7 @@ import { ChatModule } from './modules/chat/chat.module';
 import { PipelineModule } from './modules/pipeline/pipeline.module';
 import { SystemModule } from './modules/system/system.module';
 import { MetricsModule } from './modules/metrics/metrics.module';
+import { AnalyticsModule } from './modules/analytics/analytics.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { MetricsModule } from './modules/metrics/metrics.module';
     ChatModule,
     PipelineModule,
     SystemModule,
+    AnalyticsModule,
   ],
 })
 export class AppModule {}

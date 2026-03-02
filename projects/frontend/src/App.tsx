@@ -3,6 +3,7 @@ import { Routes, Route, useNavigate } from 'react-router-dom';
 import { Box, CssBaseline, ThemeProvider, createTheme } from '@mui/material';
 import { SessionSidebar } from './components/SessionSidebar';
 import { ChatView } from './components/ChatView';
+import { AnalyticsDashboard } from './pages/AnalyticsDashboard';
 
 const theme = createTheme({
   palette: {
@@ -39,6 +40,7 @@ export function App() {
         <Routes>
           <Route path="/" element={<ChatView />} />
           <Route path="/chat/:sessionId" element={<ChatView />} />
+          <Route path="/admin/analytics" element={<AnalyticsDashboard />} />
         </Routes>
       </Box>
     </ThemeProvider>
