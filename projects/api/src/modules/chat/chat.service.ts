@@ -7,6 +7,9 @@ import {
   type CollectionState,
 } from '../database/session.repository';
 import { RagService, RagResponse, StreamEvent } from '../rag/rag.service';
+import { SuggestionsService } from './suggestions.service';
+
+export type ChatStreamEvent = (StreamEvent | { type: 'suggestions'; suggestions: string[] }) & { sessionId: string };
 
 export interface ChatResponse extends RagResponse {
   sessionId: string;
@@ -19,6 +22,7 @@ export class ChatService {
     private readonly sessions: SessionRepository,
     private readonly rag: RagService,
     private readonly config: ConfigService,
+    private readonly suggestions: SuggestionsService,
   ) {}
 
   async chat(sessionId: string, message: string): Promise<ChatResponse> {
@@ -71,7 +75,7 @@ export class ChatService {
   async *chatStream(
     sessionId: string,
     message: string,
-  ): AsyncGenerator<StreamEvent & { sessionId: string }> {
+  ): AsyncGenerator<ChatStreamEvent> {
     // Get or create session
     const session = await this.sessions.getOrCreateSession(sessionId);
 
@@ -109,5 +113,9 @@ export class ChatService {
 
     // Add assistant response to history after streaming completes
     await this.sessions.addMessage(sessionId, 'assistant', fullAnswer, chunks, fullPrompt, promptTokenCount);
+
+    // Generate and stream follow-up suggestions (empty array when disabled)
+    const suggestionList = await this.suggestions.generate(message, fullAnswer);
+    yield { type: 'suggestions', suggestions: suggestionList, sessionId: session.sessionId };
   }
 }

@@ -71,6 +71,10 @@ export const ConfidentAIConfigSchema = Type.Object({
   apiKey: Type.String(),
 });
 
+export const FollowupConfigSchema = Type.Object({
+  enabled: Type.Boolean(),
+});
+
 export const WhisperConfigSchema = Type.Object({
   url: Type.String(),
 });
@@ -90,6 +94,7 @@ export const EnvConfigSchema = Type.Object({
   langfuse: LangfuseConfigSchema,
   langwatch: LangwatchConfigSchema,
   confidentai: ConfidentAIConfigSchema,
+  followup: FollowupConfigSchema,
   whisper: WhisperConfigSchema,
   piper: PiperConfigSchema,
 });
@@ -104,6 +109,7 @@ export type ScrapingConfig = Static<typeof ScrapingConfigSchema>;
 export type LangfuseConfig = Static<typeof LangfuseConfigSchema>;
 export type LangwatchConfig = Static<typeof LangwatchConfigSchema>;
 export type ConfidentAIConfig = Static<typeof ConfidentAIConfigSchema>;
+export type FollowupConfig = Static<typeof FollowupConfigSchema>;
 export type WhisperConfig = Static<typeof WhisperConfigSchema>;
 export type PiperConfig = Static<typeof PiperConfigSchema>;
 export type EnvConfig = Static<typeof EnvConfigSchema>;

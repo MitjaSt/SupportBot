@@ -210,6 +210,17 @@ export function ChatView() {
             playAudio(fullContent);
           }
         }
+
+        if (event.type === 'suggestions' && event.suggestions && event.suggestions.length > 0) {
+          setMessages((prev) => {
+            const updated = [...prev];
+            updated[updated.length - 1] = {
+              ...updated[updated.length - 1],
+              suggestions: event.suggestions,
+            };
+            return updated;
+          });
+        }
       }
     } catch {
       setError('Failed to send message. Please try again.');
@@ -319,11 +330,31 @@ export function ChatView() {
           </Box>
         ) : (
           <>
-            {messages.map((message) => (
+            {messages.map((message, i) => (
               // Use message.id (assigned at creation time) as the React key.
               // This is stable across re-renders, unlike array index which would
               // cause React to remount the wrong nodes when items shift position.
-              <ChatMessage key={message.id ?? message.createdAt.toString()} message={message} />
+              <Box key={message.id ?? message.createdAt.toString()}>
+                <ChatMessage message={message} />
+                {message.role === 'assistant' &&
+                  i === messages.length - 1 &&
+                  !loading &&
+                  message.suggestions && message.suggestions.length > 0 && (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1, ml: 2 }}>
+                      {message.suggestions.map((q) => (
+                        <Chip
+                          key={q}
+                          label={q}
+                          onClick={() => handleSend(q)}
+                          clickable
+                          size="small"
+                          variant="outlined"
+                          color="primary"
+                        />
+                      ))}
+                    </Box>
+                  )}
+              </Box>
             ))}
             <div ref={messagesEndRef} />
           </>

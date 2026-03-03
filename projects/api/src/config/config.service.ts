@@ -7,6 +7,7 @@ import type {
   EmbeddingConfig,
   EnvConfig,
   FilesystemConfig,
+  FollowupConfig,
   LangfuseConfig,
   LangwatchConfig,
   OpenAIConfig,
@@ -135,6 +136,10 @@ export class ConfigService {
       url: getOptional('WHISPER_URL', 'http://localhost:8000'),
     };
 
+    const followup: FollowupConfig = {
+      enabled: getBool('FOLLOWUP_SUGGESTIONS_ENABLED', false),
+    };
+
     const piper: PiperConfig = {
       url: getOptional('PIPER_URL', 'http://localhost:8001'),
     };
@@ -150,6 +155,7 @@ export class ConfigService {
       langfuse,
       langwatch,
       confidentai,
+      followup,
       whisper,
       piper,
     };
@@ -197,6 +203,10 @@ export class ConfigService {
 
   get whisper(): WhisperConfig {
     return this.config.whisper;
+  }
+
+  get followup(): FollowupConfig {
+    return this.config.followup;
   }
 
   get piper(): PiperConfig {

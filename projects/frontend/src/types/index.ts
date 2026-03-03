@@ -7,6 +7,7 @@ export interface Message {
   chunks?: Source[];
   fullPrompt?: string;
   promptTokenCount?: number;
+  suggestions?: string[];
 }
 
 export interface Session {

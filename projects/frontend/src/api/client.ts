@@ -3,9 +3,10 @@ import type { QueryResponse, Session, SessionWithHistory, Source } from '../type
 const API_BASE = '/api';
 
 export interface StreamEvent {
-  type: 'chunk' | 'tool' | 'done' | 'error';
+  type: 'chunk' | 'tool' | 'done' | 'error' | 'suggestions';
   content?: string;
   sessionId?: string;
+  suggestions?: string[];
   metadata?: {
     sources?: Source[];
     model?: string;
