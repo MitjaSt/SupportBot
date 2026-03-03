@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Post, Query } from '@nestjs/common';
 import {
   AnalyticsService,
+  type ChunkInspectionResult,
   type KnowledgeBasePage,
   type RetrievalAnalytics,
 } from './analytics.service';
@@ -57,6 +58,11 @@ export class AnalyticsController {
     @Body('limit') limit = 10,
   ): Promise<SearchResult[]> {
     return this.analytics.testRetrieval(query, limit);
+  }
+
+  @Post('chunk-inspector')
+  inspectChunks(@Body('text') text: string): ChunkInspectionResult {
+    return this.analytics.inspectChunks(text);
   }
 
   @Get('system-prompt')

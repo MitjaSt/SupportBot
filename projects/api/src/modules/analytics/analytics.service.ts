@@ -2,7 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { sql } from 'drizzle-orm';
 import { DatabaseService } from '../database/database.service';
 import { EmbeddingsService } from '../embeddings/embeddings.service';
+import { ProcessingService } from '../processing/processing.service';
 import { VectorDbService, type SearchResult } from '../vector-db/vector-db.service';
+
+export type { ChunkInspectionResult } from '../processing/processing.service';
 
 export interface TimeSeriesPoint {
   date: string;
@@ -54,6 +57,7 @@ export class AnalyticsService {
     private readonly dbService: DatabaseService,
     private readonly embeddings: EmbeddingsService,
     private readonly vectorDb: VectorDbService,
+    private readonly processing: ProcessingService,
   ) {}
 
   async getRetrievalAnalytics(): Promise<RetrievalAnalytics> {
@@ -247,5 +251,9 @@ export class AnalyticsService {
       createdAt: String(r.created_at),
       sessionId: r.session_id,
     }));
+  }
+
+  inspectChunks(text: string) {
+    return this.processing.inspectDocument(text);
   }
 }

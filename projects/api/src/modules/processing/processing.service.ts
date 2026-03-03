@@ -44,6 +44,25 @@ export interface FlattenedDocument {
   text: string;
 }
 
+export interface InspectedChunk {
+  index: number;
+  text: string;
+  tokenCount: number;
+  charCount: number;
+  overlapWithPrev: string; // text shared with previous chunk (empty for first chunk)
+}
+
+export interface ChunkInspectionResult {
+  chunks: InspectedChunk[];
+  config: {
+    chunkSizeTokens: number;
+    overlapTokens: number;
+  };
+  totalChunks: number;
+  totalTokens: number;
+  avgTokensPerChunk: number;
+}
+
 @Injectable()
 export class ProcessingService implements OnModuleInit {
   private readonly logger = new Logger(ProcessingService.name);
@@ -67,7 +86,7 @@ export class ProcessingService implements OnModuleInit {
     this.encoder = get_encoding('cl100k_base');
   }
 
-  private countTokens(text: string): number {
+  countTokens(text: string): number {
     return this.encoder.encode(text).length;
   }
 
@@ -354,6 +373,56 @@ export class ProcessingService implements OnModuleInit {
     }
 
     return chunks;
+  }
+
+  /**
+   * Inspect how a document would be chunked, returning detailed chunk info
+   * including overlap detection and token counts.
+   */
+  inspectDocument(text: string): ChunkInspectionResult {
+    const chunks = this.chunkDocument({ text, source: 'inspector' });
+
+    const inspected: InspectedChunk[] = chunks.map((chunk, i) => {
+      const prevChunk = i > 0 ? chunks[i - 1] : null;
+      let overlapWithPrev = '';
+
+      if (prevChunk) {
+        // Find the longest prefix of chunk.text that is a suffix of prevChunk.text
+        const prevWords = prevChunk.text.split(' ');
+        const currWords = chunk.text.split(' ');
+        const maxLen = Math.min(prevWords.length, currWords.length);
+
+        for (let len = maxLen; len > 0; len--) {
+          const currPrefix = currWords.slice(0, len).join(' ');
+          const prevSuffix = prevWords.slice(-len).join(' ');
+          if (currPrefix === prevSuffix) {
+            overlapWithPrev = currPrefix;
+            break;
+          }
+        }
+      }
+
+      return {
+        index: chunk.chunkIndex,
+        text: chunk.text,
+        tokenCount: this.countTokens(chunk.text),
+        charCount: chunk.chunkLength,
+        overlapWithPrev,
+      };
+    });
+
+    const totalTokens = inspected.reduce((sum, c) => sum + c.tokenCount, 0);
+
+    return {
+      chunks: inspected,
+      config: {
+        chunkSizeTokens: this.chunkSize,
+        overlapTokens: this.overlapSize,
+      },
+      totalChunks: inspected.length,
+      totalTokens,
+      avgTokensPerChunk: inspected.length > 0 ? Math.round(totalTokens / inspected.length) : 0,
+    };
   }
 
   chunkAllDocuments(docs: FlattenedDocument[]): TextChunk[] {

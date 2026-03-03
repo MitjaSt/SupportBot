@@ -5,6 +5,7 @@ import { SessionSidebar } from './components/SessionSidebar';
 import { ChatView } from './components/ChatView';
 import { AnalyticsDashboard } from './pages/AnalyticsDashboard';
 import { KnowledgeBaseExplorer } from './pages/KnowledgeBaseExplorer';
+import { ChunkInspector } from './pages/ChunkInspector';
 import { SystemPromptPage } from './pages/SystemPromptPage';
 
 const theme = createTheme({
@@ -45,6 +46,7 @@ export function App() {
           <Route path="/admin/analytics" element={<AnalyticsDashboard />} />
           <Route path="/admin/knowledge-base" element={<KnowledgeBaseExplorer />} />
           <Route path="/admin/system-prompt" element={<SystemPromptPage />} />
+          <Route path="/admin/chunk-inspector" element={<ChunkInspector />} />
         </Routes>
       </Box>
     </ThemeProvider>

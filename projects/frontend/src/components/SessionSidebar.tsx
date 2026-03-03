@@ -1,6 +1,7 @@
 import {
   Add,
   BarChart,
+  CallSplit,
   Chat,
   Delete,
   Description,
@@ -221,32 +222,54 @@ export function SessionSidebar({ onNewSession }: SessionSidebarProps) {
         )}
       </List>
 
-      <Divider />
-      <List sx={{ py: 0.5 }}>
-        {[
-          { label: 'Retrieval Analytics', path: '/admin/analytics', icon: <BarChart fontSize="small" /> },
-          { label: 'Knowledge Base', path: '/admin/knowledge-base', icon: <ManageSearch fontSize="small" /> },
-          { label: 'System Prompt', path: '/admin/system-prompt', icon: <Description fontSize="small" /> },
-        ].map(({ label, path, icon }) => (
-          <ListItem key={path} disablePadding>
-            <ListItemButton
-              selected={location.pathname === path}
-              onClick={() => navigate(path)}
-              sx={{
-                '&.Mui-selected': {
-                  bgcolor: 'secondary.main',
-                  color: 'secondary.contrastText',
-                  '& .MuiListItemIcon-root': { color: 'secondary.contrastText' },
-                  '&:hover': { bgcolor: 'secondary.dark' },
-                },
-              }}
-            >
-              <ListItemIcon sx={{ minWidth: 36 }}>{icon}</ListItemIcon>
-              <ListItemText primary={label} primaryTypographyProps={{ variant: 'body2' }} />
-            </ListItemButton>
-          </ListItem>
-        ))}
-      </List>
+      {([
+        {
+          group: 'Knowledge',
+          items: [
+            { label: 'Knowledge Base', path: '/admin/knowledge-base', icon: <ManageSearch fontSize="small" /> },
+            { label: 'Chunk Inspector', path: '/admin/chunk-inspector', icon: <CallSplit fontSize="small" /> },
+            { label: 'System Prompt', path: '/admin/system-prompt', icon: <Description fontSize="small" /> },
+          ],
+        },
+        {
+          group: 'Chat',
+          items: [
+            { label: 'Retrieval Analytics', path: '/admin/analytics', icon: <BarChart fontSize="small" /> },
+          ],
+        },
+      ] as const).map(({ group, items }) => (
+        <Box key={group}>
+          <Divider />
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ px: 2, py: 1, display: 'block', fontWeight: 500 }}
+          >
+            {group}
+          </Typography>
+          <List sx={{ py: 0 }}>
+            {items.map(({ label, path, icon }) => (
+              <ListItem key={path} disablePadding>
+                <ListItemButton
+                  selected={location.pathname === path}
+                  onClick={() => navigate(path)}
+                  sx={{
+                    '&.Mui-selected': {
+                      bgcolor: 'secondary.main',
+                      color: 'secondary.contrastText',
+                      '& .MuiListItemIcon-root': { color: 'secondary.contrastText' },
+                      '&:hover': { bgcolor: 'secondary.dark' },
+                    },
+                  }}
+                >
+                  <ListItemIcon sx={{ minWidth: 36 }}>{icon}</ListItemIcon>
+                  <ListItemText primary={label} primaryTypographyProps={{ variant: 'body2' }} />
+                </ListItemButton>
+              </ListItem>
+            ))}
+          </List>
+        </Box>
+      ))}
 
       {/* Delete confirmation dialog */}
       <Dialog
