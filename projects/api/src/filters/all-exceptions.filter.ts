@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common';
+import * as Sentry from '@sentry/nestjs';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 
 @Catch()
@@ -28,6 +29,19 @@ export class AllExceptionsFilter implements ExceptionFilter {
         `Unhandled exception on ${request.method} ${request.url}`,
         exception instanceof Error ? exception.stack : String(exception),
       );
+
+      // Capture server errors in Sentry with request context.
+      // 4xx errors (validation, auth, rate limits) are intentionally excluded — they are
+      // user-caused and would create noise without actionable signal.
+      const body = request.body as Record<string, unknown> | undefined;
+      const sessionId = typeof body?.sessionId === 'string' ? body.sessionId : undefined;
+
+      Sentry.withScope((scope) => {
+        scope.setTag('method', request.method);
+        scope.setTag('url', request.url);
+        if (sessionId) scope.setUser({ id: sessionId });
+        Sentry.captureException(exception);
+      });
     } else {
       this.logger.warn(
         `HTTP ${status} on ${request.method} ${request.url}: ${

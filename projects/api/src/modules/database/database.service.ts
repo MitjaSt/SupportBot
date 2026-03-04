@@ -1,4 +1,5 @@
-import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import * as Sentry from '@sentry/nestjs';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 import { ConfigService } from '@/config/config.service';
@@ -8,6 +9,7 @@ export type DrizzleDb = ReturnType<typeof drizzle<typeof schema>>;
 
 @Injectable()
 export class DatabaseService implements OnModuleInit, OnModuleDestroy {
+  private readonly logger = new Logger(DatabaseService.name);
   private pool: Pool | null = null;
   private _db: DrizzleDb | null = null;
 
@@ -43,6 +45,14 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     });
 
     this._db = drizzle(this.pool, { schema });
+
+    // Without this listener, any idle connection dropped by Postgres (e.g. server
+    // restart, admin kill) emits an 'error' event that Node throws as an
+    // uncaughtException and crashes the process.
+    this.pool.on('error', (err) => {
+      this.logger.error('PostgreSQL pool error', err.stack);
+      Sentry.captureException(err);
+    });
 
     // Test connection
     try {

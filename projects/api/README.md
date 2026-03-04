@@ -94,7 +94,6 @@ Uses the same `.env` file as the Python project. Key settings:
 
 Uses the same Docker images as Python:
 - PostgreSQL with pgvector
-- Qdrant vector database
 
 ```bash
 cd ../docker && docker-compose up -d

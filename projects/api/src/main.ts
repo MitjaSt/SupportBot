@@ -1,3 +1,5 @@
+import './instrument';
+import * as Sentry from '@sentry/nestjs';
 import { RequestMethod } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import {
@@ -91,4 +93,8 @@ async function bootstrap() {
   console.warn(`➡️   Server running on:  http://localhost:${port}`);
 }
 
-bootstrap();
+bootstrap().catch(async (err) => {
+  Sentry.captureException(err);
+  await Sentry.flush(2000);
+  process.exit(1);
+});
