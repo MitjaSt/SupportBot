@@ -1,0 +1,202 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1000" viewBox="0 0 900 1000"
+     font-family="ui-sans-serif, system-ui, -apple-system, sans-serif">
+  <defs>
+    <marker id="ah-gray" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#94a3b8"/>
+    </marker>
+    <marker id="ah-red" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#dc2626"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="900" height="1000" fill="#f8fafc"/>
+
+  <!-- Title -->
+  <text x="450" y="26" text-anchor="middle" font-size="16" font-weight="700" fill="#0f172a">RAG Data Flow — Macular Society API</text>
+
+  <!-- Column divider -->
+  <line x1="482" y1="36" x2="482" y2="900" stroke="#e2e8f0" stroke-width="1.5" stroke-dasharray="6,4"/>
+
+  <!-- Column headers -->
+  <rect x="20" y="36" width="452" height="24" rx="4" fill="#e2e8f0"/>
+  <text x="246" y="52" text-anchor="middle" font-size="11" font-weight="600" fill="#475569" letter-spacing="0.5">REQUEST PIPELINE</text>
+  <rect x="492" y="36" width="388" height="24" rx="4" fill="#fee2e2"/>
+  <text x="686" y="52" text-anchor="middle" font-size="11" font-weight="600" fill="#991b1b" letter-spacing="0.5">LANGWATCH OBSERVABILITY</text>
+
+  <!-- ===== MAIN FLOW ===== -->
+
+  <!-- 1. Client -->
+  <rect x="79" y="70" width="290" height="42" rx="7" fill="#4f46e5"/>
+  <text x="224" y="88" text-anchor="middle" font-size="13" font-weight="700" fill="white">Client</text>
+  <text x="224" y="104" text-anchor="middle" font-size="10" fill="#c7d2fe">Browser · Kiosk Widget</text>
+  <line x1="224" y1="112" x2="224" y2="143" stroke="#94a3b8" stroke-width="2" marker-end="url(#ah-gray)"/>
+  <text x="236" y="131" font-size="9" fill="#64748b">POST /chat · GET /chat/stream (SSE)</text>
+
+  <!-- 2. ChatController -->
+  <rect x="79" y="145" width="290" height="42" rx="7" fill="#0369a1"/>
+  <text x="224" y="163" text-anchor="middle" font-size="13" font-weight="700" fill="white">ChatController</text>
+  <text x="224" y="179" text-anchor="middle" font-size="10" fill="#bae6fd">NestJS · validate · route</text>
+  <line x1="224" y1="187" x2="224" y2="213" stroke="#94a3b8" stroke-width="2" marker-end="url(#ah-gray)"/>
+
+  <!-- 3. ChatService (session load) -->
+  <rect x="79" y="215" width="290" height="42" rx="7" fill="#047857"/>
+  <text x="224" y="233" text-anchor="middle" font-size="13" font-weight="700" fill="white">ChatService</text>
+  <text x="224" y="249" text-anchor="middle" font-size="10" fill="#a7f3d0">getOrCreate session · load history</text>
+  <line x1="224" y1="257" x2="224" y2="271" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#ah-gray)"/>
+
+  <!-- 4. SessionRepository -->
+  <rect x="109" y="273" width="230" height="36" rx="6" fill="#475569"/>
+  <text x="224" y="290" text-anchor="middle" font-size="11" font-weight="600" fill="white">SessionRepository · PostgreSQL</text>
+  <text x="224" y="303" text-anchor="middle" font-size="9" fill="#cbd5e1">session · conversation history</text>
+  <line x1="224" y1="309" x2="224" y2="323" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#ah-gray)"/>
+  <text x="236" y="319" font-size="9" fill="#64748b">history</text>
+
+  <!-- 5. RagService -->
+  <rect x="79" y="325" width="290" height="42" rx="7" fill="#059669"/>
+  <text x="224" y="343" text-anchor="middle" font-size="13" font-weight="700" fill="white">RagService.query()</text>
+  <text x="224" y="359" text-anchor="middle" font-size="10" fill="#d1fae5">orchestrate · trace · retrieve · generate</text>
+  <line x1="224" y1="367" x2="224" y2="385" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#ah-gray)"/>
+  <text x="236" y="379" font-size="9" fill="#64748b">if follow-up query</text>
+
+  <!-- 6. Query Rewrite (optional) -->
+  <rect x="79" y="387" width="290" height="42" rx="7" fill="#fdf4ff" stroke="#9333ea" stroke-width="1.5" stroke-dasharray="7,3"/>
+  <text x="224" y="405" text-anchor="middle" font-size="12" font-weight="700" fill="#7e22ce">Query Rewrite [optional]</text>
+  <text x="224" y="421" text-anchor="middle" font-size="10" fill="#9333ea">gpt-4o-mini · self-contained query</text>
+  <line x1="224" y1="429" x2="224" y2="447" stroke="#94a3b8" stroke-width="2" marker-end="url(#ah-gray)"/>
+
+  <!-- 7. EmbeddingsService -->
+  <rect x="79" y="449" width="290" height="42" rx="7" fill="#b45309"/>
+  <text x="224" y="467" text-anchor="middle" font-size="13" font-weight="700" fill="white">EmbeddingsService</text>
+  <text x="224" y="483" text-anchor="middle" font-size="10" fill="#fef3c7">OpenAI text-embedding-3-small</text>
+  <line x1="224" y1="491" x2="224" y2="509" stroke="#94a3b8" stroke-width="2" marker-end="url(#ah-gray)"/>
+  <text x="236" y="503" font-size="9" fill="#64748b">1536-dim vector</text>
+
+  <!-- 8. VectorDB -->
+  <rect x="79" y="511" width="290" height="42" rx="7" fill="#7c2d12"/>
+  <text x="224" y="529" text-anchor="middle" font-size="13" font-weight="700" fill="white">VectorDB · Qdrant</text>
+  <text x="224" y="545" text-anchor="middle" font-size="10" fill="#fed7aa">cosine similarity · top-K chunks + scores</text>
+  <line x1="224" y1="553" x2="224" y2="575" stroke="#94a3b8" stroke-width="2" marker-end="url(#ah-gray)"/>
+  <text x="236" y="567" font-size="9" fill="#64748b">chunks + scores</text>
+
+  <!-- 9. Build Prompt + Token Check -->
+  <rect x="79" y="577" width="290" height="42" rx="7" fill="#0f766e"/>
+  <text x="224" y="595" text-anchor="middle" font-size="13" font-weight="700" fill="white">Build Prompt + Token Check</text>
+  <text x="224" y="611" text-anchor="middle" font-size="10" fill="#ccfbf1">system · history · context · tiktoken guard</text>
+  <line x1="224" y1="619" x2="224" y2="641" stroke="#94a3b8" stroke-width="2" marker-end="url(#ah-gray)"/>
+
+  <!-- 10. OpenAI Chat Completion -->
+  <rect x="79" y="643" width="290" height="42" rx="7" fill="#6d28d9"/>
+  <text x="224" y="661" text-anchor="middle" font-size="13" font-weight="700" fill="white">OpenAI Chat Completion</text>
+  <text x="224" y="677" text-anchor="middle" font-size="10" fill="#ddd6fe">gpt-4o · stream=true · tool_choice=auto</text>
+  <line x1="224" y1="685" x2="224" y2="703" stroke="#94a3b8" stroke-width="2" marker-end="url(#ah-gray)"/>
+  <text x="236" y="697" font-size="9" fill="#64748b">answer · tool calls · usage</text>
+
+  <!-- 11. PromptLogger (fire-and-forget) -->
+  <rect x="109" y="705" width="230" height="36" rx="6" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,3"/>
+  <text x="224" y="721" text-anchor="middle" font-size="11" font-weight="600" fill="#64748b">PromptLogger → YAML</text>
+  <text x="224" y="735" text-anchor="middle" font-size="9" fill="#94a3b8">fire-and-forget · /cache/prompts/</text>
+  <line x1="224" y1="741" x2="224" y2="759" stroke="#94a3b8" stroke-width="2" marker-end="url(#ah-gray)"/>
+
+  <!-- 12. ChatService (save + suggest) -->
+  <rect x="79" y="761" width="290" height="42" rx="7" fill="#047857"/>
+  <text x="224" y="779" text-anchor="middle" font-size="13" font-weight="700" fill="white">ChatService</text>
+  <text x="224" y="795" text-anchor="middle" font-size="10" fill="#a7f3d0">addMessage · suggestions · save to DB</text>
+  <line x1="224" y1="803" x2="224" y2="831" stroke="#94a3b8" stroke-width="2" marker-end="url(#ah-gray)"/>
+  <text x="236" y="820" font-size="9" fill="#64748b">SSE stream events</text>
+
+  <!-- 13. Client (response) -->
+  <rect x="79" y="833" width="290" height="42" rx="7" fill="#4f46e5"/>
+  <text x="224" y="851" text-anchor="middle" font-size="13" font-weight="700" fill="white">Client</text>
+  <text x="224" y="867" text-anchor="middle" font-size="10" fill="#c7d2fe">chunks · sources · suggestions</text>
+
+  <!-- ===== LANGWATCH COLUMN ===== -->
+
+  <!-- createTrace (blocking) — aligns with RagService -->
+  <rect x="498" y="325" width="242" height="42" rx="7" fill="#fff1f2" stroke="#dc2626" stroke-width="2"/>
+  <text x="619" y="343" text-anchor="middle" font-size="12" font-weight="700" fill="#dc2626">createTrace()</text>
+  <text x="619" y="359" text-anchor="middle" font-size="10" fill="#b91c1c">OTEL root span · thread.id · tags</text>
+
+  <!-- logRetrieval (fire-and-forget) — aligns with VectorDB -->
+  <rect x="498" y="511" width="242" height="42" rx="7" fill="#fff8f8" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="5,3"/>
+  <text x="619" y="529" text-anchor="middle" font-size="12" font-weight="700" fill="#dc2626">logRetrieval()</text>
+  <text x="619" y="545" text-anchor="middle" font-size="10" fill="#b91c1c">RAG span · docIds · chunks · scores</text>
+
+  <!-- getPrompt (blocking, critical) — aligns with Build Prompt -->
+  <rect x="498" y="577" width="242" height="42" rx="7" fill="#fff1f2" stroke="#dc2626" stroke-width="2"/>
+  <text x="619" y="595" text-anchor="middle" font-size="12" font-weight="700" fill="#dc2626">getPrompt()</text>
+  <text x="619" y="611" text-anchor="middle" font-size="10" fill="#b91c1c">Prompts API · NodeCache 5 min</text>
+
+  <!-- logGeneration (fire-and-forget) — aligns with OpenAI Chat -->
+  <rect x="498" y="643" width="242" height="42" rx="7" fill="#fff8f8" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="5,3"/>
+  <text x="619" y="661" text-anchor="middle" font-size="12" font-weight="700" fill="#dc2626">logGeneration()</text>
+  <text x="619" y="677" text-anchor="middle" font-size="10" fill="#b91c1c">LLM span · prompt · response · tokens</text>
+
+  <!-- updateTrace + flush (fire-and-forget) — aligns with PromptLogger -->
+  <rect x="498" y="705" width="242" height="36" rx="6" fill="#fff8f8" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="5,3"/>
+  <text x="619" y="722" text-anchor="middle" font-size="12" font-weight="700" fill="#dc2626">updateTrace() + flush()</text>
+  <text x="619" y="736" text-anchor="middle" font-size="10" fill="#b91c1c">end root span · OTEL batch export</text>
+
+  <!-- LangWatch Cloud destination -->
+  <rect x="518" y="761" width="202" height="42" rx="21" fill="#dc2626"/>
+  <text x="619" y="779" text-anchor="middle" font-size="12" font-weight="700" fill="white">LangWatch Cloud</text>
+  <text x="619" y="795" text-anchor="middle" font-size="9" fill="#fecaca">traces · evaluations · prompt management</text>
+
+  <!-- LangWatch vertical connecting arrows -->
+  <!-- createTrace → (span handle flows down) → logRetrieval: long dashed -->
+  <line x1="619" y1="367" x2="619" y2="509" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="3,4"/>
+  <!-- logRetrieval → getPrompt -->
+  <line x1="619" y1="553" x2="619" y2="575" stroke="#ef4444" stroke-width="1.5" marker-end="url(#ah-red)"/>
+  <!-- getPrompt → logGeneration -->
+  <line x1="619" y1="619" x2="619" y2="641" stroke="#ef4444" stroke-width="1.5" marker-end="url(#ah-red)"/>
+  <!-- logGeneration → updateTrace+flush -->
+  <line x1="619" y1="685" x2="619" y2="703" stroke="#ef4444" stroke-width="1.5" marker-end="url(#ah-red)"/>
+  <!-- updateTrace+flush → LangWatch Cloud -->
+  <line x1="619" y1="741" x2="619" y2="759" stroke="#ef4444" stroke-width="2" marker-end="url(#ah-red)"/>
+
+  <!-- Horizontal arrows: main → LangWatch -->
+  <!-- RagService → createTrace (solid, blocking) -->
+  <line x1="370" y1="346" x2="496" y2="346" stroke="#dc2626" stroke-width="2" marker-end="url(#ah-red)"/>
+  <!-- VectorDB → logRetrieval (dashed, fire-and-forget) -->
+  <line x1="370" y1="532" x2="496" y2="532" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#ah-red)"/>
+  <!-- Build Prompt → getPrompt (solid, blocking + critical) -->
+  <line x1="370" y1="598" x2="496" y2="598" stroke="#dc2626" stroke-width="2" marker-end="url(#ah-red)"/>
+  <!-- OpenAI Chat → logGeneration (dashed, fire-and-forget) -->
+  <line x1="370" y1="664" x2="496" y2="664" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#ah-red)"/>
+  <!-- PromptLogger row → updateTrace+flush (dashed, fire-and-forget) -->
+  <line x1="370" y1="723" x2="496" y2="723" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#ah-red)"/>
+
+  <!-- ===== LEGEND ===== -->
+  <rect x="20" y="900" width="860" height="84" rx="6" fill="#f1f5f9" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="450" y="916" text-anchor="middle" font-size="10" font-weight="700" fill="#64748b" letter-spacing="0.5">LEGEND</text>
+
+  <!-- Color swatches -->
+  <rect x="32" y="924" width="13" height="13" rx="2" fill="#4f46e5"/>
+  <text x="50" y="935" font-size="10" fill="#334155">Client</text>
+  <rect x="100" y="924" width="13" height="13" rx="2" fill="#0369a1"/>
+  <text x="118" y="935" font-size="10" fill="#334155">Controller</text>
+  <rect x="195" y="924" width="13" height="13" rx="2" fill="#047857"/>
+  <text x="213" y="935" font-size="10" fill="#334155">Service</text>
+  <rect x="270" y="924" width="13" height="13" rx="2" fill="#6d28d9"/>
+  <text x="288" y="935" font-size="10" fill="#334155">OpenAI LLM</text>
+  <rect x="375" y="924" width="13" height="13" rx="2" fill="#b45309"/>
+  <text x="393" y="935" font-size="10" fill="#334155">Embeddings</text>
+  <rect x="468" y="924" width="13" height="13" rx="2" fill="#7c2d12"/>
+  <text x="486" y="935" font-size="10" fill="#334155">VectorDB</text>
+  <rect x="552" y="924" width="13" height="13" rx="2" fill="#0f766e"/>
+  <text x="570" y="935" font-size="10" fill="#334155">Prompt Build</text>
+  <rect x="652" y="924" width="13" height="13" rx="2" fill="#dc2626"/>
+  <text x="670" y="935" font-size="10" fill="#334155">LangWatch</text>
+  <rect x="745" y="924" width="13" height="13" rx="2" fill="#475569"/>
+  <text x="763" y="935" font-size="10" fill="#334155">Storage</text>
+
+  <!-- Arrow type legend -->
+  <line x1="32" y1="957" x2="58" y2="957" stroke="#94a3b8" stroke-width="2" marker-end="url(#ah-gray)"/>
+  <text x="65" y="961" font-size="10" fill="#64748b">synchronous / blocking</text>
+  <line x1="210" y1="957" x2="236" y2="957" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#ah-gray)"/>
+  <text x="243" y="961" font-size="10" fill="#64748b">async / optional / fire-and-forget</text>
+  <line x1="440" y1="957" x2="466" y2="957" stroke="#dc2626" stroke-width="2" marker-end="url(#ah-red)"/>
+  <text x="473" y="961" font-size="10" fill="#64748b">blocking observability call</text>
+  <line x1="645" y1="957" x2="671" y2="957" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#ah-red)"/>
+  <text x="678" y="961" font-size="10" fill="#64748b">fire-and-forget observability</text>
+</svg>
