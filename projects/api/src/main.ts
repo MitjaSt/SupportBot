@@ -7,6 +7,8 @@ import {
 import { AppModule } from './app.module';
 import { checkEnv } from './check-env';
 import { AllExceptionsFilter } from './filters/all-exceptions.filter';
+import { SessionRateLimitInterceptor } from './interceptors/session-rate-limit.interceptor';
+import rateLimit from '@fastify/rate-limit';
 
 async function bootstrap() {
   checkEnv();
@@ -22,6 +24,20 @@ async function bootstrap() {
   // The voice route reads request.body as a Buffer — no multipart plugin needed.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const instance = app.getHttpAdapter().getInstance() as any;
+
+  // IP-based flood protection — coarse backstop against DoS.
+  // Intentionally high (default 200/min) because many real users share a
+  // single IP via VPNs or corporate proxies. Per-user throttling is handled
+  // by SessionRateLimitInterceptor using the session ID from the request body.
+  await instance.register(rateLimit, {
+    max: parseInt(process.env.RATE_LIMIT_IP_MAX ?? '200', 10),
+    timeWindow: parseInt(process.env.RATE_LIMIT_IP_WINDOW_MS ?? '60000', 10),
+    errorResponseBuilder: (_req: unknown, context: { after: string }) => ({
+      statusCode: 429,
+      error: 'Too Many Requests',
+      message: `IP rate limit exceeded, retry after ${context.after}`,
+    }),
+  });
   instance.addContentTypeParser(
     [
       'audio/webm',
@@ -58,6 +74,7 @@ async function bootstrap() {
   );
 
   app.useGlobalFilters(new AllExceptionsFilter());
+  app.useGlobalInterceptors(new SessionRateLimitInterceptor());
 
   // All API routes live under /api — matches the frontend's fetch calls in production.
   // /metrics is excluded so Prometheus can still scrape it at the bare path.
