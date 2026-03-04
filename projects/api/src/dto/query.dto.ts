@@ -1,6 +1,6 @@
 import { Static, Type } from '@sinclair/typebox';
 
-const QUERY_MAX_LENGTH = 200;
+const QUERY_MAX_LENGTH = 1500;
 
 export const QueryRequestSchema = Type.Object({
   query: Type.String({ minLength: 1, maxLength: QUERY_MAX_LENGTH, error: `Message must be ${QUERY_MAX_LENGTH} characters or fewer` }),

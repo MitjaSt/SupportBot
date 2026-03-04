@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ChatMessages } from '@/constants/chat-messages';
 import { ContactCollectionService } from '../../contact-collection/contact-collection.service';
 import {
   IToolHandler,
@@ -60,10 +61,7 @@ export class ContactCollectionToolHandler
       );
 
       // Generate success message
-      const successMessage =
-        contactInfo.type === 'phone'
-          ? `Thank you for providing your phone number. Someone from the Macular Society will contact you at ${contactInfo.value} on the next working day to discuss your query.`
-          : `Thank you for providing your email address. Someone from the Macular Society will contact you at ${contactInfo.value} on the next working day to discuss your query.`;
+      const successMessage = ChatMessages.contactCollected(contactInfo.type, contactInfo.value);
 
       this.logger.log(
         `Contact collected successfully: ${contactInfo.type} - ${contactInfo.value}`,
@@ -83,7 +81,7 @@ export class ContactCollectionToolHandler
       this.logger.warn(`Contact validation failed: ${contactInfo.validationMessage}`);
 
       return {
-        answer: contactInfo.validationMessage || 'Invalid contact information provided.',
+        answer: contactInfo.validationMessage || ChatMessages.INVALID_CONTACT,
       };
     }
   }

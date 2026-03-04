@@ -5,6 +5,7 @@ import {
   type AgentReturnTypes,
 } from '@langwatch/scenario';
 import { randomUUID } from 'crypto';
+import { ChatMessages } from '@/constants/chat-messages';
 import { API_BASE_URL } from './constants';
 
 interface ChatApiResponse {
@@ -46,7 +47,7 @@ export class MacularRAGAgent extends AgentAdapter {
         : null;
 
     if (!userMessage) {
-      return "I didn't receive a message. How can I help you?";
+      return ChatMessages.NO_MESSAGE_RECEIVED;
     }
 
     const response = await fetch(`${API_BASE_URL}/api/chat/query`, {
