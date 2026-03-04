@@ -9,6 +9,12 @@ Document **important technical and architectural decisions** — context, trade-
 | [001](./001-rbac.md) | RBAC with Org → Team → Project hierarchy | Accepted |
 | [002](./002-event-sourcing.md) | Event sourcing for traces/evaluations | Accepted |
 | [003](./003-logging.md) | Structured logging with trace correlation | Accepted |
+| [004](./004-database.md) | Database layer — Drizzle ORM and pgvector | Accepted |
+| [005](./005-api-design.md) | API design — NestJS/Fastify, SSE streaming, rate limiting | Accepted |
+| [006](./006-frontend.md) | Frontend — React, TanStack Query, SSE client | Accepted |
+| [007](./007-session-model.md) | Stateless anonymous sessions without authentication | Accepted |
+| [008](./008-voice-pipeline.md) | Self-hosted voice pipeline (Whisper STT + Piper TTS) | Accepted |
+| [009](./009-rag-pipeline.md) | RAG pipeline — pgvector, query rewriting, retrieval parameters | Accepted |
 
 ## When to Write an ADR
 
