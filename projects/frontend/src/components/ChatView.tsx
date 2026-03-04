@@ -222,8 +222,8 @@ export function ChatView() {
           });
         }
       }
-    } catch {
-      setError('Failed to send message. Please try again.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to send message. Please try again.');
       setFailedInput(content);
       setMessages((prev) => {
         const messagesToRemove = prev[prev.length - 1]?.role === 'assistant' ? 2 : 1;

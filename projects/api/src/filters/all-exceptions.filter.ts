@@ -43,12 +43,18 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     // Build a client-safe message — never expose stack traces or internal details
     let message: string;
+    let errors: string[] | undefined;
     if (exception instanceof HttpException) {
       const body = exception.getResponse();
-      message =
-        typeof body === 'string'
-          ? body
-          : (body as Record<string, unknown>).message?.toString() ?? exception.message;
+      if (typeof body === 'string') {
+        message = body;
+      } else {
+        const bodyObj = body as Record<string, unknown>;
+        message = bodyObj.message?.toString() ?? exception.message;
+        if (Array.isArray(bodyObj.errors)) {
+          errors = bodyObj.errors as string[];
+        }
+      }
     } else {
       message = 'An unexpected error occurred. Please try again later.';
     }
@@ -56,6 +62,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     void reply.status(status).send({
       statusCode: status,
       message,
+      ...(errors ? { errors } : {}),
       path: request.url,
       timestamp: new Date().toISOString(),
     });

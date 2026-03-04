@@ -6,9 +6,7 @@ export function TypeBoxPipe<T extends TSchema>(schema: T): PipeTransform {
   return {
     transform(value: unknown) {
       if (!Value.Check(schema, value)) {
-        const errors = [...Value.Errors(schema, value)].map(
-          (e) => `${e.path || '(root)'}: ${e.message}`,
-        );
+        const errors = [...Value.Errors(schema, value)].map((e) => e.message);
         throw new BadRequestException({ message: 'Validation failed', errors });
       }
       return value;

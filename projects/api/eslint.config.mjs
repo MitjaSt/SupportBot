@@ -25,6 +25,7 @@ export default tseslint.config(
       '@typescript-eslint/explicit-module-boundary-types': 'off',
       '@typescript-eslint/no-explicit-any': 'error',
       'prefer-const': 'error',
+      'prefer-template': 'error',
       'no-var': 'error',
       eqeqeq: ['error', 'always'],
     },

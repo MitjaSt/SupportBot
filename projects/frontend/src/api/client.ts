@@ -74,7 +74,9 @@ export async function* sendQueryStream(
   );
 
   if (!response.ok) {
-    throw new Error(`Query failed: ${response.statusText}`);
+    const body = await response.json().catch(() => null);
+    const detail = (body?.errors as string[] | undefined)?.join('; ') ?? body?.message;
+    throw new Error(detail ?? `Query failed: ${response.statusText}`);
   }
 
   if (!response.body) {
