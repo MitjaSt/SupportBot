@@ -75,6 +75,11 @@ export function ChatView() {
     setVoiceEnabled((prev) => {
       const newValue = !prev;
       localStorage.setItem('voiceEnabled', String(newValue));
+      if (!newValue && audioRef.current) {
+        audioRef.current.pause();
+      } else if (newValue && audioRef.current) {
+        audioRef.current.play();
+      }
       return newValue;
     });
   };
