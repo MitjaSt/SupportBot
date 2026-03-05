@@ -20,7 +20,7 @@ import type {
 } from './env.schema';
 
 // Load .env from project root (shared with Python)
-config({ path: resolve(__dirname, '../../../../.env') });
+config({ path: resolve(__dirname, '../../../../.env'), override: true });
 
 function getRequired(key: string): string {
   const value = process.env[key];
