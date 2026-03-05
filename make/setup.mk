@@ -7,6 +7,10 @@ setup: ## Install npm dependencies for all projects
 	cd $(API_DIR) && npm install
 	@echo "$(GREEN)API dependencies installed!$(NC)"
 	@echo ""
+	@echo "$(BLUE)Creating .env symlink for API...$(NC)"
+	@[ -e $(API_DIR)/.env ] || ln -s ../../.env $(API_DIR)/.env
+	@echo "$(GREEN).env symlink ready!$(NC)"
+	@echo ""
 	@echo "$(BLUE)Installing Frontend dependencies...$(NC)"
 	cd $(FRONTEND_DIR) && npm install
 	@echo "$(GREEN)Frontend dependencies installed!$(NC)"
