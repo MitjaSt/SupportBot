@@ -13,6 +13,7 @@ import type {
   OpenAIConfig,
   PiperConfig,
   PostgresConfig,
+  PromptGuardConfig,
   RagConfig,
   ScrapingConfig,
   WhisperConfig,
@@ -144,6 +145,11 @@ export class ConfigService {
       url: getOptional('PIPER_URL', 'http://localhost:8001'),
     };
 
+    const promptGuard: PromptGuardConfig = {
+      enabled: getBool('PROMPT_GUARD_ENABLE', false),
+      url: getOptional('PROMPT_GUARD_URL', 'http://localhost:8002'),
+    };
+
     return {
       filesystem,
       embedding,
@@ -158,6 +164,7 @@ export class ConfigService {
       followup,
       whisper,
       piper,
+      promptGuard,
     };
   }
 
@@ -211,5 +218,9 @@ export class ConfigService {
 
   get piper(): PiperConfig {
     return this.config.piper;
+  }
+
+  get promptGuard(): PromptGuardConfig {
+    return this.config.promptGuard;
   }
 }

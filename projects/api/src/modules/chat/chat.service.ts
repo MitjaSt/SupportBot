@@ -7,6 +7,7 @@ import {
   type CollectionState,
 } from '../database/session.repository';
 import { RagService, RagResponse, StreamEvent } from '../rag/rag.service';
+import { PromptGuardService } from '../prompt-guard/prompt-guard.service';
 import { SuggestionsService } from './suggestions.service';
 
 export type ChatStreamEvent = (StreamEvent | { type: 'suggestions'; suggestions: string[] }) & { sessionId: string };
@@ -22,10 +23,14 @@ export class ChatService {
     private readonly sessions: SessionRepository,
     private readonly rag: RagService,
     private readonly config: ConfigService,
+    private readonly promptGuard: PromptGuardService,
     private readonly suggestions: SuggestionsService,
   ) {}
 
   async chat(sessionId: string, message: string): Promise<ChatResponse> {
+    // Scan for prompt injection / jailbreak before any processing
+    await this.promptGuard.scan(message);
+
     // Get or create session
     const session = await this.sessions.getOrCreateSession(sessionId);
 
@@ -76,6 +81,9 @@ export class ChatService {
     sessionId: string,
     message: string,
   ): AsyncGenerator<ChatStreamEvent> {
+    // Scan for prompt injection / jailbreak before any processing
+    await this.promptGuard.scan(message);
+
     // Get or create session
     const session = await this.sessions.getOrCreateSession(sessionId);
 

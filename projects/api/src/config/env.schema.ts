@@ -83,6 +83,11 @@ export const PiperConfigSchema = Type.Object({
   url: Type.String(),
 });
 
+export const PromptGuardConfigSchema = Type.Object({
+  enabled: Type.Boolean(),
+  url: Type.String(),
+});
+
 export const EnvConfigSchema = Type.Object({
   filesystem: FilesystemConfigSchema,
   embedding: EmbeddingConfigSchema,
@@ -97,6 +102,7 @@ export const EnvConfigSchema = Type.Object({
   followup: FollowupConfigSchema,
   whisper: WhisperConfigSchema,
   piper: PiperConfigSchema,
+  promptGuard: PromptGuardConfigSchema,
 });
 
 export type FilesystemConfig = Static<typeof FilesystemConfigSchema>;
@@ -112,4 +118,5 @@ export type ConfidentAIConfig = Static<typeof ConfidentAIConfigSchema>;
 export type FollowupConfig = Static<typeof FollowupConfigSchema>;
 export type WhisperConfig = Static<typeof WhisperConfigSchema>;
 export type PiperConfig = Static<typeof PiperConfigSchema>;
+export type PromptGuardConfig = Static<typeof PromptGuardConfigSchema>;
 export type EnvConfig = Static<typeof EnvConfigSchema>;
