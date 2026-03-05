@@ -1,6 +1,6 @@
+import { ConfigService } from '@/config/config.service';
 import { Injectable, Logger } from '@nestjs/common';
 import OpenAI from 'openai';
-import { ConfigService } from '@/config/config.service';
 
 @Injectable()
 export class SuggestionsService {
