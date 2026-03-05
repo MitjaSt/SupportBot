@@ -11,8 +11,6 @@ config({ path: resolve(__dirname, '../../../.env') });
 const dsn = process.env.SENTRY_DSN;
 const enabled = process.env.SENTRY_ENABLE?.toLowerCase() === 'true';
 
-console.warn({ dsn, enabled});
-
 if (enabled && dsn) {
   Sentry.init({
     dsn,
