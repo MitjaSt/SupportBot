@@ -1,0 +1,18 @@
+services:
+  cloudbeaver:
+    image: dbeaver/cloudbeaver:latest
+    container_name: macular-cloudbeaver
+    restart: unless-stopped
+    ports:
+      - "8978:8978"
+    volumes:
+      - cloudbeaver_data:/opt/cloudbeaver/workspace
+    networks:
+      - macular-network
+
+volumes:
+  cloudbeaver_data:
+
+networks:
+  macular-network:
+    external: true

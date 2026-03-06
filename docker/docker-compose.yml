@@ -4,3 +4,4 @@ include:
   - docker-compose.piper.yml
   - docker-compose.prometheus.yml
   - docker-compose.grafana.yml
+  - docker-compose.cloudbeaver.yml
