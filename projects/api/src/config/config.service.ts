@@ -80,6 +80,7 @@ export class ConfigService {
       promptTokenWarnThreshold: getInt('RAG_PROMPT_TOKEN_WARN_THRESHOLD', 2000),
       promptTokenRejectThreshold: getInt('RAG_PROMPT_TOKEN_REJECT_THRESHOLD', 4000),
       contextHistoryMessages: parseInt(getRequired('RAG_CONTEXT_HISTORY_MESSAGES'), 10),
+      hybridSearchEnabled: getBool('RAG_HYBRID_SEARCH_ENABLED', false),
     };
 
     const chunking: ChunkingConfig = {

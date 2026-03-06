@@ -84,6 +84,9 @@ export const vectors = pgTable('vectors', {
   source: text('source').notNull(),
   chunkIndex: integer('chunk_index').notNull(),
   chunkLength: integer('chunk_length'),
+  title: text('title'),
+  url: text('url'),
+  // search_text (tsvector) is a Postgres-generated column — managed via migration, not Drizzle
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
 

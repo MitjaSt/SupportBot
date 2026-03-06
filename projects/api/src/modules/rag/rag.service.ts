@@ -208,11 +208,9 @@ export class RagService {
 
     const queryVector = await this.embeddings.embed(query);
 
-    const results = await this.vectorDb.search(
-      queryVector,
-      this.topK,
-      this.scoreThreshold,
-    );
+    const results = this.config.rag.hybridSearchEnabled
+      ? await this.vectorDb.hybridSearch(queryVector, query, this.topK)
+      : await this.vectorDb.search(queryVector, this.topK, this.scoreThreshold);
 
     retrievalTimer();
 

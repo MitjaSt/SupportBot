@@ -11,6 +11,8 @@ export interface VectorPoint {
     source: string;
     chunk_index: number;
     chunk_length?: number;
+    title?: string;
+    url?: string;
     [key: string]: unknown;
   };
 }
@@ -84,6 +86,8 @@ export class VectorDbService implements OnModuleInit {
           source: p.payload.source,
           chunkIndex: p.payload.chunk_index,
           chunkLength: p.payload.chunk_length ?? p.payload.text.length,
+          title: p.payload.title,
+          url: p.payload.url,
         }));
 
         await this.db.insert(vectors).values(values);
@@ -136,6 +140,61 @@ export class VectorDbService implements OnModuleInit {
       return mapped;
     } catch (error) {
       this.logger.error('Failed to search vectors:', error);
+      throw error;
+    }
+  }
+
+  async hybridSearch(
+    queryVector: number[],
+    queryText: string,
+    limit: number,
+  ): Promise<SearchResult[]> {
+    try {
+      // Reciprocal Rank Fusion: combines vector similarity and BM25 keyword ranking.
+      // k=60 is the standard RRF constant. FULL OUTER JOIN ensures results from either
+      // side are included even when the other search returns no match.
+      const query = sql`
+        WITH vector_ranked AS (
+          SELECT id, text, source, chunk_index,
+            ROW_NUMBER() OVER (ORDER BY embedding <=> ${JSON.stringify(queryVector)}::vector) AS rank
+          FROM vectors
+          LIMIT ${limit * 4}
+        ),
+        text_ranked AS (
+          SELECT id, text, source, chunk_index,
+            ROW_NUMBER() OVER (ORDER BY ts_rank(search_text, query) DESC) AS rank
+          FROM vectors, websearch_to_tsquery('english', ${queryText}) AS query
+          WHERE search_text @@ query
+          LIMIT ${limit * 4}
+        ),
+        rrf AS (
+          SELECT
+            COALESCE(v.id, t.id)                    AS id,
+            COALESCE(v.text, t.text)                AS text,
+            COALESCE(v.source, t.source)            AS source,
+            COALESCE(v.chunk_index, t.chunk_index)  AS "chunkIndex",
+            COALESCE(1.0 / (60 + v.rank), 0.0)
+              + COALESCE(1.0 / (60 + t.rank), 0.0) AS score
+          FROM vector_ranked v
+          FULL OUTER JOIN text_ranked t ON v.id = t.id
+        )
+        SELECT id, text, source, "chunkIndex", score
+        FROM rrf
+        ORDER BY score DESC
+        LIMIT ${limit}
+      `;
+
+      const results = await this.db.execute(query);
+
+      return (results.rows as unknown as SearchQueryRow[]).map((r) => ({
+        id: String(r.id),
+        score: Number(r.score),
+        text: String(r.text),
+        source: String(r.source),
+        chunkIndex: Number(r.chunkIndex),
+      }));
+    } catch (error) {
+      this.logger.error('Failed to run hybrid search:', error);
       throw error;
     }
   }

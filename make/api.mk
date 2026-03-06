@@ -1,7 +1,7 @@
 .PHONY: api api-prod api-build frontend frontend-build frontend-preview \
         scrape process summarize criteria embed pipeline pipeline-full collection-info \
         lint lint-fix format format-check typecheck check \
-        db-generate db-migrate db-push db-studio
+        db-generate db-migrate db-fts db-push db-studio
 
 ##@ API Server
 
@@ -115,9 +115,18 @@ db-generate: ## Generate Drizzle migration files
 	@echo "$(BLUE)Generating migration files...$(NC)"
 	cd $(API_DIR) && npm run db:generate
 
-db-migrate: ## Run Drizzle migrations
+db-migrate: ## Run Drizzle migrations (automatically applies FTS column after)
 	@echo "$(BLUE)Running migrations...$(NC)"
 	cd $(API_DIR) && npm run db:migrate
+	@$(MAKE) --no-print-directory db-fts
+
+db-fts: ## Apply full-text search column + GIN index (run once after db-migrate on a fresh DB)
+	@echo "$(BLUE)Applying full-text search generated column and GIN index...$(NC)"
+	@docker exec macular-postgres psql -U macular -d macular_society -c "\
+		ALTER TABLE vectors ADD COLUMN IF NOT EXISTS search_text tsvector \
+		  GENERATED ALWAYS AS (to_tsvector('english', coalesce(title, '') || ' ' || text)) STORED; \
+		CREATE INDEX IF NOT EXISTS vectors_search_text_idx ON vectors USING GIN (search_text);"
+	@echo "$(GREEN)Full-text search ready!$(NC)"
 
 db-push: ## Push schema changes to database
 	@echo "$(BLUE)Pushing schema to database...$(NC)"

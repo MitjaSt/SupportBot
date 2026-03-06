@@ -21,6 +21,7 @@ export const RagConfigSchema = Type.Object({
   promptTokenWarnThreshold: Type.Number(),
   promptTokenRejectThreshold: Type.Number(),
   contextHistoryMessages: Type.Number(),
+  hybridSearchEnabled: Type.Boolean(),
 });
 
 export const ChunkingConfigSchema = Type.Object({

@@ -6,6 +6,7 @@ import type {
   SummarizeResult,
 } from '@/dto/pipeline.dto';
 import { EmbeddingsService } from '@/modules/embeddings/embeddings.service';
+import { DocumentMetadataService } from '@/modules/processing/document-metadata.service';
 import { ProcessingService } from '@/modules/processing/processing.service';
 import { SummarizationService } from '@/modules/processing/summarization.service';
 import { VectorDbService } from '@/modules/vector-db/vector-db.service';
@@ -21,6 +22,7 @@ export class PipelineController {
     private readonly embeddings: EmbeddingsService,
     private readonly vectorDb: VectorDbService,
     private readonly config: ConfigService,
+    private readonly documentMetadata: DocumentMetadataService,
   ) {}
 
   @Post('process')
@@ -61,16 +63,22 @@ export class PipelineController {
     await this.vectorDb.recreateCollection();
 
     const embeddedChunks = await this.embeddings.embedWithMetadata(chunks);
+    const metadataMap = await this.documentMetadata.loadMetadata();
 
-    const points = embeddedChunks.map((c) => ({
-      vector: c.embedding,
-      payload: {
-        text: c.text,
-        source: c.source,
-        chunk_index: c.chunkIndex,
-        chunk_length: c.text.length,
-      },
-    }));
+    const points = embeddedChunks.map((c) => {
+      const meta = metadataMap.get(c.source);
+      return {
+        vector: c.embedding,
+        payload: {
+          text: c.text,
+          source: c.source,
+          chunk_index: c.chunkIndex,
+          chunk_length: c.text.length,
+          title: meta?.title,
+          url: meta?.url,
+        },
+      };
+    });
 
     await this.vectorDb.upsertPoints(points);
 

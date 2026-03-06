@@ -27,6 +27,12 @@ Required variables to set in `.env`:
 | `POSTGRES_USER` | Database user |
 | `POSTGRES_PASSWORD` | Database password |
 
+Optional feature flags:
+
+| Variable | Default | Description |
+|---|---|---|
+| `RAG_HYBRID_SEARCH_ENABLED` | `false` | Enable hybrid search (BM25 + vector) with RRF ranking. Set to `true` after running `make embed`. |
+
 ### 2. Install dependencies
 
 ```bash
@@ -49,6 +55,8 @@ Starts PostgreSQL (port 5432), Whisper STT (port 3040), and Piper TTS (port 3050
 make db-generate
 make db-migrate
 ```
+
+`db-migrate` automatically applies the full-text search column and GIN index after running Drizzle migrations. Both steps are idempotent.
 
 ### 5. Seed embeddings
 
@@ -91,6 +99,7 @@ make frontend     # Vite frontend → http://localhost:5173
 | `make docker-stop` | Stop Docker services |
 | `make docker-logs` | Tail Docker logs |
 | `make docker-status` | Show Docker service status |
+| `make db-fts` | Apply full-text search column + GIN index (once, after migrations) |
 | `make db-studio` | Open Drizzle Studio (database UI) |
 | `make lint` | Run ESLint on API and frontend |
 | `make typecheck` | Run TypeScript type checks |
