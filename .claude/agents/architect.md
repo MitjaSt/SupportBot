@@ -108,37 +108,36 @@ For each design decision, document:
 For significant architectural decisions, create ADRs:
 
 ```markdown
-# ADR-001: Use Redis for Semantic Search Vector Storage
+# ADR-004: PostgreSQL + pgvector for Vector Storage
 
 ## Context
-Need to store and query 1536-dimensional embeddings for semantic market search.
+Need to store and query 1536-dimensional embeddings for semantic search over Macular Society knowledge base.
 
 ## Decision
-Use Redis Stack with vector search capability.
+Use PostgreSQL with the pgvector extension and cosine similarity (<=> operator) via raw SQL in Drizzle.
 
 ## Consequences
 
 ### Positive
-- Fast vector similarity search (<10ms)
-- Built-in KNN algorithm
-- Simple deployment
-- Good performance up to 100K vectors
+- Persistent storage — no separate vector DB to operate
+- Transactional consistency with the rest of the data model
+- Sufficient performance for current scale (<100K vectors)
+- Drizzle ORM for standard queries; raw sql`` tag for vector ops
 
 ### Negative
-- In-memory storage (expensive for large datasets)
-- Single point of failure without clustering
-- Limited to cosine similarity
+- Vector search is slower than dedicated vector DBs at very large scale
+- No built-in ANN indexing (uses exact search unless IVFFlat/HNSW index added)
 
 ### Alternatives Considered
-- **PostgreSQL pgvector**: Slower, but persistent storage
-- **Pinecone**: Managed service, higher cost
+- **Qdrant**: Was used previously, replaced for operational simplicity
+- **Pinecone**: Managed service, higher cost and external dependency
 - **Weaviate**: More features, more complex setup
 
 ## Status
 Accepted
 
 ## Date
-2025-01-15
+2025-03-01
 ```
 
 ## System Design Checklist
@@ -185,55 +184,36 @@ Watch for these architectural anti-patterns:
 
 ## Project-Specific Architecture
 
-This is a **RAG (Retrieval-Augmented Generation) system** for medical Q&A about macular degeneration.
+This is a **RAG (Retrieval-Augmented Generation) system** for medical Q&A about macular degeneration, run by the Macular Society (UK charity). Read `CLAUDE.md` for the authoritative current stack. Summary:
 
 ### Current Architecture
-- **Frontend**: React 18 + Vite + TypeScript + Material-UI (Port 5173)
-- **Backend**: NestJS (TypeScript) + REST API (Port 3030)
-- **Database**: PostgreSQL with pgvector extension
-- **ORM**: Drizzle ORM with custom pgvector types
-- **LLM**: OpenAI GPT-5.2-chat-latest with streaming and function calling
+- **Frontend**: React 18 + Vite + TypeScript + MUI v5 + TanStack Query v5 (port 5173 dev / 3030 prod)
+- **Backend**: NestJS (Fastify adapter) + TypeScript + REST API (port 3030)
+- **Database**: PostgreSQL with pgvector extension + Drizzle ORM
+- **LLM**: OpenAI (gpt-4o or configured model) with streaming and function calling
 - **Embeddings**: OpenAI text-embedding-3-small (1536 dimensions)
-- **Voice Pipeline**:
-  - Whisper (Speech-to-Text) - Port 3040
-  - Piper (Text-to-Speech) - Port 3050
+- **Voice Pipeline**: Whisper STT (port 3040) + Piper TTS (port 3050)
+- **Observability**: LangWatch (OTEL) — adapters for LangFuse, DeepEval, null
 - **Monitoring**: Prometheus (3060) + Grafana (3070)
-- **Infrastructure**: Docker Compose for local dev
+- **Infrastructure**: Docker Compose, Make-based task runner
 
 ### Key Design Decisions
-1. **pgvector over specialized vector DBs**: Simplicity, persistent storage, good for <1M vectors
-2. **Streaming responses**: Better UX for long-form answers
-3. **Function calling for tools**: Contact collection via OpenAI native tools
-4. **Query rewriting**: Handles follow-up questions with context
-5. **Conversation history**: Stored in Postgres for session management
-6. **Metrics instrumentation**: All OpenAI calls tracked for cost monitoring
+1. **pgvector over specialised vector DBs**: Operational simplicity, persistent storage, sufficient for current scale
+2. **Streaming via AsyncGenerator + SSE**: Better UX for long-form answers
+3. **Function calling for contact collection**: OpenAI native tool calling, not custom parsing
+4. **Query rewriting**: Handles follow-up questions with prior context
+5. **TypeBox for validation**: Not class-validator — DTOs use TypeBox schemas
+6. **All OpenAI calls instrumented**: Token usage and cost tracked via MetricsService
 
-### RAG Pipeline Architecture
+### RAG Pipeline
 ```
-User Query → Embed (OpenAI) → Vector Search (pgvector) →
-Top-K Chunks → Prompt + Context → GPT-5.2 Stream → Response
+User Query → Embed (OpenAI) → pgvector cosine search (threshold 0.7, top-K configurable)
+→ Retrieved chunks → Prompt assembly → OpenAI stream → SSE to client
 ```
 
-### Module Structure (NestJS)
-- **ChatModule**: HTTP endpoints for chat interactions
-- **RagModule**: Core RAG logic (retrieve + generate)
-- **EmbeddingsModule**: OpenAI embedding generation
-- **VectorDbModule**: Postgres pgvector operations
-- **PipelineModule**: Data ingestion (scrape → process → embed)
-- **WhisperModule**: Speech-to-text integration
-- **PiperModule**: Text-to-speech integration
-- **MetricsModule**: Prometheus instrumentation
+### Domain Constraints
+- Users have macular degeneration (vision loss) — accessibility is non-negotiable (WCAG 2.1 AA)
+- Medical domain — no hallucinations; responses grounded in retrieved Macular Society content only
+- Charity context — keep infrastructure operationally simple
 
-### Scalability Plan
-- **Current (1K queries/day)**: Current architecture sufficient
-- **10K queries/day**: Add Redis caching for frequent queries
-- **100K queries/day**: Separate read replica, CDN for frontend
-- **1M queries/day**: Dedicated vector DB (Weaviate/Pinecone), microservices
-
-### Key Constraints
-- Medical domain requires high accuracy (no hallucinations)
-- Retrieval threshold (0.7) filters low-confidence results
-- Context window management (4096 tokens max)
-- Voice pipeline adds latency (~3-5s)
-
-**Remember**: RAG systems balance retrieval quality vs generation quality. Monitor both similarity scores and response accuracy.
+**Remember**: RAG systems balance retrieval quality vs generation quality. Monitor both similarity scores and response accuracy. Before proposing architectural changes, check `docs/adr/` for existing decisions.

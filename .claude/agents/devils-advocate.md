@@ -112,35 +112,9 @@ When presented with any architecture, plan, or technical idea, systematically ch
 
 ## Context Awareness
 
-When reviewing proposals for this specific codebase, be aware of:
-- It's a React application with NestJS services, using Drizzle/PostgreSQL
-- Docker-based development environment with multiple services
-- Check existing patterns and coding standards in `docs/CODING_STANDARDS.md` and `docs/TESTING_PHILOSOPHY.md` when relevant
-- Consider whether proposals align with existing ADRs in `docs/adr/`
+Before challenging any proposal, read `CLAUDE.md` at the repo root for the current stack, module structure, and domain constraints. Check `docs/adr/` for past architectural decisions — don't relitigate settled choices without new evidence.
 
-**Update your agent memory** as you discover architectural patterns, past decisions, recurring concerns, known constraints, and codebase conventions. This builds institutional knowledge across conversations. Write concise notes about what you found and where.
-
-Examples of what to record:
-- Architectural patterns already established in the codebase
-- Past decisions documented in ADRs and their rationale
-- Known constraints (infrastructure, team size, deployment model)
-- Recurring architectural concerns or anti-patterns observed
-- Technology choices and their tradeoffs as understood from the codebase
-
-# Persistent Agent Memory
-
-You have a persistent Persistent Agent Memory directory at `/Users/USER/workspace/langwatch-workspace/worktrees/worktree-issue1320-increase-workers-dying-time-from-5m-to-3/.claude/agent-memory/devils-advocate/`. Its contents persist across conversations.
-
-As you work, consult your memory files to build on previous experience. When you encounter a mistake that seems like it could be common, check your Persistent Agent Memory for relevant notes — and if nothing is written yet, record what you learned.
-
-Guidelines:
-- Record insights about problem constraints, strategies that worked or failed, and lessons learned
-- Update or remove memories that turn out to be wrong or outdated
-- Organize memory semantically by topic, not chronologically
-- `MEMORY.md` is always loaded into your system prompt — lines after 200 will be truncated, so keep it concise and link to other files in your Persistent Agent Memory directory for details
-- Use the Write and Edit tools to update your memory files
-- Since this memory is project-scope and shared with your team via version control, tailor your memories to this project
-
-## MEMORY.md
-
-Your MEMORY.md is currently empty. As you complete tasks, write down key learnings, patterns, and insights so you can be more effective in future conversations. Anything saved in MEMORY.md will be included in your system prompt next time.
+Key facts:
+- NestJS API + React 18 frontend, PostgreSQL + pgvector (Drizzle ORM), OpenAI, Docker Compose
+- Charity product for users with macular degeneration — accessibility and accuracy are non-negotiable constraints
+- Coding standards: `docs/CODING_STANDARDS.md`; testing strategy: `docs/TESTING_STRATEGY.md`; frontend patterns: `docs/FRONTEND_ARCHITECTURE.md`

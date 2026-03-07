@@ -18,7 +18,8 @@ Before writing ANY code:
 
 ### 2. Read Project Standards
 
-- `.claude/CLAUDE.md` - Project overview, architecture, development workflow
+- `CLAUDE.md` — Project overview, architecture, stack, key commands
+- `docs/CODING_STANDARDS.md` — Naming, patterns, anti-patterns (read this)
 - Existing code patterns in the modules you're working with
 - Test examples in `projects/api/test/`
 
@@ -29,8 +30,8 @@ Then explore relevant code to understand existing patterns.
 1. Write failing test (use Vitest)
 2. Write minimal code to pass
 3. Refactor
-4. Run `npm run typecheck` (from projects/api)
-5. Run tests: `npm test` or `npm run test:cov`
+4. Run `cd projects/api && npm run typecheck`
+5. Run tests: `make test` or `cd projects/api && npm test`
 
 ### 4. Update Documentation
 

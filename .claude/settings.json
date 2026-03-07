@@ -4,6 +4,15 @@
       "WebSearch",
       "WebFetch",
       "Bash(git commit:*)"
+    ],
+    "deny": [
+      "Bash(*test:scenarios*)",
+      "Bash(*test:ragas*)",
+      "Bash(*test:evals*)",
+      "Bash(*test:simulations*)",
+      "Bash(*test-scenarios*)",
+      "Bash(*test-ragas*)",
+      "Bash(*test-evals*)"
     ]
   },
   "hooks": {
