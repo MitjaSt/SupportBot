@@ -1,0 +1,52 @@
+name: Feature recommendation
+description: Suggest an improvement or new feature
+labels: ['type: feature']
+body:
+  - type: checkboxes
+    attributes:
+      label: Pre-flight checklist
+      options:
+        - label: I have searched existing issues and this has not already been requested
+          required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Which part of the application does this relate to?
+      options:
+        - Chat interface
+        - Voice input / output
+        - RAG / answer quality
+        - Accessibility
+        - API / backend
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Problem or motivation
+      description: What problem are you trying to solve, or what user need would this address?
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Proposed solution
+      description: Describe your suggested approach. Screenshots, sketches, or examples from other tools are welcome.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Accessibility considerations
+      description: |
+        How might this feature affect users with low vision, screen readers, or other assistive technology?
+        If you are unsure, write "unknown" — this helps us flag it for review.
+
+  - type: textarea
+    attributes:
+      label: Alternatives considered
+      description: Have you thought of other ways to solve this? Why is your proposal preferable?

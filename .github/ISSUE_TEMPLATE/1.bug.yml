@@ -1,0 +1,73 @@
+name: Bug report
+description: Something is not working as expected
+labels: ['type: bug']
+body:
+  - type: checkboxes
+    attributes:
+      label: Pre-flight checklist
+      options:
+        - label: I have searched existing issues and this is not a duplicate
+          required: true
+        - label: I can reproduce this consistently
+          required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Which part of the application is affected?
+      options:
+        - Chat interface
+        - Voice input (microphone / Whisper)
+        - Voice output (audio playback / Piper)
+        - RAG answers / content accuracy
+        - Accessibility (screen reader, keyboard navigation, high contrast)
+        - API / backend
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Steps to reproduce
+      description: Provide clear, numbered steps to reproduce the bug.
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Current behaviour
+      description: What actually happens?
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Expected behaviour
+      description: What should happen instead?
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Environment
+      description: Browser and version, OS, and any assistive technology in use.
+      placeholder: |
+        Browser: Chrome 121
+        OS: Windows 11
+        Assistive technology: NVDA 2023.3 / None
+
+  - type: textarea
+    attributes:
+      label: Logs or screenshots
+      description: Paste any relevant console errors, API logs, or screenshots. Wrap code in triple backticks.
+
+  - type: checkboxes
+    attributes:
+      label: Accessibility impact
+      options:
+        - label: This bug affects users relying on a screen reader, keyboard navigation, or other assistive technology

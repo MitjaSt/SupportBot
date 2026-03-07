@@ -1,0 +1,37 @@
+name: Documentation feedback
+description: Report unclear, missing, or incorrect documentation
+labels: ['type: docs']
+title: '[docs] '
+body:
+  - type: input
+    id: page
+    attributes:
+      label: Document or section
+      description: Which file, page, or section is this about?
+      placeholder: 'e.g. docs/VOICE_PIPELINE.md or the README'
+    validations:
+      required: true
+
+  - type: dropdown
+    attributes:
+      label: Kind of issue
+      options:
+        - Unclear explanation
+        - Missing information
+        - Incorrect or out of date
+        - Broken link or example
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Description
+      description: What is wrong or confusing?
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Suggested improvement
+      description: If you have a fix or better wording in mind, paste it here. Partial suggestions are fine.
