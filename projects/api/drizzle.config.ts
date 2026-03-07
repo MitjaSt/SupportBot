@@ -2,8 +2,9 @@ import { config } from 'dotenv';
 import { defineConfig } from 'drizzle-kit';
 import { resolve } from 'path';
 
-// Load .env from project root
-config({ path: resolve(__dirname, '../../.env'), override: true });
+// Load config then secrets from project root
+config({ path: resolve(__dirname, '../../.env.config') });
+config({ path: resolve(__dirname, '../../.env.secrets'), override: true });
 
 export default defineConfig({
   schema: './src/db/schema.ts',

@@ -19,8 +19,9 @@ import type {
   WhisperConfig,
 } from './env.schema';
 
-// Load .env from project root (shared with Python)
-config({ path: resolve(__dirname, '../../../../.env'), override: true });
+// Load config then secrets from project root (.env.config is committed, .env.secrets is gitignored)
+config({ path: resolve(__dirname, '../../../../.env.config') });
+config({ path: resolve(__dirname, '../../../../.env.secrets'), override: true });
 
 function getRequired(key: string): string {
   const value = process.env[key];

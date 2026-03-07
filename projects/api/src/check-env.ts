@@ -18,38 +18,43 @@ function parseEnvKeys(filePath: string): Set<string> {
 export function checkEnv(): void {
   // dist/check-env.js → dist/ → api/ → projects/ → repo root
   const root = resolve(__dirname, '../../../');
-  const envPath = resolve(root, '.env');
-  const examplePath = resolve(root, '.env.example');
+  const secretsPath = resolve(root, '.env.secrets');
+  const examplePath = resolve(root, '.env.secrets.example');
+  const configPath = resolve(root, '.env.config');
+
+  if (!existsSync(configPath)) {
+    console.warn('[env] ℹ️  .env.config not found — non-sensitive config may be missing');
+  }
 
   if (!existsSync(examplePath)) {
-    console.warn('[env] ℹ️. .env.example not found, skipping config check');
+    console.warn('[env] ℹ️  .env.secrets.example not found, skipping secrets check');
     return;
   }
 
   const exampleKeys = parseEnvKeys(examplePath);
 
-  if (!existsSync(envPath)) {
+  if (!existsSync(secretsPath)) {
     console.error(
-      `[env] 🛑  .env file not found. Missing variables:\n  ${[...exampleKeys].join('\n  ')}`,
+      `[env] 🛑  .env.secrets file not found. Missing variables:\n  ${[...exampleKeys].join('\n  ')}`,
     );
     process.exit(1);
   }
 
-  const envKeys = parseEnvKeys(envPath);
+  const secretsKeys = parseEnvKeys(secretsPath);
 
-  const missing = [...exampleKeys].filter((k) => !envKeys.has(k));
-  const extra = [...envKeys].filter((k) => !exampleKeys.has(k));
+  const missing = [...exampleKeys].filter((k) => !secretsKeys.has(k));
+  const extra = [...secretsKeys].filter((k) => !exampleKeys.has(k));
 
   if (missing.length > 0) {
     console.error(
-      `[env] 🛑  Missing variables (in .env.example but not in .env):\n  ${missing.join('\n  ')}`,
+      `[env] 🛑  Missing secrets (in .env.secrets.example but not in .env.secrets):\n  ${missing.join('\n  ')}`,
     );
     process.exit(1);
   }
 
   if (extra.length > 0) {
     console.warn(
-      `[env] ℹ️  Unknown variables (in .env but not in .env.example):\n  ${extra.join('\n  ')}`,
+      `[env] ℹ️  Unknown secrets (in .env.secrets but not in .env.secrets.example):\n  ${extra.join('\n  ')}`,
     );
   }
 }

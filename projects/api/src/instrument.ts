@@ -5,8 +5,9 @@ import { config } from 'dotenv';
 import { resolve } from 'path';
 
 // instrument.ts runs before ConfigModule, so dotenv hasn't loaded yet.
-// Load .env explicitly — same file as config.service.ts, just one fewer level up.
-config({ path: resolve(__dirname, '../../../.env') });
+// Load config then secrets — same paths as config.service.ts, just one fewer level up.
+config({ path: resolve(__dirname, '../../../.env.config') });
+config({ path: resolve(__dirname, '../../../.env.secrets'), override: true });
 
 const dsn = process.env.SENTRY_DSN;
 const enabled = process.env.SENTRY_ENABLE?.toLowerCase() === 'true';

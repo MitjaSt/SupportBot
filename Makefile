@@ -7,8 +7,9 @@ YELLOW := $(shell printf '\033[0;33m')
 RED    := $(shell printf '\033[0;31m')
 NC     := $(shell printf '\033[0m')
 
-# Load .env (DOCKERHUB_*, etc.) as Make variables
--include .env
+# Load env files as Make variables (.env.config is committed; .env.secrets is gitignored)
+-include .env.config
+-include .env.secrets
 export
 
 # Paths
