@@ -47,6 +47,21 @@ projects/
 | Grafana | 3070 |
 | PostgreSQL | 5432 |
 
+### Docker storage convention
+
+Persistent data uses **bind mounts** into `docker/storage/<service>/` — never named Docker volumes. This keeps data visible on the host filesystem and easy to back up or inspect.
+
+```
+docker/storage/
+├── cloudbeaver/
+├── ollama_data/
+├── qdrant/
+├── redis/
+└── redisinsight/
+```
+
+When adding a new service that needs persistent storage, add a bind mount `./storage/<service-name>:/path/in/container` and create the directory. Do not add a `volumes:` block.
+
 ## Key commands
 
 ```bash

@@ -16,6 +16,7 @@ docker-start: docker-network ## Start Docker services (Postgres, Whisper, Piper)
 	@echo "$(YELLOW)Postgres: localhost:5432$(NC)"
 	@echo "$(YELLOW)Whisper:  localhost:3040$(NC)"
 	@echo "$(YELLOW)Piper:    localhost:3050$(NC)"
+	@echo "$(YELLOW)Beaver:   localhost:8978$(NC)"
 
 docker-stop: ## Stop Docker services
 	@echo "$(BLUE)Stopping Docker services...$(NC)"
