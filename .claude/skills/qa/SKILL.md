@@ -163,8 +163,9 @@ This project uses: **Vitest** for unit and integration tests, **@langwatch/scena
 
 1. **[Highest risk test area]** — worth writing test stubs before implementation starts?
 2. **[Missing test data]** — what needs creating before tests can run?
-3. **Ready to plan?** — run `/plan [feature]` to break implementation into tasks,
-   or `/value [feature]` for ROI evaluation first.
+3. **Note:** For most features, `/plan` combines architecture, QA strategy, and tasks
+   into one document — use this standalone `/qa` skill when you need a detailed test
+   strategy independently (e.g., for a complex AI feature or external review).
 ```
 
 ---

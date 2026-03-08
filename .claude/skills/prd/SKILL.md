@@ -311,7 +311,7 @@ This is a draft. Highest-value things to dig into:
 2. **[Scope question]** — e.g., "M1 is broad — should we cut it to just X?"
 3. **[Open question]** — e.g., "The schema change in M2 could be breaking — worth a migration strategy first?"
 
-When this PRD is approved, the next step is `/architecture` for technical design, or `/plan` if the approach is already clear.
+When this PRD is approved, run `/plan [feature]` to design, validate, and task it out in one step. For uncertain or high-stakes features, run `/value [feature]` first to check the ROI before investing in design.
 
 Or just tell me what to change, add, or go deeper on.
 ```

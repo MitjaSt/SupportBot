@@ -2,7 +2,25 @@
 
 A sequence of skills that takes a rough idea through structured thinking stages before committing to implementation. Each skill reads the outputs of prior stages and hands off to the next.
 
-## The pipeline
+## Two tracks
+
+**Standard** — most features:
+
+```
+Idea
+ ↓
+/prd        Product decision — goals, options, recommendation, assumptions
+ ↓
+/plan       Technical design + QA strategy + task breakdown (the "ready to build" doc)
+ ↓
+/decision   Final record — what was decided, why, risks accepted, kill criteria
+```
+
+Add `/explore` at the start when the problem is fuzzy or the solution space is unknown.
+
+---
+
+**Full** — complex, uncertain, or high-stakes features:
 
 ```
 Idea
@@ -11,13 +29,9 @@ Idea
  ↓
 /prd        Product decision — goals, options, recommendation, assumptions
  ↓
-/arch       Technical design — hardest problems first, components, interfaces
+/value      ROI check — is this worth building before investing in design?
  ↓
-/qa         Validation strategy — test plan, failure modes, accessibility, AI checks
- ↓
-/plan       Implementation tasks — break milestones into concrete work items
- ↓
-/value      ROI evaluation — effort vs impact, opportunity cost, recommendation
+/plan       Technical design + QA strategy + task breakdown
  ↓
 /challenge  Critical review — adversarial stress-test of problem, design, and value
  ↓
@@ -26,26 +40,38 @@ Idea
 docs/decisions/YYYY-MM-DD-[feature].md   (revisited after delivery for lessons learned)
 ```
 
-## Output directories
+---
 
-Each skill saves its output to a corresponding folder under `docs/`:
+## When to use each track
+
+| Signal | Track |
+|--------|-------|
+| Small to medium feature, approach is clear | Standard |
+| Novel problem or unfamiliar domain | Full (start with `/explore`) |
+| Significant effort or hard to reverse | Full (at minimum add `/value`) |
+| Multiple stakeholders need to align | Full |
+| High risk of being wrong about the problem | Full (start with `/explore`) |
+
+---
+
+## Output directories
 
 | Skill | Output directory |
 |-------|-----------------|
 | `/explore` | `docs/explore/` |
 | `/prd` | `docs/prd/` |
-| `/arch` | `docs/architecture/` |
-| `/qa` | `docs/qa/` |
+| `/plan` | `docs/plan/` |
 | `/value` | `docs/value/` |
 | `/challenge` | `docs/challenge/` |
 | `/decision` | `docs/decisions/` |
 
-## Usage notes
+---
 
-- You do not need to run every stage for every idea. Small changes may only need `/prd` + `/arch`. Large or uncertain initiatives benefit from the full pipeline.
-- Each skill will search for upstream documents automatically — pass the feature name or a file path.
-- `/plan` is not a skill in this pipeline — use the planning-specialist agent directly for implementation task breakdown.
-- `/decision` is the learning loop anchor. Return to it after delivery and fill in the Outcome and Lessons learned sections.
+## Standalone skills (available but not required in most pipelines)
+
+`/arch` and `/qa` remain available when you need them in isolation — e.g., presenting a technical design for external review, or writing a detailed test strategy for a complex AI feature. `/plan` folds both into one document for everyday work.
+
+---
 
 ## Dev skills (separate from this pipeline)
 

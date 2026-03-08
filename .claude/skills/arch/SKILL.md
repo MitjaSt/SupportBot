@@ -209,8 +209,8 @@ Must be resolved before implementation starts.
 
 1. **[Most critical open question]** — needs resolution before implementation
 2. **[Riskiest component]** — worth a proof-of-concept first?
-3. **Ready to validate?** — run `/qa [feature]` to define the test strategy,
-   or `/plan [feature]` if the test approach is already clear.
+3. **Ready to build?** — run `/plan [feature]` to combine this design with a QA strategy
+   and task breakdown in one document, or `/qa [feature]` for a standalone test strategy.
 ```
 
 ---
