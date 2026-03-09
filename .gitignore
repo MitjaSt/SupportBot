@@ -18,6 +18,7 @@ dist/
 .env
 .env.personal
 .env.secrets
+**/.env.local
 
 # Node modules
 **/node_modules/
