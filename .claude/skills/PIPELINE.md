@@ -82,5 +82,6 @@ These skills support day-to-day development and are unrelated to the planning pi
 | `/check` | Pre-push ESLint + typecheck |
 | `/review-pr` | PR review and description |
 | `/audit-a11y` | Accessibility audit |
+| `/pentest` | Adversarial security audit — STRIDE threat model + executable test cases |
 | `/test-rag-system` | RAG system test suite |
 | `/health-check` | Dev stack status check |

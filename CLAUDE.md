@@ -62,6 +62,18 @@ docker/storage/
 
 When adding a new service that needs persistent storage, add a bind mount `./storage/<service-name>:/path/in/container` and create the directory. Do not add a `volumes:` block.
 
+### Env file convention
+
+All configuration lives in `.env.config` (non-secret, committed) and `.env.secrets` (secrets, gitignored). Every docker-compose service must declare:
+
+```yaml
+env_file:
+  - ../.env.config
+  - ../.env.secrets
+```
+
+Never add env vars to Makefiles or shell scripts.
+
 ## Key commands
 
 ```bash
