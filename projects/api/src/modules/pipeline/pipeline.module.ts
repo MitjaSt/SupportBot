@@ -1,9 +1,10 @@
+import { ConfigModule } from '@/config/config.module';
+import { EmbeddingsModule } from '@/modules/embeddings/embeddings.module';
+import { MetricsModule } from '@/modules/metrics/metrics.module';
+import { ProcessingModule } from '@/modules/processing/processing.module';
+import { VectorDbModule } from '@/modules/vector-db/vector-db.module';
 import { Module } from '@nestjs/common';
 import { PipelineController } from './pipeline.controller';
-import { ProcessingModule } from '@/modules/processing/processing.module';
-import { EmbeddingsModule } from '@/modules/embeddings/embeddings.module';
-import { VectorDbModule } from '@/modules/vector-db/vector-db.module';
-import { ConfigModule } from '@/config/config.module';
 
 @Module({
   imports: [
@@ -11,6 +12,7 @@ import { ConfigModule } from '@/config/config.module';
     ProcessingModule,
     EmbeddingsModule,
     VectorDbModule,
+    MetricsModule
   ],
   controllers: [PipelineController],
 })

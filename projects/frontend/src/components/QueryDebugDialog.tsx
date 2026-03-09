@@ -30,7 +30,7 @@ export function QueryDebugDialog({ open, onClose, chunks, fullPrompt, promptToke
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 1 }}>
         Sources & Prompt
-        <IconButton size="small" onClick={onClose}>
+        <IconButton size="small" aria-label="Close dialog" onClick={onClose}>
           <Close fontSize="small" />
         </IconButton>
       </DialogTitle>

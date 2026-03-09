@@ -49,6 +49,24 @@ export class VectorDbService implements OnModuleInit {
 
   async onModuleInit(): Promise<void> {
     await this.ensureExtension();
+    await this.checkVectorCount();
+  }
+
+  private async checkVectorCount(): Promise<void> {
+    try {
+      const result = await this.db.execute(sql`SELECT COUNT(*) as count FROM ${vectors}`);
+      const count = Number((result.rows as unknown as CountQueryRow[])[0]?.count ?? 0);
+      if (count === 0) {
+        this.logger.warn(
+          'Vector DB is empty — RAG will return no results until content is ingested. ' +
+            'Run the pipeline to populate the knowledge base.',
+        );
+      } else {
+        this.logger.log(`Vector DB ready: ${count} chunks indexed`);
+      }
+    } catch (error) {
+      this.logger.warn('Could not check vector count at startup:', error);
+    }
   }
 
   private async ensureExtension(): Promise<void> {

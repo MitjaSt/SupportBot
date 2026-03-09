@@ -61,6 +61,10 @@ export class MetricsService {
   public readonly newSessions: Counter;
   public readonly messagesPerSession: Histogram;
 
+  // Auth Metrics
+  public readonly authJwtVerifiedTotal: Counter;
+  public readonly authJwksFetchTotal: Counter;
+
   // Database Metrics
   public readonly dbQueryDuration: Histogram;
   public readonly dbConnectionPoolSize: Gauge;
@@ -290,6 +294,21 @@ export class MetricsService {
       name: 'macular_messages_per_session',
       help: 'Distribution of messages per session',
       buckets: [1, 2, 5, 10, 20, 50],
+      registers: [register],
+    });
+
+    // Auth Metrics
+    this.authJwtVerifiedTotal = new Counter({
+      name: 'macular_auth_jwt_verified_total',
+      help: 'Total JWT verification attempts',
+      labelNames: ['result'],
+      registers: [register],
+    });
+
+    this.authJwksFetchTotal = new Counter({
+      name: 'macular_auth_jwks_fetch_total',
+      help: 'Total JWKS key fetch operations',
+      labelNames: ['result'],
       registers: [register],
     });
 

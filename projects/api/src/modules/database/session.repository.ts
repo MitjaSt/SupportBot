@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { eq, gt, desc, sql, count, asc } from 'drizzle-orm';
+import { and, eq, gt, desc, sql, count, asc } from 'drizzle-orm';
 import { ConfigService } from '@/config/config.service';
 import { DatabaseService } from './database.service';
 import {
@@ -34,14 +34,51 @@ export class SessionRepository {
     return expiresAt;
   }
 
-  async createSession(sessionId: string): Promise<Session> {
+  async createSession(sessionId: string, userId?: string): Promise<Session> {
     const [session] = await this.db
       .insert(sessions)
       .values({
         sessionId,
         expiresAt: this.getExpiresAt(),
+        userId: userId ?? null,
       })
       .returning();
+
+    return session;
+  }
+
+  async listSessionsForUser(
+    userId: string,
+    limit = 50,
+  ): Promise<Array<Session & { messageCount: number }>> {
+    const result = await this.db
+      .select({
+        session: sessions,
+        messageCount: count(messages.id),
+      })
+      .from(sessions)
+      .leftJoin(messages, eq(sessions.sessionId, messages.sessionId))
+      .where(and(eq(sessions.userId, userId), gt(sessions.expiresAt, new Date())))
+      .groupBy(sessions.sessionId)
+      .orderBy(desc(sessions.updatedAt))
+      .limit(limit);
+
+    return result.map((row: { session: Session; messageCount: number }) => ({
+      ...row.session,
+      messageCount: row.messageCount,
+    }));
+  }
+
+  async getSessionForUser(sessionId: string, userId: string): Promise<Session | null> {
+    const [session] = await this.db
+      .select()
+      .from(sessions)
+      .where(and(eq(sessions.sessionId, sessionId), eq(sessions.userId, userId)))
+      .limit(1);
+
+    if (!session || session.expiresAt < new Date()) {
+      return null;
+    }
 
     return session;
   }
@@ -60,12 +97,12 @@ export class SessionRepository {
     return session;
   }
 
-  async getOrCreateSession(sessionId: string): Promise<Session> {
+  async getOrCreateSession(sessionId: string, userId?: string): Promise<Session> {
     const existing = await this.getSession(sessionId);
     if (existing) {
       return existing;
     }
-    return this.createSession(sessionId);
+    return this.createSession(sessionId, userId);
   }
 
   async updateSession(
@@ -154,6 +191,27 @@ export class SessionRepository {
       .from(sessions)
       .leftJoin(messages, eq(sessions.sessionId, messages.sessionId))
       .where(gt(sessions.expiresAt, new Date()))
+      .groupBy(sessions.sessionId)
+      .orderBy(desc(sessions.updatedAt))
+      .limit(limit);
+
+    return result.map((row: { session: Session; messageCount: number }) => ({
+      ...row.session,
+      messageCount: row.messageCount,
+    }));
+  }
+
+  async listConsentedSessions(
+    limit = 50,
+  ): Promise<Array<Session & { messageCount: number }>> {
+    const result = await this.db
+      .select({
+        session: sessions,
+        messageCount: count(messages.id),
+      })
+      .from(sessions)
+      .leftJoin(messages, eq(sessions.sessionId, messages.sessionId))
+      .where(eq(sessions.collectionState, 'complete'))
       .groupBy(sessions.sessionId)
       .orderBy(desc(sessions.updatedAt))
       .limit(limit);

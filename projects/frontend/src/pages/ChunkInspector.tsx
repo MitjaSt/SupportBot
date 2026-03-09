@@ -12,6 +12,8 @@ import {
 } from '@mui/material';
 import { Upload } from '@mui/icons-material';
 import { useMutation } from '@tanstack/react-query';
+import { apiFetch } from '../api/client';
+import { useAuth } from '../hooks/useAuth';
 
 interface InspectedChunk {
   index: number;
@@ -39,12 +41,12 @@ const CHUNK_BORDER_COLORS = [
   '#80deea', '#f48fb1', '#e6ee9c', '#b39ddb',
 ];
 
-async function inspectChunks(text: string): Promise<ChunkInspectionResult> {
-  const res = await fetch('/api/analytics/chunk-inspector', {
+async function inspectChunks(text: string, token: string | null): Promise<ChunkInspectionResult> {
+  const res = await apiFetch('/api/analytics/chunk-inspector', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ text }),
-  });
+  }, undefined, token ?? undefined);
   if (!res.ok) throw new Error(`Request failed: ${res.status}`);
   return res.json() as Promise<ChunkInspectionResult>;
 }
@@ -52,8 +54,9 @@ async function inspectChunks(text: string): Promise<ChunkInspectionResult> {
 export function ChunkInspector() {
   const [text, setText] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { token } = useAuth();
 
-  const mutation = useMutation({ mutationFn: inspectChunks });
+  const mutation = useMutation({ mutationFn: (t: string) => inspectChunks(t, token) });
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

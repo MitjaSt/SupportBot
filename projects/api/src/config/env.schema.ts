@@ -89,6 +89,13 @@ export const PromptGuardConfigSchema = Type.Object({
   url: Type.String(),
 });
 
+export const ZitadelConfigSchema = Type.Object({
+  enabled: Type.Boolean(),
+  jwksUri: Type.String(),
+  issuer: Type.String(),
+  audience: Type.String(),
+});
+
 export const EnvConfigSchema = Type.Object({
   filesystem: FilesystemConfigSchema,
   embedding: EmbeddingConfigSchema,
@@ -104,6 +111,7 @@ export const EnvConfigSchema = Type.Object({
   whisper: WhisperConfigSchema,
   piper: PiperConfigSchema,
   promptGuard: PromptGuardConfigSchema,
+  zitadel: ZitadelConfigSchema,
 });
 
 export type FilesystemConfig = Static<typeof FilesystemConfigSchema>;
@@ -120,4 +128,5 @@ export type FollowupConfig = Static<typeof FollowupConfigSchema>;
 export type WhisperConfig = Static<typeof WhisperConfigSchema>;
 export type PiperConfig = Static<typeof PiperConfigSchema>;
 export type PromptGuardConfig = Static<typeof PromptGuardConfigSchema>;
+export type ZitadelConfig = Static<typeof ZitadelConfigSchema>;
 export type EnvConfig = Static<typeof EnvConfigSchema>;

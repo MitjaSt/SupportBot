@@ -1,4 +1,7 @@
-import { Body, Controller, Get, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '@/modules/auth/guards/jwt-auth.guard';
+import { PermissionsGuard } from '@/modules/auth/guards/permissions.guard';
+import { Permissions } from '@/modules/auth/decorators/permissions.decorator';
 import {
   AnalyticsService,
   type ChunkInspectionResult,
@@ -19,6 +22,8 @@ export interface SystemPromptInfo {
   maxTokens: number;
 }
 
+@UseGuards(JwtAuthGuard, PermissionsGuard)
+@Permissions('analytics:read')
 @Controller('analytics')
 export class AnalyticsController {
   constructor(

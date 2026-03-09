@@ -36,6 +36,13 @@
       "when": 1772756056348,
       "tag": "0004_great_doorman",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1772990695537,
+      "tag": "0005_volatile_star_brand",
+      "breakpoints": true
     }
   ]
 }

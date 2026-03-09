@@ -116,7 +116,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
           {hasDebugData && (
             <Box sx={{ mt: 0.5 }}>
               <Tooltip title="View sources & prompt">
-                <IconButton size="small" onClick={() => setDebugOpen(true)} sx={{ opacity: 0.5, '&:hover': { opacity: 1 } }}>
+                <IconButton size="small" aria-label="View sources and prompt" onClick={() => setDebugOpen(true)} sx={{ opacity: 0.5, '&:hover': { opacity: 1 } }}>
                   <InfoOutlined
                     fontSize="small"
                     sx={{

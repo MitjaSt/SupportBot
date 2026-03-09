@@ -14,8 +14,15 @@ import {
   Req,
   Res,
   BadRequestException,
+  UseGuards,
 } from '@nestjs/common';
 import type { FastifyReply, FastifyRequest } from 'fastify';
+import { JwtAuthGuard } from '@/modules/auth/guards/jwt-auth.guard';
+import { PermissionsGuard } from '@/modules/auth/guards/permissions.guard';
+import { Permissions } from '@/modules/auth/decorators/permissions.decorator';
+import { OptionalAuth } from '@/modules/auth/decorators/optional-auth.decorator';
+import { CurrentUser } from '@/modules/auth/decorators/current-user.decorator';
+import type { AuthUser } from '@/modules/auth/interfaces/auth-user.interface';
 import { ChatService } from './chat.service';
 import { WhisperService } from '../whisper/whisper.service';
 import { PiperService } from '../piper/piper.service';
@@ -28,13 +35,22 @@ export class ChatController {
     private readonly piper: PiperService,
   ) {}
 
+  @OptionalAuth()
   @Post('query')
-  async query(@Body(TypeBoxPipe(QueryRequestSchema)) body: QueryRequest): Promise<QueryResponse> {
-    return this.chat.chat(body.sessionId, body.query);
+  async query(
+    @Body(TypeBoxPipe(QueryRequestSchema)) body: QueryRequest,
+    @CurrentUser() user: AuthUser | null,
+  ): Promise<QueryResponse> {
+    return this.chat.chat(body.sessionId, body.query, user);
   }
 
+  @OptionalAuth()
   @Post('query/stream')
-  async queryStream(@Body(TypeBoxPipe(QueryRequestSchema)) body: QueryRequest, @Res() reply: FastifyReply) {
+  async queryStream(
+    @Body(TypeBoxPipe(QueryRequestSchema)) body: QueryRequest,
+    @CurrentUser() user: AuthUser | null,
+    @Res() reply: FastifyReply,
+  ) {
     const sessionId = body.sessionId;
 
     // Set SSE headers for Fastify
@@ -45,7 +61,7 @@ export class ChatController {
 
     try {
       // Stream events to client
-      for await (const event of this.chat.chatStream(sessionId, body.query)) {
+      for await (const event of this.chat.chatStream(sessionId, body.query, user)) {
         // Send event as SSE format: "data: {json}\n\n"
         reply.raw.write(`data: ${JSON.stringify(event)}\n\n`);
       }
@@ -99,15 +115,31 @@ export class ChatController {
     };
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get('sessions')
-  async listSessions(@Query('limit') limit?: string) {
+  async listSessions(
+    @CurrentUser() user: AuthUser | null,
+    @Query('limit') limit?: string,
+  ) {
     const parsedLimit = limit ? parseInt(limit, 10) : 50;
-    return this.chat.listSessions(parsedLimit);
+    return this.chat.listSessionsForUser(user!.sub, parsedLimit);
   }
 
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @Permissions('sessions.consented:read')
+  @Get('consented-sessions')
+  async listConsentedSessions(@Query('limit') limit?: string) {
+    const parsedLimit = limit ? parseInt(limit, 10) : 50;
+    return this.chat.listConsentedSessions(parsedLimit);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Get('sessions/:sessionId')
-  async getSession(@Param('sessionId') sessionId: string) {
-    const session = await this.chat.getSession(sessionId);
+  async getSession(
+    @CurrentUser() user: AuthUser | null,
+    @Param('sessionId') sessionId: string,
+  ) {
+    const session = await this.chat.getSessionForUser(sessionId, user!.sub);
     if (!session) {
       throw new NotFoundException('Session not found');
     }

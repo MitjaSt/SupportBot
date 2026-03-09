@@ -17,6 +17,7 @@ import type {
   RagConfig,
   ScrapingConfig,
   WhisperConfig,
+  ZitadelConfig,
 } from './env.schema';
 
 // Load config then secrets from project root (.env.config is committed, .env.secrets is gitignored)
@@ -152,6 +153,13 @@ export class ConfigService {
       url: getOptional('PROMPT_GUARD_URL', 'http://localhost:8002'),
     };
 
+    const zitadel: ZitadelConfig = {
+      enabled: getBool('AUTH_ENABLED', false),
+      jwksUri: getOptional('ZITADEL_JWKS_URI', ''),
+      issuer: getOptional('ZITADEL_ISSUER', ''),
+      audience: getOptional('ZITADEL_AUDIENCE', 'macular-society-api'),
+    };
+
     return {
       filesystem,
       embedding,
@@ -167,6 +175,7 @@ export class ConfigService {
       whisper,
       piper,
       promptGuard,
+      zitadel,
     };
   }
 
@@ -224,5 +233,9 @@ export class ConfigService {
 
   get promptGuard(): PromptGuardConfig {
     return this.config.promptGuard;
+  }
+
+  get zitadel(): ZitadelConfig {
+    return this.config.zitadel;
   }
 }

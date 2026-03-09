@@ -291,8 +291,10 @@ export function ChatView() {
         bgcolor: 'background.default',
       }}
     >
-      {/* Messages area */}
-      <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
+      {/* Messages area — role="log" causes screen readers to announce new messages as
+          they arrive, including streamed assistant responses. aria-live is implicit on
+          role="log" but aria-label gives the region a meaningful name. */}
+      <Box role="log" aria-label="Conversation" aria-live="polite" sx={{ flex: 1, overflow: 'auto', p: 2 }}>
         {messages.length === 0 && !loading ? (
           <Box
             sx={{

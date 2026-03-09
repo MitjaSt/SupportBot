@@ -1,0 +1,58 @@
+services:
+  zitadel:
+    image: ghcr.io/zitadel/zitadel:latest
+    container_name: macular-zitadel
+    restart: unless-stopped
+    # start-from-init is idempotent — skips init if the DB is already populated.
+    command: >
+      start-from-init
+      --masterkey h0hN7TKEmUOLx02EeYBjMgcMY0Q7WwYq
+      --tlsMode disabled
+    environment:
+      # Postgres connection — uses the existing macular-postgres container.
+      # The macular user is a superuser so Zitadel can create its own DB and user.
+      ZITADEL_DATABASE_POSTGRES_HOST: macular-postgres
+      ZITADEL_DATABASE_POSTGRES_PORT: 5432
+      ZITADEL_DATABASE_POSTGRES_DATABASE: zitadel_dev
+      ZITADEL_DATABASE_POSTGRES_USER_USERNAME: zitadel
+      ZITADEL_DATABASE_POSTGRES_USER_PASSWORD: zitadel_dev
+      ZITADEL_DATABASE_POSTGRES_USER_SSL_MODE: disable
+      ZITADEL_DATABASE_POSTGRES_ADMIN_USERNAME: macular
+      ZITADEL_DATABASE_POSTGRES_ADMIN_PASSWORD: macular_dev
+      ZITADEL_DATABASE_POSTGRES_ADMIN_SSL_MODE: disable
+
+      # External domain — localhost for local dev; override in prod.
+      ZITADEL_EXTERNALDOMAIN: localhost
+      ZITADEL_EXTERNALPORT: 8080
+      ZITADEL_EXTERNALSECURE: "false"
+
+      # ZITADEL_ADMIN_PASSWORD: Admin1234!
+
+      # First-run admin account (only applied on initial DB init).
+      ZITADEL_FIRSTINSTANCE_ORG_NAME: "MacularSociety"
+      # First instance admin user — preferred login name is admin@macularsociety.localhost
+      # (Zitadel derives org domain from org name, not from FIRSTINSTANCE_ORG_DOMAIN)
+      # http://localhost:8080/ui/console?login_hint=admin@macularsociety.localhost
+      ZITADEL_FIRSTINSTANCE_ORG_HUMAN_USERNAME: admin
+      ZITADEL_FIRSTINSTANCE_ORG_HUMAN_EMAIL_ADDRESS: admin@zitadel.localhost
+      ZITADEL_FIRSTINSTANCE_ORG_HUMAN_EMAIL_VERIFIED: "true"
+      ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORD: Password1!
+      ZITADEL_FIRSTINSTANCE_ORG_DOMAIN: zitadel.localhost
+      ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORDCHANGEREQUIRED: "false"
+
+      # Service account for setup-zitadel.sh — PAT is printed as a bare token in init logs once.
+      # Retrieve after first boot: docker logs macular-zitadel 2>&1 | grep -E '^[A-Za-z0-9_-]{40,}$'
+      ZITADEL_FIRSTINSTANCE_ORG_MACHINE_MACHINE_USERNAME: setup-sa
+      ZITADEL_FIRSTINSTANCE_ORG_MACHINE_MACHINE_NAME: Setup Service Account
+      ZITADEL_FIRSTINSTANCE_ORG_MACHINE_PAT_EXPIRATIONDATE: "0001-01-01T00:00:00Z"
+
+      # Disable Login V2 (required - V2 doesn't work properly yet)
+      ZITADEL_DEFAULTINSTANCE_FEATURES_LOGINV2_REQUIRED: "false"
+    ports:
+      - "8080:8080"
+    networks:
+      - macular-network
+
+networks:
+  macular-network:
+    external: true

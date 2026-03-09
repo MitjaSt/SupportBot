@@ -10,9 +10,14 @@ import { DocumentMetadataService } from '@/modules/processing/document-metadata.
 import { ProcessingService } from '@/modules/processing/processing.service';
 import { SummarizationService } from '@/modules/processing/summarization.service';
 import { VectorDbService } from '@/modules/vector-db/vector-db.service';
-import { Controller, Get, Post } from '@nestjs/common';
+import { Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '@/modules/auth/guards/jwt-auth.guard';
+import { PermissionsGuard } from '@/modules/auth/guards/permissions.guard';
+import { Permissions } from '@/modules/auth/decorators/permissions.decorator';
 import { CriteriaGenerationService } from '../processing/criteria-generation.service';
 
+@UseGuards(JwtAuthGuard, PermissionsGuard)
+@Permissions('pipeline:write')
 @Controller('pipeline')
 export class PipelineController {
   constructor(

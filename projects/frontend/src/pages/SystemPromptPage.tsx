@@ -12,6 +12,7 @@ import {
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { getSystemPrompt } from '../api/client';
+import { useAuth } from '../hooks/useAuth';
 
 function TokenBudgetBar({
   estimatedTokens,
@@ -130,9 +131,10 @@ function TokenBudgetBar({
 }
 
 export function SystemPromptPage() {
+  const { token } = useAuth();
   const { data, isPending, error } = useQuery({
     queryKey: ['system-prompt'],
-    queryFn: getSystemPrompt,
+    queryFn: () => getSystemPrompt(token ?? undefined),
     staleTime: 5 * 60 * 1000,
   });
 

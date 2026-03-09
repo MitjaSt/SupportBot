@@ -163,11 +163,12 @@ export function ChatInput({ onSend, onVoiceSend, disabled, loading, voiceEnabled
       {/* Send text button */}
       <IconButton
         color="primary"
+        aria-label={loading ? 'Sending…' : 'Send message'}
         onClick={handleSend}
         disabled={!input.trim() || disabled || loading || isRecording}
         sx={{ alignSelf: 'flex-end' }}
       >
-        {loading ? <CircularProgress size={24} /> : <Send />}
+        {loading ? <CircularProgress size={24} aria-hidden="true" /> : <Send />}
       </IconButton>
     </Box>
     </>

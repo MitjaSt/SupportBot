@@ -48,6 +48,7 @@ export const sessions = pgTable('sessions', {
   preferredCallTime: text('preferred_call_time'),
   collectionState: collectionStateEnum('collection_state').default('idle'),
   callbackTopic: text('callback_topic'),
+  userId: text('user_id'),  // Zitadel sub — null for anonymous sessions
 });
 
 // Messages table

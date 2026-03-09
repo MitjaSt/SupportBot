@@ -24,12 +24,16 @@ export interface StreamEvent {
  * Thin fetch wrapper that injects X-Rag-Session-Id when a session ID is provided
  * and a unique X-Request-Id for every request.
  * nginx logs these as $http_rag_session_id and $http_x_request_id.
+ *
+ * Pass `token` for admin API calls that require authentication.
+ * Chat app callers omit it — no Authorization header is sent for public routes.
  */
-function apiFetch(url: string | URL, init: RequestInit = {}, sessionId?: string): Promise<Response> {
+export function apiFetch(url: string | URL, init: RequestInit = {}, sessionId?: string, token?: string): Promise<Response> {
   const headers: Record<string, string> = {
     ...(init.headers as Record<string, string>),
     'X-Request-Id': crypto.randomUUID(),
     ...(sessionId ? { 'X-Rag-Session-Id': sessionId } : {}),
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
   return fetch(url, { ...init, headers });
 }
@@ -136,8 +140,8 @@ export interface SystemPromptInfo {
   maxTokens: number;
 }
 
-export async function getSystemPrompt(): Promise<SystemPromptInfo | { error: string }> {
-  const response = await apiFetch(`${API_BASE}/analytics/system-prompt`);
+export async function getSystemPrompt(token?: string): Promise<SystemPromptInfo | { error: string }> {
+  const response = await apiFetch(`${API_BASE}/analytics/system-prompt`, {}, undefined, token);
   if (!response.ok) {
     throw new Error(`Failed to fetch system prompt: ${response.statusText}`);
   }

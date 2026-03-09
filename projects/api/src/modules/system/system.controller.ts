@@ -1,4 +1,7 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '@/modules/auth/guards/jwt-auth.guard';
+import { PermissionsGuard } from '@/modules/auth/guards/permissions.guard';
+import { Permissions } from '@/modules/auth/decorators/permissions.decorator';
 import { DatabaseService } from '@/modules/database/database.service';
 import { VectorDbService } from '@/modules/vector-db/vector-db.service';
 import { ConfigService } from '@/config/config.service';
@@ -25,6 +28,8 @@ export class SystemController {
     private readonly systemService: SystemService,
   ) {}
 
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @Permissions('system:read')
   @Get('status')
   async getStatus(): Promise<SystemStatus> {
     const services = {
@@ -49,6 +54,8 @@ export class SystemController {
     return { status: 'ok' };
   }
 
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @Permissions('system:read')
   @Get('openai-stats')
   getOpenAIStats(): Promise<OpenAIStats> {
     return this.systemService.getOpenAIStats();

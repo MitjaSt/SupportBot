@@ -9,6 +9,11 @@ import {
 import { RagService, RagResponse, StreamEvent } from '../rag/rag.service';
 import { PromptGuardService } from '../prompt-guard/prompt-guard.service';
 import { SuggestionsService } from './suggestions.service';
+import type { AuthUser } from '../auth/interfaces/auth-user.interface';
+
+function hasDebugAccess(user: AuthUser | null): boolean {
+  return user?.permissions.includes('system:read') ?? false;
+}
 
 export type ChatStreamEvent = (StreamEvent | { type: 'suggestions'; suggestions: string[] }) & { sessionId: string };
 
@@ -27,12 +32,12 @@ export class ChatService {
     private readonly suggestions: SuggestionsService,
   ) {}
 
-  async chat(sessionId: string, message: string): Promise<ChatResponse> {
+  async chat(sessionId: string, message: string, user: AuthUser | null = null): Promise<ChatResponse> {
     // Scan for prompt injection / jailbreak before any processing
     await this.promptGuard.scan(message);
 
-    // Get or create session
-    const session = await this.sessions.getOrCreateSession(sessionId);
+    // Get or create session — stamp userId so authenticated users own their sessions
+    const session = await this.sessions.getOrCreateSession(sessionId, user?.sub ?? undefined);
 
     // Get conversation history
     const history = await this.sessions.getMessages(sessionId);
@@ -53,6 +58,7 @@ export class ChatService {
 
     return {
       ...response,
+      sources: hasDebugAccess(user) ? response.sources : [],
       sessionId: session.sessionId,
       collectionState: session.collectionState ?? 'idle',
     };
@@ -74,18 +80,31 @@ export class ChatService {
     return this.sessions.listSessions(limit);
   }
 
+  async listSessionsForUser(userId: string, limit = 50) {
+    return this.sessions.listSessionsForUser(userId, limit);
+  }
+
+  async getSessionForUser(sessionId: string, userId: string) {
+    return this.sessions.getSessionForUser(sessionId, userId);
+  }
+
+  async listConsentedSessions(limit = 50) {
+    return this.sessions.listConsentedSessions(limit);
+  }
+
   /**
    * Streaming version of chat() that yields events as they're generated
    */
   async *chatStream(
     sessionId: string,
     message: string,
+    user: AuthUser | null = null,
   ): AsyncGenerator<ChatStreamEvent> {
     // Scan for prompt injection / jailbreak before any processing
     await this.promptGuard.scan(message);
 
-    // Get or create session
-    const session = await this.sessions.getOrCreateSession(sessionId);
+    // Get or create session — stamp userId so authenticated users own their sessions
+    const session = await this.sessions.getOrCreateSession(sessionId, user?.sub ?? undefined);
 
     // Get conversation history
     const history = await this.sessions.getMessages(sessionId);
@@ -115,8 +134,13 @@ export class ChatService {
         promptTokenCount = event.metadata.promptTokenCount;
       }
 
-      // Yield event to client with sessionId
-      yield { ...event, sessionId: session.sessionId };
+      // Yield event to client with sessionId; strip sources from done events for non-admins
+      if (event.type === 'done' && event.metadata && !hasDebugAccess(user)) {
+        const { sources: _sources, ...metaWithoutSources } = event.metadata;
+        yield { ...event, metadata: metaWithoutSources, sessionId: session.sessionId };
+      } else {
+        yield { ...event, sessionId: session.sessionId };
+      }
     }
 
     // Add assistant response to history after streaming completes

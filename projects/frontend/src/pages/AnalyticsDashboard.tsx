@@ -1,5 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
+import { apiFetch } from '../api/client';
+import { useAuth } from '../hooks/useAuth';
 import {
   Box,
   Breadcrumbs,
@@ -61,8 +63,8 @@ interface RetrievalAnalytics {
   deadQueries: DeadQuery[];
 }
 
-async function fetchAnalytics(): Promise<RetrievalAnalytics> {
-  const res = await fetch('/api/analytics/retrieval');
+async function fetchAnalytics(token: string | null): Promise<RetrievalAnalytics> {
+  const res = await apiFetch('/api/analytics/retrieval', {}, undefined, token ?? undefined);
   if (!res.ok) throw new Error('Failed to fetch analytics');
   return res.json() as Promise<RetrievalAnalytics>;
 }
@@ -102,9 +104,10 @@ function formatSource(src: string) {
 
 export function AnalyticsDashboard() {
   const navigate = useNavigate();
+  const { token } = useAuth();
   const { data, isLoading, error } = useQuery({
     queryKey: ['retrieval-analytics'],
-    queryFn: fetchAnalytics,
+    queryFn: () => fetchAnalytics(token),
     staleTime: 60_000,
   });
 

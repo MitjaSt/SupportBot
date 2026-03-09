@@ -1,6 +1,8 @@
 import { useState, useDeferredValue } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
+import { apiFetch } from '../api/client';
+import { useAuth } from '../hooks/useAuth';
 import {
   Box,
   Breadcrumbs,
@@ -59,8 +61,8 @@ interface DialogChunk {
   chunkIndex?: number;
 }
 
-async function fetchSources(): Promise<string[]> {
-  const res = await fetch('/api/analytics/knowledge-base/sources');
+async function fetchSources(token: string | null): Promise<string[]> {
+  const res = await apiFetch('/api/analytics/knowledge-base/sources', {}, undefined, token ?? undefined);
   if (!res.ok) throw new Error('Failed to fetch sources');
   return res.json() as Promise<string[]>;
 }
@@ -70,21 +72,22 @@ async function fetchChunks(
   source: string,
   page: number,
   limit: number,
+  token: string | null,
 ): Promise<KnowledgeBasePage> {
   const params = new URLSearchParams({ page: String(page + 1), limit: String(limit) });
   if (q) params.set('q', q);
   if (source) params.set('source', source);
-  const res = await fetch(`/api/analytics/knowledge-base?${params}`);
+  const res = await apiFetch(`/api/analytics/knowledge-base?${params}`, {}, undefined, token ?? undefined);
   if (!res.ok) throw new Error('Failed to fetch chunks');
   return res.json() as Promise<KnowledgeBasePage>;
 }
 
-async function runTestRetrieval(query: string, limit: number): Promise<RetrievalResult[]> {
-  const res = await fetch('/api/analytics/knowledge-base/test-retrieval', {
+async function runTestRetrieval(query: string, limit: number, token: string | null): Promise<RetrievalResult[]> {
+  const res = await apiFetch('/api/analytics/knowledge-base/test-retrieval', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ query, limit }),
-  });
+  }, undefined, token ?? undefined);
   if (!res.ok) throw new Error('Retrieval failed');
   return res.json() as Promise<RetrievalResult[]>;
 }
@@ -163,6 +166,7 @@ function ChunkTextCell({
 
 export function KnowledgeBaseExplorer() {
   const navigate = useNavigate();
+  const { token } = useAuth();
 
   // --- Dialog state (shared between both tables) ---
   const [dialogChunk, setDialogChunk] = useState<DialogChunk | null>(null);
@@ -177,13 +181,13 @@ export function KnowledgeBaseExplorer() {
 
   const { data: sources = [] } = useQuery({
     queryKey: ['kb-sources'],
-    queryFn: fetchSources,
+    queryFn: () => fetchSources(token),
     staleTime: 5 * 60_000,
   });
 
   const { data, isFetching } = useQuery({
     queryKey: ['kb-chunks', deferredSearch, sourceFilter, page, rowsPerPage],
-    queryFn: () => fetchChunks(deferredSearch, sourceFilter, page, rowsPerPage),
+    queryFn: () => fetchChunks(deferredSearch, sourceFilter, page, rowsPerPage, token),
     placeholderData: (prev) => prev,
   });
 
@@ -199,7 +203,7 @@ export function KnowledgeBaseExplorer() {
     data: retrievalResults,
     isPending: isRetrieving,
     reset: resetRetrieval,
-  } = useMutation({ mutationFn: ({ q, k }: { q: string; k: number }) => runTestRetrieval(q, k) });
+  } = useMutation({ mutationFn: ({ q, k }: { q: string; k: number }) => runTestRetrieval(q, k, token) });
 
   return (
     <Box sx={{ flex: 1, overflowY: 'auto', p: 3, bgcolor: 'background.default' }}>
