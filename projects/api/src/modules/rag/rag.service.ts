@@ -10,12 +10,10 @@ import { SearchResult, VectorDbService } from '../vector-db/vector-db.service';
 import { ToolHandlerService } from './services/tool-handler.service';
 import { RAG_TOOLS } from './tools';
 
-
-export interface RagResponse {
-  answer: string;
+export interface ResponseMetadata {
   sources: SearchResult[];
   model: string;
-  backend: 'openai';
+  backend: string;
   fullPrompt?: string;
   promptTokenCount?: number;
   contactCollected?: {
@@ -24,25 +22,17 @@ export interface RagResponse {
   };
 }
 
+export interface RagResponse extends ResponseMetadata {
+  answer: string;
+}
+
 export interface StreamEvent {
   type: 'chunk' | 'tool' | 'done';
   content?: string;
-  metadata?: {
-    sources?: SearchResult[];
-    model?: string;
-    backend?: string;
-    fullContent?: string;
-    fullPrompt?: string;
-    promptTokenCount?: number;
-    contactCollected?: {
-      type: 'phone' | 'email';
-      value: string;
-    };
-  };
+  metadata?: ResponseMetadata;
 }
 
 type ConversationMessage = { role: 'user' | 'assistant'; content: string };
-
 
 interface BuildPromptOptions {
   query: string;
