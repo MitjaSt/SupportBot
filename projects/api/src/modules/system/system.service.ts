@@ -3,9 +3,11 @@ import { Injectable } from '@nestjs/common';
 
 const OPENAI_API_BASE = 'https://api.openai.com';
 
-interface CompletionBucket {
+interface BaseBucket {
   start_time: number;
   end_time: number;
+}
+interface CompletionBucket extends BaseBucket {
   results: Array<{
     input_tokens: number;
     output_tokens: number;
@@ -14,18 +16,14 @@ interface CompletionBucket {
   }>;
 }
 
-interface EmbeddingBucket {
-  start_time: number;
-  end_time: number;
+interface EmbeddingBucket extends BaseBucket {
   results: Array<{
     input_tokens: number;
     num_model_requests: number;
   }>;
 }
 
-interface CostBucket {
-  start_time: number;
-  end_time: number;
+interface CostBucket extends BaseBucket {
   results: Array<{
     amount: { value: number | string; currency: string };
   }>;

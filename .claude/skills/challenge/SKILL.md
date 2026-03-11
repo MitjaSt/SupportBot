@@ -7,6 +7,17 @@ description: Critical review of a proposed feature. Stress-tests the problem fra
 
 A structured adversarial review of the full proposal — problem, design, and value case. The goal is to find weaknesses before they become production problems or wasted effort.
 
+megathink.
+Critically challenge the proposal and attempt to falsify it.
+
+Evaluate:
+- hidden assumptions
+- architectural fragility
+- operational risks
+- opportunity cost
+- simpler alternatives
+
+
 Read all available pipeline documents before writing anything. Then challenge everything.
 
 This is not a veto. It surfaces risks and questions that should inform the final decision.

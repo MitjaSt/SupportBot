@@ -1,0 +1,23 @@
+{
+  "name": "@macular-society/tools",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Internal automation scripts — not a service",
+  "scripts": {
+    "respond": "tsx src/confluence-responder.ts",
+    "respond:dry": "tsx src/confluence-responder.ts --dry-run",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.36.0",
+    "confluence.js": "^1.7.4",
+    "dotenv": "^16.4.5",
+    "marked": "^12.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.4.0",
+    "vitest": "^1.4.0"
+  }
+}

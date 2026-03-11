@@ -7,6 +7,9 @@ description: Implementation plan for an approved PRD. Combines technical design,
 
 The "ready to build" document. Combines technical architecture, validation strategy, and implementation tasks into one artifact. For most features this replaces the separate `/arch` → `/qa` sequence.
 
+ultrathink.
+Design the technical architecture, risks, and task breakdown.
+
 Read the PRD before writing anything. Do not design in a vacuum.
 
 **Target length:** 900–1600 words.

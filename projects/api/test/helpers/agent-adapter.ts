@@ -1,3 +1,4 @@
+import { ChatMessages } from '@/constants/chat-messages';
 import {
   AgentAdapter,
   AgentRole,
@@ -5,10 +6,9 @@ import {
   type AgentReturnTypes,
 } from '@langwatch/scenario';
 import { randomUUID } from 'crypto';
-import { ChatMessages } from '@/constants/chat-messages';
 import { API_BASE_URL } from './constants';
 
-interface ChatApiResponse {
+export interface ChatApiResponse {
   answer: string;
   sources: Array<{
     id: string;

@@ -7,6 +7,9 @@ description: Turn a rough idea into a structured PRD with codebase grounding and
 
 Takes a rough idea, researches it (codebase context + current ecosystem/trends), and produces a structured Product Requirements Document. Designed for iterative refinement — after the draft, you and the user ping-pong until the PRD is implementation-ready.
 
+megathink.
+Evaluate the product problem and produce a structured PRD.
+
 Follow the workflow strictly. Do not skip steps.
 
 Prefer solutions that reuse existing patterns or libraries in the codebase. Avoid introducing new frameworks unless clearly justified.

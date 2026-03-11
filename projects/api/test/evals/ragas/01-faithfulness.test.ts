@@ -1,22 +1,9 @@
 import { randomUUID } from 'crypto';
 import { LangWatch } from 'langwatch';
 import { describe, it } from 'vitest';
+import { ChatApiResponse } from '../../helpers/agent-adapter';
 import { API_BASE_URL } from '../../helpers/constants';
 
-interface ChatApiResponse {
-  answer: string;
-  sources: Array<{
-    id: string;
-    score: number;
-    text: string;
-    source: string;
-    chunkIndex: number;
-  }>;
-  model: string;
-  backend: 'openai';
-  sessionId: string;
-  collectionState: string;
-}
 
 const DATASET = [
   { input: 'Can you interpret my OCT scan results?' },

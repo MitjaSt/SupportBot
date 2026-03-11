@@ -21,6 +21,23 @@ api-build: ## Build the API for production
 
 ##@ Frontend
 
+dev: ## Start API + chat + admin concurrently (hot reload)
+	@echo "$(BLUE)Starting API, chat, and admin...$(NC)"
+	@echo "$(YELLOW)API:   http://localhost:3030$(NC)"
+	@echo "$(YELLOW)Chat:  http://localhost:5173$(NC)"
+	@echo "$(YELLOW)Admin: http://localhost:5174$(NC)"
+	@bash -c 'set -a; \
+		[ -f .env.config ] && source .env.config; \
+		[ -f .env.secrets ] && source .env.secrets; \
+		set +a; \
+		cd $(FRONTEND_DIR) && npx concurrently \
+			--names "api,chat,admin" \
+			--prefix-colors "cyan,green,yellow" \
+			--kill-others-on-fail \
+			"cd ../../$(API_DIR) && npm run start:dev" \
+			"npm run dev:chat" \
+			"npm run dev:admin"'
+
 frontend: ## Start the frontend development server
 	@echo "$(BLUE)Starting frontend development server...$(NC)"
 	@echo "$(YELLOW)Frontend will be available at: http://localhost:5173$(NC)"

@@ -43,19 +43,16 @@ export interface StreamEvent {
 
 type ConversationMessage = { role: 'user' | 'assistant'; content: string };
 
-interface GenerateAnswerOptions {
-  query: string;
-  chunks: SearchResult[];
-  systemPrompt: string;
-  conversationHistory?: ConversationMessage[];
-  sessionId?: string;
-}
 
 interface BuildPromptOptions {
   query: string;
   chunks: SearchResult[];
   systemPrompt: string;
   conversationHistory?: ConversationMessage[];
+}
+
+interface GenerateAnswerOptions extends BuildPromptOptions{
+  sessionId?: string;
 }
 
 // Query rewriting prompt for making follow-up questions self-contained

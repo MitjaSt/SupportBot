@@ -3,30 +3,18 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import fs from 'fs';
 
-// Dev-only plugin: intercepts all non-asset, non-API requests and serves
-// admin.html via Vite's transformIndexHtml (which injects the HMR client).
-// Without this, Vite's dev server would serve index.html (the chat app) for /.
+// Dev-only plugin: replaces Vite's default index.html with admin.html so the
+// admin dev server (port 5174) serves the admin entry point instead of chat.
+// Uses transformIndexHtml (guaranteed to run in Vite's HTML pipeline) rather
+// than a configureServer middleware, which has ordering issues in Vite 7.
 function serveAdminHtml(): Plugin {
   return {
     name: 'serve-admin-html',
-    configureServer(server) {
-      server.middlewares.use(async (req, res, next) => {
-        const url = req.url ?? '/';
-        // Strip query string before checking for a file extension — Vite appends
-        // ?v=<hash> for cache-busting, which would fool a naive end-of-string check.
-        const pathname = url.split('?')[0];
-        const hasExtension = /\.\w+$/.test(pathname);
-        const isViteInternal = url.startsWith('/@') || url.startsWith('/__') || pathname.startsWith('/node_modules/');
-        if (!hasExtension && !isViteInternal && !url.startsWith('/api')) {
-          const adminHtmlPath = path.resolve(__dirname, 'admin.html');
-          const raw = fs.readFileSync(adminHtmlPath, 'utf-8');
-          const html = await server.transformIndexHtml(url, raw);
-          res.setHeader('Content-Type', 'text/html');
-          res.end(html);
-          return;
-        }
-        next();
-      });
+    transformIndexHtml: {
+      order: 'pre',
+      handler() {
+        return fs.readFileSync(path.resolve(__dirname, 'admin.html'), 'utf-8');
+      },
     },
   };
 }
@@ -36,6 +24,7 @@ function serveAdminHtml(): Plugin {
 // Prod build: base '/admin/' so assets resolve correctly under the /admin/ path prefix.
 export default defineConfig(({ command }) => ({
   plugins: [react(), serveAdminHtml()],
+  cacheDir: 'node_modules/.vite-admin',
   base: command === 'build' ? '/admin/' : '/',
   build: {
     rollupOptions: {

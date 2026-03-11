@@ -133,13 +133,15 @@ export class ChatController {
     return this.chat.listConsentedSessions(parsedLimit);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @OptionalAuth()
   @Get('sessions/:sessionId')
   async getSession(
     @CurrentUser() user: AuthUser | null,
     @Param('sessionId') sessionId: string,
   ) {
-    const session = await this.chat.getSessionForUser(sessionId, user!.sub);
+    const session = user
+      ? await this.chat.getSessionForUser(sessionId, user.sub)
+      : await this.chat.getSession(sessionId);
     if (!session) {
       throw new NotFoundException('Session not found');
     }

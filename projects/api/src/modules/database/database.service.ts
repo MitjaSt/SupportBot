@@ -1,5 +1,7 @@
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import * as Sentry from '@sentry/nestjs';
+import { getTableColumns, getTableName, is, Table } from 'drizzle-orm';
+import { type AnyPgTable } from 'drizzle-orm/pg-core';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 import { ConfigService } from '@/config/config.service';
@@ -61,6 +63,36 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     } catch (error) {
       console.error('Failed to connect to PostgreSQL:', error);
       throw error;
+    }
+
+    await this.checkSchema();
+  }
+
+  private async checkSchema(): Promise<void> {
+    const tables = Object.values(schema).filter((v) => is(v, Table)) as AnyPgTable[];
+
+    for (const table of tables) {
+      const tableName = getTableName(table);
+      const expectedColumns = Object.values(getTableColumns(table)).map((col) => col.name);
+
+      const result = await this.pool!.query<{ column_name: string }>(
+        `SELECT column_name FROM information_schema.columns WHERE table_name = $1 AND table_schema = 'public'`,
+        [tableName],
+      );
+
+      if (result.rows.length === 0) {
+        this.logger.warn(`Table "${tableName}" does not exist. Run "make db-push" to apply migrations.`);
+        continue;
+      }
+
+      const actualColumns = result.rows.map((r) => r.column_name);
+      const missing = expectedColumns.filter((col) => !actualColumns.includes(col));
+
+      if (missing.length > 0) {
+        this.logger.warn(
+          `Schema mismatch on table "${tableName}": missing columns [${missing.join(', ')}]. Run "make db-push" to apply.`,
+        );
+      }
     }
   }
 

@@ -1,4 +1,4 @@
-import { relations } from 'drizzle-orm';
+import { relations, sql } from 'drizzle-orm';
 import {
   customType,
   integer,
@@ -87,7 +87,9 @@ export const vectors = pgTable('vectors', {
   chunkLength: integer('chunk_length'),
   title: text('title'),
   url: text('url'),
-  // search_text (tsvector) is a Postgres-generated column — managed via migration, not Drizzle
+  searchText: customType<{ data: string }>({ dataType: () => 'tsvector' })('search_text')
+    .generatedAlwaysAs(sql`to_tsvector('english', coalesce(title, '') || ' ' || text)`)
+    .notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
 

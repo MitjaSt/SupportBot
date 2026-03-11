@@ -7,9 +7,18 @@ description: ROI evaluation for a feature. Weighs estimated effort and feature�
 
 Evaluates whether a feature is worth building by weighing effort against impact. Synthesises from the full pipeline — PRD, architecture, and plan — into a prioritisation recommendation. Feeds into `/challenge` and `/decision`.
 
+megathink.
+Perform a cost/benefit and ROI evaluation.
+
 This is the "is it worth it?" question, asked after design and before committing to build.
 
 No additional research needed — synthesise from upstream documents. If estimates are missing, flag uncertainty rather than inventing numbers.
+
+Return:
+- expected benefit
+- expected cost
+- confidence level
+- recommendation: build / defer / kill
 
 **Target length:** 400–700 words.
 
