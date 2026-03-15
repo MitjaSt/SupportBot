@@ -6,7 +6,7 @@ import {
   type Message,
   type CollectionState,
 } from '../database/session.repository';
-import { RagService, RagResponse, StreamEvent } from '../rag/rag.service';
+import { RagService, RagResponse, ResponseMetadata, StreamEvent } from '../rag/rag.service';
 import { PromptGuardService } from '../prompt-guard/prompt-guard.service';
 import { SuggestionsService } from './suggestions.service';
 import type { AuthUser } from '../auth/interfaces/auth-user.interface';
@@ -137,7 +137,7 @@ export class ChatService {
       // Yield event to client with sessionId; strip sources from done events for non-admins
       if (event.type === 'done' && event.metadata && !hasDebugAccess(user)) {
         const { sources: _sources, ...metaWithoutSources } = event.metadata;
-        yield { ...event, metadata: metaWithoutSources, sessionId: session.sessionId };
+        yield { ...event, metadata: metaWithoutSources as ResponseMetadata, sessionId: session.sessionId };
       } else {
         yield { ...event, sessionId: session.sessionId };
       }

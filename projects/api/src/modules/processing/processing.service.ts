@@ -32,6 +32,10 @@ const EXCLUDED_FILE_PREFIXES = [
   'volunteer',
 ];
 
+// Marker prefix used to annotate section headings in flat text files.
+// Chosen to be unique and unlikely to appear in any real document text.
+const SECTION_MARKER = '__SECTION__: ';
+
 export interface TextChunk {
   text: string;
   source: string;
@@ -42,6 +46,7 @@ export interface TextChunk {
 export interface FlattenedDocument {
   source: string;
   text: string;
+  title?: string;
 }
 
 export interface InspectedChunk {
@@ -201,7 +206,7 @@ export class ProcessingService implements OnModuleInit {
     for (const item of page.content) {
       if (item.type === 'heading') {
         parts.push('');
-        parts.push(item.text);
+        parts.push(`${SECTION_MARKER}${item.text}`);
       } else {
         parts.push(item.text);
       }
@@ -241,6 +246,7 @@ export class ProcessingService implements OnModuleInit {
         docs.push({
           source: filename.replace('.txt', ''),
           text,
+          title: this.extractTitle(text),
         });
       }
       return docs;
@@ -252,6 +258,7 @@ export class ProcessingService implements OnModuleInit {
       docs.push({
         source: filename.replace('.txt', ''),
         text,
+        title: this.extractTitle(text),
       });
     }
 
@@ -260,11 +267,65 @@ export class ProcessingService implements OnModuleInit {
   }
 
   /**
-   * Semantic chunking: respects sentence boundaries and uses accurate token counting.
+   * Extract the document title from the first non-empty, non-section-marker line.
    */
-  chunkDocument(doc: FlattenedDocument): TextChunk[] {
+  private extractTitle(text: string): string | undefined {
+    return text
+      .split('\n')
+      .find((l) => l.trim() && !l.startsWith(SECTION_MARKER))
+      ?.trim();
+  }
+
+  /**
+   * Split flat text into sections delimited by SECTION_MARKER lines.
+   * Content before the first marker becomes the preamble (heading = '').
+   */
+  private splitIntoSections(text: string): Array<{ heading: string; content: string }> {
+    const lines = text.split('\n');
+    const sections: Array<{ heading: string; content: string }> = [];
+    let currentHeading = '';
+    let currentLines: string[] = [];
+
+    for (const line of lines) {
+      if (line.startsWith(SECTION_MARKER)) {
+        const sectionContent = currentLines.join('\n').trim();
+        if (sectionContent) {
+          sections.push({ heading: currentHeading, content: sectionContent });
+        }
+        currentHeading = line.slice(SECTION_MARKER.length).trim();
+        currentLines = [];
+      } else {
+        currentLines.push(line);
+      }
+    }
+
+    // Push final section
+    const sectionContent = currentLines.join('\n').trim();
+    if (sectionContent) {
+      sections.push({ heading: currentHeading, content: sectionContent });
+    }
+
+    return sections;
+  }
+
+  /**
+   * Build the contextual prefix prepended to each chunk before embedding.
+   * Format: "[Document: <title> | Section: <heading>]"
+   */
+  private buildChunkPrefix(title: string | undefined, heading: string): string {
+    const parts: string[] = [];
+    if (title) parts.push(`Document: ${title}`);
+    if (heading) parts.push(`Section: ${heading}`);
+    return parts.length ? `[${parts.join(' | ')}]` : '';
+  }
+
+  /**
+   * Chunk a plain text string using a sentence-aware sliding window.
+   * Returns chunks with chunkIndex starting from 0 — callers reassign global indices.
+   */
+  private chunkText(text: string, source: string): TextChunk[] {
     const chunks: TextChunk[] = [];
-    const sentences = this.splitIntoSentences(doc.text);
+    const sentences = this.splitIntoSentences(text);
 
     if (sentences.length === 0) {
       return [];
@@ -274,7 +335,6 @@ export class ProcessingService implements OnModuleInit {
     let currentTokens = 0;
     let chunkIndex = 0;
 
-    // Track sentences for overlap
     const sentenceTokenCounts = sentences.map((s) => this.countTokens(s));
 
     for (let i = 0; i < sentences.length; i++) {
@@ -285,12 +345,12 @@ export class ProcessingService implements OnModuleInit {
       if (sentenceTokens > this.chunkSize) {
         // Flush current chunk first
         if (currentChunk.length > 0) {
-          const text = currentChunk.join(' ');
+          const chunkText = currentChunk.join(' ');
           chunks.push({
-            text,
-            source: doc.source,
+            text: chunkText,
+            source,
             chunkIndex: chunkIndex++,
-            chunkLength: text.length,
+            chunkLength: chunkText.length,
           });
           currentChunk = [];
           currentTokens = 0;
@@ -302,14 +362,14 @@ export class ProcessingService implements OnModuleInit {
         let wordTokens = 0;
 
         for (const word of words) {
-          const wordTokenCount = this.countTokens(word + ' ');
+          const wordTokenCount = this.countTokens(`${word} `);
           if (wordTokens + wordTokenCount > this.chunkSize && wordChunk.length > 0) {
-            const text = wordChunk.join(' ');
+            const chunkText = wordChunk.join(' ');
             chunks.push({
-              text,
-              source: doc.source,
+              text: chunkText,
+              source,
               chunkIndex: chunkIndex++,
-              chunkLength: text.length,
+              chunkLength: chunkText.length,
             });
             wordChunk = [];
             wordTokens = 0;
@@ -327,13 +387,12 @@ export class ProcessingService implements OnModuleInit {
 
       // Check if adding this sentence would exceed the limit
       if (currentTokens + sentenceTokens > this.chunkSize && currentChunk.length > 0) {
-        // Create chunk from current sentences
-        const text = currentChunk.join(' ');
+        const chunkText = currentChunk.join(' ');
         chunks.push({
-          text,
-          source: doc.source,
+          text: chunkText,
+          source,
           chunkIndex: chunkIndex++,
-          chunkLength: text.length,
+          chunkLength: chunkText.length,
         });
 
         // Calculate overlap: include sentences from end of previous chunk
@@ -356,23 +415,54 @@ export class ProcessingService implements OnModuleInit {
         currentTokens = overlapTokens;
       }
 
-      // Add sentence to current chunk
       currentChunk.push(sentence);
       currentTokens += sentenceTokens;
     }
 
     // Don't forget the last chunk
     if (currentChunk.length > 0) {
-      const text = currentChunk.join(' ');
+      const chunkText = currentChunk.join(' ');
       chunks.push({
-        text,
-        source: doc.source,
+        text: chunkText,
+        source,
         chunkIndex: chunkIndex++,
-        chunkLength: text.length,
+        chunkLength: chunkText.length,
       });
     }
 
     return chunks;
+  }
+
+  /**
+   * Semantic, section-aware chunking.
+   *
+   * Documents are first split into sections by SECTION_MARKER headings. Each
+   * section is chunked independently so overlap never crosses a heading boundary.
+   * A contextual prefix "[Document: <title> | Section: <heading>]" is prepended
+   * to every chunk, giving the embedding model the provenance context that would
+   * otherwise be lost when the chunk is retrieved in isolation.
+   */
+  chunkDocument(doc: FlattenedDocument): TextChunk[] {
+    const sections = this.splitIntoSections(doc.text);
+    const allChunks: TextChunk[] = [];
+    let globalChunkIndex = 0;
+
+    for (const section of sections) {
+      if (!section.content.trim()) continue;
+      const prefix = this.buildChunkPrefix(doc.title, section.heading);
+      const rawChunks = this.chunkText(section.content, doc.source);
+      for (const chunk of rawChunks) {
+        const text = prefix ? `${prefix}\n\n${chunk.text}` : chunk.text;
+        allChunks.push({
+          text,
+          source: chunk.source,
+          chunkIndex: globalChunkIndex++,
+          chunkLength: text.length,
+        });
+      }
+    }
+
+    return allChunks;
   }
 
   /**

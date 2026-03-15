@@ -38,6 +38,26 @@ Examples:
 
 ## Instructions
 
+### Pre-step: Model check
+
+Before doing anything else, say this to the user:
+
+---
+
+**Model recommendation:** `/challenge` is adversarial reasoning over a full proposal — Opus surfaces non-obvious risks and falsification angles that Sonnet tends to miss.
+
+You are currently on **Sonnet**. To get better results, switch first:
+```
+/model claude-opus-4-6
+```
+Then re-run the skill.
+
+**Continue on Sonnet anyway?** Reply `yes` to proceed, or switch models and re-run.
+
+---
+
+Wait for the user to reply. If they say `yes` (or any affirmative), proceed. Otherwise stop here.
+
 ### Step 0: Locate all pipeline documents
 
 Search for all available documents across pipeline stages using `Glob`:

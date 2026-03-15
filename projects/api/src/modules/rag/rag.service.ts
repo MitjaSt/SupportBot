@@ -13,7 +13,7 @@ import { RAG_TOOLS } from './tools';
 export interface ResponseMetadata {
   sources: SearchResult[];
   model: string;
-  backend: string;
+  backend: 'openai';
   fullPrompt?: string;
   promptTokenCount?: number;
   contactCollected?: {
@@ -356,7 +356,6 @@ export class RagService {
       stream_options: { include_usage: true },
     });
 
-    let fullContent = '';
     const toolCalls: OpenAI.ChatCompletionMessageToolCall[] = [];
 
     // Stream the response
@@ -365,7 +364,6 @@ export class RagService {
 
       // Handle text content
       if (delta?.content) {
-        fullContent += delta.content;
         yield { type: 'chunk', content: delta.content };
       }
 
@@ -416,7 +414,7 @@ export class RagService {
       yield {
         type: 'tool',
         content: toolResult.answer,
-        metadata: toolResult.metadata,
+        metadata: toolResult.metadata as ResponseMetadata | undefined,
       };
     }
 
@@ -427,7 +425,6 @@ export class RagService {
         sources: chunks,
         model: this.config.openai.chatModel,
         backend: 'openai',
-        fullContent: fullContent || undefined,
       },
     };
   }
@@ -681,7 +678,7 @@ export class RagService {
         fullAnswer += event.content;
       }
       if (event.type === 'done') {
-        yield { ...event, metadata: { ...event.metadata, fullPrompt, promptTokenCount } };
+        yield { ...event, metadata: { ...(event.metadata as ResponseMetadata), fullPrompt, promptTokenCount } };
       } else {
         yield event;
       }

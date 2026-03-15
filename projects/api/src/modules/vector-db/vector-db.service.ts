@@ -23,6 +23,8 @@ export interface SearchResult {
   text: string;
   source: string;
   chunkIndex: number;
+  title?: string;
+  url?: string;
 }
 
 interface SearchQueryRow {
@@ -31,6 +33,8 @@ interface SearchQueryRow {
   source: unknown;
   chunkIndex: unknown;
   score: unknown;
+  title: unknown;
+  url: unknown;
 }
 
 interface CountQueryRow {
@@ -134,6 +138,8 @@ export class VectorDbService implements OnModuleInit {
           text,
           source,
           chunk_index as "chunkIndex",
+          title,
+          url,
           1 - (embedding <=> ${JSON.stringify(queryVector)}::vector) as score
         FROM ${vectors}
         ORDER BY embedding <=> ${JSON.stringify(queryVector)}::vector
@@ -149,6 +155,8 @@ export class VectorDbService implements OnModuleInit {
         text: String(r.text),
         source: String(r.source),
         chunkIndex: Number(r.chunkIndex),
+        title: r.title != null ? String(r.title) : undefined,
+        url: r.url != null ? String(r.url) : undefined,
       }));
 
       if (scoreThreshold !== undefined) {
@@ -173,13 +181,13 @@ export class VectorDbService implements OnModuleInit {
       // side are included even when the other search returns no match.
       const query = sql`
         WITH vector_ranked AS (
-          SELECT id, text, source, chunk_index,
+          SELECT id, text, source, chunk_index, title, url,
             ROW_NUMBER() OVER (ORDER BY embedding <=> ${JSON.stringify(queryVector)}::vector) AS rank
           FROM vectors
           LIMIT ${limit * 4}
         ),
         text_ranked AS (
-          SELECT id, text, source, chunk_index,
+          SELECT id, text, source, chunk_index, title, url,
             ROW_NUMBER() OVER (ORDER BY ts_rank(search_text, query) DESC) AS rank
           FROM vectors, websearch_to_tsquery('english', ${queryText}) AS query
           WHERE search_text @@ query
@@ -191,12 +199,14 @@ export class VectorDbService implements OnModuleInit {
             COALESCE(v.text, t.text)                AS text,
             COALESCE(v.source, t.source)            AS source,
             COALESCE(v.chunk_index, t.chunk_index)  AS "chunkIndex",
+            COALESCE(v.title, t.title)              AS title,
+            COALESCE(v.url, t.url)                  AS url,
             COALESCE(1.0 / (60 + v.rank), 0.0)
               + COALESCE(1.0 / (60 + t.rank), 0.0) AS score
           FROM vector_ranked v
           FULL OUTER JOIN text_ranked t ON v.id = t.id
         )
-        SELECT id, text, source, "chunkIndex", score
+        SELECT id, text, source, "chunkIndex", title, url, score
         FROM rrf
         ORDER BY score DESC
         LIMIT ${limit}
@@ -210,6 +220,8 @@ export class VectorDbService implements OnModuleInit {
         text: String(r.text),
         source: String(r.source),
         chunkIndex: Number(r.chunkIndex),
+        title: r.title != null ? String(r.title) : undefined,
+        url: r.url != null ? String(r.url) : undefined,
       }));
     } catch (error) {
       this.logger.error('Failed to run hybrid search:', error);

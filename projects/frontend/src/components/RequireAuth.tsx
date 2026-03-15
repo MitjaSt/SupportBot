@@ -1,6 +1,6 @@
 import { useAuth } from 'react-oidc-context';
 import { Outlet } from 'react-router-dom';
-import { Box, CircularProgress, Typography } from '@mui/material';
+import { Box, Button, CircularProgress, Typography } from '@mui/material';
 
 /**
  * Route guard for admin-only routes.
@@ -37,11 +37,30 @@ export function RequireAuth() {
   }
 
   if (!auth.isAuthenticated) {
-    void auth.signinRedirect();
     return (
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', gap: 2 }}>
-        <CircularProgress size={24} />
-        <Typography aria-live="polite">Redirecting to login...</Typography>
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100vh',
+          gap: 3,
+        }}
+      >
+        <Typography variant="h5" component="h1">
+          Macular Society Admin
+        </Typography>
+        <Typography color="text.secondary">
+          Sign in to access the admin panel.
+        </Typography>
+        <Button
+          variant="contained"
+          size="large"
+          onClick={() => void auth.signinRedirect()}
+        >
+          Sign in
+        </Button>
       </Box>
     );
   }

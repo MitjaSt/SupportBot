@@ -24,6 +24,26 @@ Runs a multi-layer accessibility audit on the Macular Society chat frontend. The
 
 ## Instructions
 
+### Pre-step: Model check
+
+Before doing anything else, say this to the user:
+
+---
+
+**Model recommendation:** `/audit-a11y` involves nuanced judgment about assistive technology and WCAG compliance for users with macular degeneration — Opus catches issues Sonnet tends to overlook.
+
+You are currently on **Sonnet**. To get better results, switch first:
+```
+/model claude-opus-4-6
+```
+Then re-run the skill.
+
+**Continue on Sonnet anyway?** Reply `yes` to proceed, or switch models and re-run.
+
+---
+
+Wait for the user to reply. If they say `yes` (or any affirmative), proceed. Otherwise stop here.
+
 ### Step 1: Check if dev server is running
 
 ```bash

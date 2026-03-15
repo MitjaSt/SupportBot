@@ -216,6 +216,7 @@ ROLES=(
 	"pipeline:write|Pipeline Write"
 	"system:read|System Read"
 	"sessions.consented:read|Consented Sessions Read"
+	"sessions:read|Sessions Read"
 )
 
 for role_def in "${ROLES[@]}"; do
@@ -242,7 +243,7 @@ info "Admin user ID: $USER_ID"
 info "Granting roles to admin..."
 api_or_conflict POST "management/v1/users/$USER_ID/grants" -d "{
   \"projectId\": \"$PROJECT_ID\",
-  \"roleKeys\": [\"analytics:read\", \"pipeline:write\", \"system:read\", \"sessions.consented:read\"]
+  \"roleKeys\": [\"analytics:read\", \"pipeline:write\", \"system:read\", \"sessions.consented:read\", \"sessions:read\"]
 }" >/dev/null
 info "Roles granted"
 
@@ -254,7 +255,7 @@ SA_ID=$(printf '%s' "$SA_USERS" | jq -r '.result[] | select(.userName == "setup-
 if [[ -n "$SA_ID" && "$SA_ID" != "null" ]]; then
 	api_or_conflict POST "management/v1/users/$SA_ID/grants" -d "{
     \"projectId\": \"$PROJECT_ID\",
-    \"roleKeys\": [\"analytics:read\", \"pipeline:write\", \"system:read\", \"sessions.consented:read\"]
+    \"roleKeys\": [\"analytics:read\", \"pipeline:write\", \"system:read\", \"sessions.consented:read\", \"sessions:read\"]
   }" >/dev/null
 	info "Roles granted to setup-sa — use its PAT from init logs for API testing"
 else
