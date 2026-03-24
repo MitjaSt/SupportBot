@@ -148,6 +148,7 @@ src/
 
 ## Detailed references
 
+- **Learned anti-patterns**: `AGENTS.md` — mistakes made in this codebase and the correct behavior. Read this before writing code.
 - Coding conventions: `docs/CODING_STANDARDS.md`
 - Testing strategy: `docs/TESTING_STRATEGY.md`
 - Frontend architecture: `docs/FRONTEND_ARCHITECTURE.md`

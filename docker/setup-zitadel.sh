@@ -229,6 +229,43 @@ for role_def in "${ROLES[@]}"; do
 	info "  Role: $role_key"
 done
 
+# grant_or_update USER_ID PROJECT_ID ROLES_JSON
+# Creates a user grant; if one already exists for this project, updates it in place.
+# This ensures re-runs pick up newly added roles rather than silently skipping.
+# The Zitadel management API does not expose a reliable grant-search endpoint in all
+# versions, so we read the grant ID directly from the Zitadel Postgres DB.
+grant_or_update() {
+	local user_id="$1" project_id="$2" roles_json="$3"
+	local result
+	result=$(api_or_conflict POST "management/v1/users/$user_id/grants" -d "{
+    \"projectId\": \"$project_id\",
+    \"roleKeys\": $roles_json
+  }")
+	if [[ -z "$result" ]]; then
+		# 409 — grant already exists; look up the grant ID from Zitadel's Postgres.
+		local grant_id
+		grant_id=$(docker exec macular-postgres psql -U macular -d zitadel_dev -t -A -c \
+			"SELECT id FROM projections.user_grants5 WHERE user_id = '$user_id' AND project_id = '$project_id' LIMIT 1" 2>/dev/null)
+		if [[ -z "$grant_id" || "$grant_id" == "null" ]]; then
+			warn "Could not find existing grant ID for user $user_id — skipping update"
+			return
+		fi
+		local _tmpfile _code
+		_tmpfile=$(mktemp)
+		_code=$(curl -s -o "$_tmpfile" -w "%{http_code}" -X PUT "$ZITADEL_BASE/management/v1/users/$user_id/grants/$grant_id" \
+			-H "Authorization: Bearer $PAT" -H "Content-Type: application/json" \
+			-d "{\"roleKeys\": $roles_json}")
+		rm -f "$_tmpfile"
+		# 400 "not changed" is fine — roles already match, treat as success.
+		if [[ "$_code" != "200" && "$_code" != "400" ]]; then
+			die "HTTP $_code updating grant $grant_id for user $user_id"
+		fi
+		info "  Updated existing grant $grant_id"
+	fi
+}
+
+ALL_ROLES='["analytics:read","pipeline:write","system:read","sessions.consented:read","sessions:read"]'
+
 # ── 5. Grant all roles to admin user (idempotent) ─────────────────────────────
 
 info "Looking up admin user ($ADMIN_LOGIN)..."
@@ -241,10 +278,7 @@ USER_ID=$(printf '%s' "$ALL_USERS" | jq -r --arg login "$ADMIN_LOGIN" \
 info "Admin user ID: $USER_ID"
 
 info "Granting roles to admin..."
-api_or_conflict POST "management/v1/users/$USER_ID/grants" -d "{
-  \"projectId\": \"$PROJECT_ID\",
-  \"roleKeys\": [\"analytics:read\", \"pipeline:write\", \"system:read\", \"sessions.consented:read\", \"sessions:read\"]
-}" >/dev/null
+grant_or_update "$USER_ID" "$PROJECT_ID" "$ALL_ROLES"
 info "Roles granted"
 
 # ── 5b. Grant roles to setup-sa machine user (for API testing via PAT) ────────
@@ -253,10 +287,7 @@ info "Looking up setup-sa machine user..."
 SA_USERS=$(api POST "management/v1/users/_search" -d '{"type": "TYPE_MACHINE"}')
 SA_ID=$(printf '%s' "$SA_USERS" | jq -r '.result[] | select(.userName == "setup-sa") | .id' | head -1)
 if [[ -n "$SA_ID" && "$SA_ID" != "null" ]]; then
-	api_or_conflict POST "management/v1/users/$SA_ID/grants" -d "{
-    \"projectId\": \"$PROJECT_ID\",
-    \"roleKeys\": [\"analytics:read\", \"pipeline:write\", \"system:read\", \"sessions.consented:read\", \"sessions:read\"]
-  }" >/dev/null
+	grant_or_update "$SA_ID" "$PROJECT_ID" "$ALL_ROLES"
 	info "Roles granted to setup-sa — use its PAT from init logs for API testing"
 else
 	warn "setup-sa not found — skipping machine user grant"

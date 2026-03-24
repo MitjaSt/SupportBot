@@ -762,6 +762,15 @@ Properties that make code joyful to work with:
 | **I**diomatic | Feels natural in language/framework | Uses NestJS decorators (`@Injectable`, `@Post`) idiomatically |
 | **D**omain-based | Mirrors business domain | Modules map to domain concepts (RAG, Chat, VectorDb, not GenericService) |
 
+### When SOLID and CUPID Conflict
+
+Sometimes principles tension:
+- SRP extraction may fragment Unix "does one thing well"
+- DIP abstractions may reduce predictability
+- ISP splits may hurt composability
+
+When this happens, surface the tradeoff for human decision rather than dogmatically following one principle.
+
 ---
 
 ## Code Smells
