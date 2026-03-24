@@ -1,0 +1,2 @@
+ALTER TABLE "messages" ADD COLUMN "search_text" "tsvector" GENERATED ALWAYS AS (to_tsvector('english', content)) STORED NOT NULL;--> statement-breakpoint
+CREATE INDEX "messages_search_text_gin" ON "messages" USING GIN ("search_text");

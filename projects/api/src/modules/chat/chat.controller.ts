@@ -146,9 +146,15 @@ export class ChatController {
       throw new NotFoundException('Session not found');
     }
     const history = await this.chat.getHistory(sessionId);
-    return { session, history };
+    const hasDebugAccess = user?.permissions.includes('system:read') ?? false;
+    const filteredHistory = hasDebugAccess
+      ? history
+      : history.map(({ chunks: _c, fullPrompt: _fp, promptTokenCount: _ptc, ...msg }) => msg);
+    return { session, history: filteredHistory };
   }
 
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @Permissions('sessions:read')
   @Delete('sessions/:sessionId')
   async deleteSession(@Param('sessionId') sessionId: string) {
     await this.chat.clearSession(sessionId);

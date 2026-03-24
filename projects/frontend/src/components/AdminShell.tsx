@@ -18,6 +18,7 @@ import {
   Analytics,
   CallSplit,
   Description,
+  Forum,
   Logout,
   ManageSearch,
   Menu,
@@ -28,6 +29,7 @@ const DRAWER_WIDTH = 240;
 
 const NAV_ITEMS = [
   { label: 'Analytics', path: '/analytics', icon: <Analytics /> },
+  { label: 'Conversations', path: '/conversations', icon: <Forum /> },
   { label: 'Knowledge Base', path: '/knowledge-base', icon: <ManageSearch /> },
   { label: 'System Prompt', path: '/system-prompt', icon: <Description /> },
   { label: 'Chunk Inspector', path: '/chunk-inspector', icon: <CallSplit /> },

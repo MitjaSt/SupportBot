@@ -1,10 +1,8 @@
 import { Alert, Box, Chip, Typography } from '@mui/material';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useQueryClient } from '@tanstack/react-query';
 import { sendQueryStream, sendVoiceQuery, synthesizeSpeech } from '../api/client';
 import { useSession } from '../hooks/useSession';
-import { sessionsQueryKey } from '../hooks/useSessions';
 import type { Message } from '../types';
 import { ChatInput } from './ChatInput';
 import { ChatMessage } from './ChatMessage';
@@ -12,12 +10,6 @@ import { ChatMessage } from './ChatMessage';
 export function ChatView() {
   const { sessionId } = useParams();
   const navigate = useNavigate();
-
-  // useQueryClient() gives access to the shared QueryClient instance.
-  // We use it after a stream completes to invalidate the sessions list —
-  // this triggers SessionSidebar's useSessions() to refetch automatically,
-  // with no prop drilling or callback required.
-  const queryClient = useQueryClient();
 
   // useSession loads the message history for an existing session.
   // When sessionId is undefined (new chat route "/"), enabled:false means
@@ -207,10 +199,6 @@ export function ChatView() {
             });
           }
 
-          // Invalidate the sessions list so the sidebar reflects the new message count.
-          // This replaces the old onSessionUpdate() prop callback — no prop drilling needed.
-          queryClient.invalidateQueries({ queryKey: sessionsQueryKey() });
-
           if (fullContent) {
             playAudio(fullContent);
           }
@@ -270,8 +258,6 @@ export function ChatView() {
         fullPrompt: response.fullPrompt,
       };
       setMessages((prev) => [...prev, assistantMessage]);
-
-      queryClient.invalidateQueries({ queryKey: sessionsQueryKey() });
 
       playAudio(response.answer);
     } catch {

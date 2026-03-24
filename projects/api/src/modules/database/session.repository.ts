@@ -1,17 +1,30 @@
-import { Injectable } from '@nestjs/common';
-import { and, eq, gt, desc, sql, count, asc } from 'drizzle-orm';
 import { ConfigService } from '@/config/config.service';
-import { DatabaseService } from './database.service';
 import {
-  sessions,
   messages,
-  type Session,
-  type Message,
+  sessions,
   type CollectionState,
+  type Message,
+  type Session,
 } from '@/db/schema';
+import { Injectable } from '@nestjs/common';
+import { and, asc, count, desc, eq, gt, sql } from 'drizzle-orm';
+import { DatabaseService } from './database.service';
 
 // Re-export types for consumers
-export type { Session, Message, CollectionState } from '@/db/schema';
+export type { CollectionState, Message, Session } from '@/db/schema';
+
+export interface SessionListItem {
+  sessionId: string;
+  createdAt: Date;
+  updatedAt: Date;
+  collectionState: string | null;
+  userName: string | null;
+  userPhone: string | null;
+  preferredCallTime: string | null;
+  callbackTopic: string | null;
+  messageCount: number;
+  firstMessage: string | null;
+}
 
 @Injectable()
 export class SessionRepository {
@@ -120,6 +133,17 @@ export class SessionRepository {
         expiresAt: this.getExpiresAt(),
       })
       .where(eq(sessions.sessionId, session.sessionId));
+
+      console.warn({
+        userPhone: session.userPhone,
+        userName: session.userName,
+        preferredCallTime: session.preferredCallTime,
+        collectionState: session.collectionState,
+        callbackTopic: session.callbackTopic,
+        updatedAt: new Date(),
+        expiresAt: this.getExpiresAt(),
+      });
+      
   }
 
   async updateCollectionState(
@@ -219,6 +243,66 @@ export class SessionRepository {
     return result.map((row: { session: Session; messageCount: number }) => ({
       ...row.session,
       messageCount: row.messageCount,
+    }));
+  }
+
+  async listAllSessions(params: {
+    search?: string;
+    state?: string;
+    limit: number;
+  }): Promise<SessionListItem[]> {
+    const { search, state, limit } = params;
+    const cappedLimit = Math.min(limit, 500);
+
+    const rows = await this.db.execute<{
+      session_id: string;
+      created_at: Date;
+      updated_at: Date;
+      collection_state: string | null;
+      user_name: string | null;
+      user_phone: string | null;
+      preferred_call_time: string | null;
+      callback_topic: string | null;
+      message_count: string;
+      first_message: string | null;
+    }>(sql`
+      SELECT
+        s.session_id,
+        s.created_at,
+        s.updated_at,
+        s.collection_state,
+        s.user_name,
+        s.user_phone,
+        s.preferred_call_time,
+        s.callback_topic,
+        COUNT(m.id)::int AS message_count,
+        (
+          SELECT LEFT(content, 80)
+          FROM messages
+          WHERE session_id = s.session_id AND role = 'user'
+          ORDER BY created_at ASC
+          LIMIT 1
+        ) AS first_message
+      FROM sessions s
+      LEFT JOIN messages m ON m.session_id = s.session_id
+      ${search ? sql`JOIN messages ms ON ms.session_id = s.session_id AND ms.search_text @@ to_tsquery('english', plainto_tsquery('english', ${search})::text || ':*')` : sql``}
+      ${state ? sql`WHERE s.collection_state = ${state}` : sql``}
+      GROUP BY s.session_id
+      ORDER BY s.created_at DESC
+      LIMIT ${cappedLimit}
+    `);
+
+    return rows.rows.map((row) => ({
+      sessionId: row.session_id,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+      collectionState: row.collection_state,
+      userName: row.user_name,
+      userPhone: row.user_phone,
+      preferredCallTime: row.preferred_call_time,
+      callbackTopic: row.callback_topic,
+      messageCount: Number(row.message_count),
+      firstMessage: row.first_message ?? null,
     }));
   }
 

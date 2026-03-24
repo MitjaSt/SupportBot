@@ -6,6 +6,7 @@ import { RequireAuth } from './components/RequireAuth';
 import { OidcCallback } from './components/OidcCallback';
 import { AdminShell } from './components/AdminShell';
 import { AnalyticsDashboard } from './pages/AnalyticsDashboard';
+import { ConversationsPage } from './pages/ConversationsPage';
 import { KnowledgeBaseExplorer } from './pages/KnowledgeBaseExplorer';
 import { ChunkInspector } from './pages/ChunkInspector';
 import { SystemPromptPage } from './pages/SystemPromptPage';
@@ -48,6 +49,7 @@ export function AdminApp() {
                 <Route element={<AdminShell />}>
                   <Route path="/" element={<Navigate to="/analytics" replace />} />
                   <Route path="/analytics" element={<AnalyticsDashboard />} />
+                  <Route path="/conversations" element={<ConversationsPage />} />
                   <Route path="/knowledge-base" element={<KnowledgeBaseExplorer />} />
                   <Route path="/system-prompt" element={<SystemPromptPage />} />
                   <Route path="/chunk-inspector" element={<ChunkInspector />} />

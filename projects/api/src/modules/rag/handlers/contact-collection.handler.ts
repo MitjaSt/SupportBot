@@ -1,12 +1,13 @@
-import { Injectable, Logger } from '@nestjs/common';
 import { ChatMessages } from '@/constants/chat-messages';
+import { Injectable, Logger } from '@nestjs/common';
 import { ContactCollectionService } from '../../contact-collection/contact-collection.service';
+import { SessionRepository } from '../../database/session.repository';
 import {
+  CollectContactArgs,
+  ContactCollectionMetadata,
   IToolHandler,
   ToolExecutionContext,
   ToolResult,
-  CollectContactArgs,
-  ContactCollectionMetadata,
 } from '../interfaces/tool-handler.interface';
 
 interface ConversationTurn {
@@ -25,7 +26,10 @@ export class ContactCollectionToolHandler
   readonly name = 'collect_contact_information';
   private readonly logger = new Logger(ContactCollectionToolHandler.name);
 
-  constructor(private readonly contactCollection: ContactCollectionService) {}
+  constructor(
+    private readonly contactCollection: ContactCollectionService,
+    private readonly sessions: SessionRepository,
+  ) {}
 
   async handle(
     args: CollectContactArgs,
@@ -53,12 +57,23 @@ export class ContactCollectionToolHandler
         },
       ];
 
-      // Save conversation history
+      // Save conversation history to markdown file
       await this.contactCollection.saveConversationHistory(
         contactInfo,
         conversationTurns,
         context.sessionId,
       );
+
+      // Persist contact info to DB so it appears in the Admin conversations view
+      console.warn({ sessionId: context.sessionId});
+      
+      if (context.sessionId) {
+        await this.sessions.updateSession({
+          sessionId: context.sessionId,
+          userPhone: contactInfo.value,
+          collectionState: 'complete',
+        });
+      }
 
       // Generate success message
       const successMessage = ChatMessages.contactCollected(contactInfo.type, contactInfo.value);

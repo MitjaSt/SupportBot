@@ -1,7 +1,5 @@
-import { useCallback } from 'react';
-import { Routes, Route, useNavigate } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import { Box, CssBaseline, ThemeProvider, createTheme } from '@mui/material';
-import { SessionSidebar } from './components/SessionSidebar';
 import { ChatView } from './components/ChatView';
 
 const theme = createTheme({
@@ -22,20 +20,10 @@ const theme = createTheme({
 });
 
 export function App() {
-  const navigate = useNavigate();
-
-  const handleNewSession = useCallback(() => {
-    navigate('/');
-  }, [navigate]);
-
-  // No refreshTrigger or onSessionUpdate needed.
-  // ChatView calls queryClient.invalidateQueries() after a stream completes,
-  // which automatically triggers useSessions() in SessionSidebar to refetch.
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Box sx={{ display: 'flex', height: '100vh' }}>
-        <SessionSidebar onNewSession={handleNewSession} />
         <Routes>
           <Route path="/" element={<ChatView />} />
           <Route path="/chat/:sessionId" element={<ChatView />} />

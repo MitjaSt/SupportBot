@@ -43,6 +43,13 @@
       "when": 1772990695537,
       "tag": "0005_volatile_star_brand",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1773550057338,
+      "tag": "0006_dark_whizzer",
+      "breakpoints": true
     }
   ]
 }

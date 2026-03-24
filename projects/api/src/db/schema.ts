@@ -63,6 +63,9 @@ export const messages = pgTable('messages', {
   fullPrompt: text('full_prompt'),
   promptTokenCount: integer('prompt_token_count'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  searchText: customType<{ data: string }>({ dataType: () => 'tsvector' })('search_text')
+    .generatedAlwaysAs(sql`to_tsvector('english', content)`)
+    .notNull(),
 });
 
 // Relations

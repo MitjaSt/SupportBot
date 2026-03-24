@@ -8,7 +8,7 @@ import { ObservabilityService } from '../observability/observability.service';
 import { PromptLoggerService } from '../prompt-logger/prompt-logger.service';
 import { SearchResult, VectorDbService } from '../vector-db/vector-db.service';
 import { ToolHandlerService } from './services/tool-handler.service';
-import { RAG_TOOLS } from './tools';
+import { RAG_TOOLS, TOOL_USAGE_INSTRUCTIONS } from './tools';
 
 export interface ResponseMetadata {
   sources: SearchResult[];
@@ -288,8 +288,38 @@ export class RagService {
         backend: 'openai',
       });
 
+      // Feed the tool result back to the LLM so it can generate a proper
+      // conversational response (e.g. re-prompt on validation failure).
+      const messagesWithResult: OpenAI.ChatCompletionMessageParam[] = [
+        ...messages,
+        { role: 'assistant', content: null, tool_calls: message.tool_calls },
+        { role: 'tool', tool_call_id: toolCall.id, content: toolResult.answer },
+      ];
+
+      const apiTimer2 = this.metrics.openaiApiDuration.startTimer({ operation: 'chat_tool', model: this.config.openai.chatModel });
+      this.metrics.openaiApiCalls.inc({ operation: 'chat_tool', model: this.config.openai.chatModel });
+
+      const secondResponse = await this.openaiClient.chat.completions.create({
+        model: this.config.openai.chatModel,
+        messages: messagesWithResult,
+        max_tokens: this.maxTokens,
+        temperature: 0.7,
+      });
+
+      apiTimer2();
+
+      if (secondResponse.usage) {
+        const { prompt_tokens, completion_tokens, total_tokens } = secondResponse.usage;
+        this.metrics.tokensInputTotal.inc({ model: this.config.openai.chatModel, endpoint: 'chat_tool' }, prompt_tokens);
+        this.metrics.tokensOutputTotal.inc({ model: this.config.openai.chatModel, endpoint: 'chat_tool' }, completion_tokens);
+        this.metrics.tokensTotal.inc({ model: this.config.openai.chatModel, endpoint: 'chat_tool' }, total_tokens);
+        this.metrics.tokensPerRequest.observe({ type: 'input', model: this.config.openai.chatModel }, prompt_tokens);
+        this.metrics.tokensPerRequest.observe({ type: 'output', model: this.config.openai.chatModel }, completion_tokens);
+        this.metrics.recordTokenCost(this.config.openai.chatModel, prompt_tokens, completion_tokens);
+      }
+
       return {
-        answer: toolResult.answer,
+        answer: secondResponse.choices[0]?.message?.content ?? '',
         sources: chunks,
         model: this.config.openai.chatModel,
         backend: 'openai',
@@ -398,6 +428,7 @@ export class RagService {
     apiTimer();
 
     // Handle tool calls after streaming completes
+    let contactCollected: ResponseMetadata['contactCollected'] | undefined;
     if (toolCalls.length > 0) {
       const toolCall = toolCalls[0];
 
@@ -411,11 +442,48 @@ export class RagService {
         backend: 'openai',
       });
 
-      yield {
-        type: 'tool',
-        content: toolResult.answer,
-        metadata: toolResult.metadata as ResponseMetadata | undefined,
-      };
+      const meta = toolResult.metadata as { contactCollected?: ResponseMetadata['contactCollected'] } | undefined;
+      if (meta?.contactCollected) {
+        contactCollected = meta.contactCollected;
+      }
+
+      // Feed the tool result back to the LLM so it generates a proper
+      // conversational response (e.g. re-prompt on validation failure).
+      const messagesWithResult: OpenAI.ChatCompletionMessageParam[] = [
+        ...messages,
+        { role: 'assistant', content: null, tool_calls: toolCalls },
+        { role: 'tool', tool_call_id: toolCall.id, content: toolResult.answer },
+      ];
+
+      const apiTimer2 = this.metrics.openaiApiDuration.startTimer({ operation: 'chat_stream_tool', model: this.config.openai.chatModel });
+      this.metrics.openaiApiCalls.inc({ operation: 'chat_stream_tool', model: this.config.openai.chatModel });
+
+      const secondStream = await this.openaiClient.chat.completions.create({
+        model: this.config.openai.chatModel,
+        messages: messagesWithResult,
+        max_tokens: this.maxTokens,
+        temperature: 0.7,
+        stream: true,
+        stream_options: { include_usage: true },
+      });
+
+      for await (const chunk of secondStream) {
+        const delta = chunk.choices[0]?.delta;
+        if (delta?.content) {
+          yield { type: 'chunk', content: delta.content };
+        }
+        if (chunk.usage) {
+          const { prompt_tokens, completion_tokens, total_tokens } = chunk.usage;
+          this.metrics.tokensInputTotal.inc({ model: this.config.openai.chatModel, endpoint: 'chat_stream_tool' }, prompt_tokens);
+          this.metrics.tokensOutputTotal.inc({ model: this.config.openai.chatModel, endpoint: 'chat_stream_tool' }, completion_tokens);
+          this.metrics.tokensTotal.inc({ model: this.config.openai.chatModel, endpoint: 'chat_stream_tool' }, total_tokens);
+          this.metrics.tokensPerRequest.observe({ type: 'input', model: this.config.openai.chatModel }, prompt_tokens);
+          this.metrics.tokensPerRequest.observe({ type: 'output', model: this.config.openai.chatModel }, completion_tokens);
+          this.metrics.recordTokenCost(this.config.openai.chatModel, prompt_tokens, completion_tokens);
+        }
+      }
+
+      apiTimer2();
     }
 
     // Send done signal with metadata
@@ -425,6 +493,7 @@ export class RagService {
         sources: chunks,
         model: this.config.openai.chatModel,
         backend: 'openai',
+        ...(contactCollected ? { contactCollected } : {}),
       },
     };
   }
@@ -509,7 +578,7 @@ export class RagService {
         'No system prompt available. Configure a prompt in LangWatch or another enabled observability adapter.',
       );
     }
-    const systemPrompt = promptResult.template;
+    const systemPrompt = promptResult.template + TOOL_USAGE_INSTRUCTIONS;
 
     const fullPrompt = this.buildFullPrompt({ query, chunks, systemPrompt, conversationHistory });
 
@@ -647,7 +716,7 @@ export class RagService {
         'No system prompt available. Configure a prompt in LangWatch or another enabled observability adapter.',
       );
     }
-    const systemPrompt = promptResult.template;
+    const systemPrompt = promptResult.template + TOOL_USAGE_INSTRUCTIONS;
 
     // Generation phase (streaming)
     const generationStart = Date.now();

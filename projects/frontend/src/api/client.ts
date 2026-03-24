@@ -1,4 +1,4 @@
-import type { QueryResponse, Session, SessionWithHistory, Source } from '../types';
+import type { QueryResponse, SessionListItem, SessionWithHistory, Source } from '../types';
 
 const API_BASE = '/api';
 
@@ -148,16 +148,6 @@ export async function getSystemPrompt(token?: string): Promise<SystemPromptInfo 
   return response.json();
 }
 
-export async function listSessions(): Promise<(Session & { messageCount: number })[]> {
-  const response = await apiFetch(`${API_BASE}/chat/sessions`);
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch sessions: ${response.statusText}`);
-  }
-
-  return response.json();
-}
-
 export async function getSession(sessionId: string): Promise<SessionWithHistory | null> {
   const response = await apiFetch(`${API_BASE}/chat/sessions/${sessionId}`, {}, sessionId);
 
@@ -171,13 +161,24 @@ export async function getSession(sessionId: string): Promise<SessionWithHistory 
   return response.json();
 }
 
-export async function deleteSession(sessionId: string): Promise<void> {
-  const response = await apiFetch(
-    `${API_BASE}/chat/sessions/${sessionId}`,
-    { method: 'DELETE' },
-    sessionId
-  );
+export async function listAdminSessions(
+  params: { search?: string; state?: string; limit?: number },
+  token: string,
+): Promise<SessionListItem[]> {
+  const url = new URL(`${API_BASE}/analytics/conversations`, window.location.origin);
+  if (params.search) url.searchParams.set('search', params.search);
+  if (params.state) url.searchParams.set('state', params.state);
+  if (params.limit) url.searchParams.set('limit', String(params.limit));
 
+  const response = await apiFetch(url, {}, undefined, token);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch conversations: ${response.statusText}`);
+  }
+  return response.json();
+}
+
+export async function deleteAdminSession(sessionId: string, token: string): Promise<void> {
+  const response = await apiFetch(`${API_BASE}/chat/sessions/${sessionId}`, { method: 'DELETE' }, undefined, token);
   if (!response.ok) {
     throw new Error(`Failed to delete session: ${response.statusText}`);
   }

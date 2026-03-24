@@ -45,3 +45,16 @@ export interface SessionWithHistory {
   session: Session;
   history: Message[];
 }
+
+export interface SessionListItem {
+  sessionId: string;
+  createdAt: string;
+  updatedAt: string;
+  collectionState: string | null;
+  userName: string | null;
+  userPhone: string | null;
+  preferredCallTime: string | null;
+  callbackTopic: string | null;
+  messageCount: number;
+  firstMessage: string | null;
+}
