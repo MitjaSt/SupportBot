@@ -6,7 +6,7 @@
 
 docker-network: ## Create Docker network for services
 	@echo "$(BLUE)Creating Docker network...$(NC)"
-	@docker network create macular-network 2>/dev/null || echo "$(YELLOW)Network already exists$(NC)"
+	@docker network create rag-network 2>/dev/null || echo "$(YELLOW)Network already exists$(NC)"
 	@echo "$(GREEN)Network ready!$(NC)"
 
 docker-start: docker-network ## Start Docker services (Postgres, Whisper, Piper)

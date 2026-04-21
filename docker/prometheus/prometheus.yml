@@ -2,12 +2,12 @@ global:
   scrape_interval: 15s
   evaluation_interval: 15s
   external_labels:
-    monitor: 'macular-society'
+    monitor: 'rag-project-monitor'
     environment: 'development'
 
 scrape_configs:
   # NestJS API metrics
-  - job_name: 'macular-api'
+  - job_name: 'rag-project-api'
     static_configs:
       - targets: ['host.docker.internal:3030']
     metrics_path: '/metrics'

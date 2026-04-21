@@ -1,4 +1,4 @@
-# Macular Society RAG Pipeline
+# RAG Pipeline
 
 A retrieval-augmented generation (RAG) chatbot, built with NestJS, PostgreSQL/pgvector, and OpenAI.
 
@@ -76,10 +76,10 @@ Restart the API to pick up the new audience value. On future restarts (without a
 
 > **After a DB wipe:** Drop the Zitadel DB and re-run setup:
 > ```bash
-> docker exec macular-postgres psql -U macular -d macular_society \
+> docker exec postgres psql -U rag_user -d rag_project \
 >   -c "DROP DATABASE IF EXISTS zitadel_dev;" \
 >   -c "DROP ROLE IF EXISTS zitadel;"
-> docker restart macular-zitadel
+> docker restart zitadel
 > ./docker/setup-zitadel.sh   # wait ~30s for Zitadel to re-init first
 > ```
 > Then update `ZITADEL_AUDIENCE` in `.env.config` with the new project ID.
@@ -93,7 +93,7 @@ curl http://localhost:3030/api/system/health
 
 # 2. Get a JWT via the browser login flow
 # Visit the authorize URL printed by setup-zitadel.sh, log in as
-# admin@macularsociety.localhost / Password1!
+# admin@ragproject.localhost / Password1!
 # Copy the `code=` param from the redirect URL, then:
 curl -s -X POST http://localhost:8080/oauth/v2/token \
   -H "Content-Type: application/x-www-form-urlencoded" \

@@ -1,6 +1,6 @@
 import scenario from '@langwatch/scenario';
 import { describe, expect, it } from 'vitest';
-import { MacularRAGAgent } from '../../../helpers/agent-adapter';
+import { RAGAgent } from '../../../helpers/agent-adapter';
 import { SCENARIO_SET_ID } from '../../../helpers/constants';
 import { saveSimulationResult } from '../../../helpers/result-saver';
 
@@ -9,7 +9,7 @@ describe('Generated Tests - Diagnosis Treatment', () => {
   it('should answer questions about Diagnosis-treatment - Healthcare', async () => {
     const description =
       'User asking about diagnosis-treatment - healthcare.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Diagnosis-treatment - Healthcare',
@@ -46,7 +46,7 @@ describe('Generated Tests - Diagnosis Treatment', () => {
   it('should answer questions about Diagnosis-treatment - How - Ct-scans', async () => {
     const description =
       'User asking about diagnosis-treatment - how - ct-scans.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Diagnosis-treatment - How - Ct-scans',
@@ -83,7 +83,7 @@ describe('Generated Tests - Diagnosis Treatment', () => {
   it('should answer questions about Diagnosis-treatment - How - Eye-tests', async () => {
     const description =
       'User asking about diagnosis-treatment - how - eye-tests.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Diagnosis-treatment - How - Eye-tests',
@@ -120,7 +120,7 @@ describe('Generated Tests - Diagnosis Treatment', () => {
   it('should answer questions about Diagnosis-treatment - How - Fluorescein-dye-angiography', async () => {
     const description =
       'User asking about diagnosis-treatment - how - fluorescein-dye-angiography.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Diagnosis-treatment - How - Fluorescein-dye-angiography',
@@ -157,7 +157,7 @@ describe('Generated Tests - Diagnosis Treatment', () => {
   it('should answer questions about Diagnosis-treatment - How - Genetic-testing', async () => {
     const description =
       'User asking about diagnosis-treatment - how - genetic-testing.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Diagnosis-treatment - How - Genetic-testing',
@@ -194,7 +194,7 @@ describe('Generated Tests - Diagnosis Treatment', () => {
   it('should answer questions about Diagnosis-treatment - How - Hcq-retinopathy-screening', async () => {
     const description =
       'User asking about diagnosis-treatment - how - hcq-retinopathy-screening.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Diagnosis-treatment - How - Hcq-retinopathy-screening',
@@ -231,7 +231,7 @@ describe('Generated Tests - Diagnosis Treatment', () => {
   it('should answer questions about Diagnosis-treatment - How', async () => {
     const description =
       'User asking about diagnosis-treatment - how.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Diagnosis-treatment - How',
@@ -268,7 +268,7 @@ describe('Generated Tests - Diagnosis Treatment', () => {
   it('should answer questions about Diagnosis-treatment - Treatments - New-treatments', async () => {
     const description =
       'User asking about diagnosis-treatment - treatments - new-treatments.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Diagnosis-treatment - Treatments - New-treatments',
@@ -306,7 +306,7 @@ describe('Generated Tests - Diagnosis Treatment', () => {
   it('should answer questions about Diagnosis-treatment - Treatments', async () => {
     const description =
       'User asking about diagnosis-treatment - treatments.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Diagnosis-treatment - Treatments',

@@ -5,7 +5,7 @@ tools: Read, Bash, Grep, Glob
 model: sonnet
 ---
 
-You review and document pull requests for the Macular Society RAG platform. Read `CLAUDE.md` before starting.
+You review and document pull requests for the RAG Project. Read `CLAUDE.md` before starting.
 
 ## Workflow
 

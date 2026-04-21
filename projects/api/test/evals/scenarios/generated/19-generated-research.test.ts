@@ -1,6 +1,6 @@
 import scenario from '@langwatch/scenario';
 import { describe, expect, it } from 'vitest';
-import { MacularRAGAgent } from '../../../helpers/agent-adapter';
+import { RAGAgent } from '../../../helpers/agent-adapter';
 import { SCENARIO_SET_ID } from '../../../helpers/constants';
 import { saveSimulationResult } from '../../../helpers/result-saver';
 
@@ -9,7 +9,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Achievements', async () => {
     const description =
       'User asking about research - explore - achievements.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Achievements',
@@ -46,7 +46,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Finding-cure', async () => {
     const description =
       'User asking about research - explore - finding-cure.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Finding-cure',
@@ -83,7 +83,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Improving-life', async () => {
     const description =
       'User asking about research - explore - improving-life.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Improving-life',
@@ -120,7 +120,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Insight', async () => {
     const description =
       'User asking about research - explore - insight.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Insight',
@@ -157,7 +157,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects - Fellowships - Measuring-visual-pigment-regeneration-to-track-stargardt-progression', async () => {
     const description =
       'User asking about research - explore - projects - fellowships - measuring-visual-pigment-regeneration-to-track-stargardt-progression.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects - Fellowships - Measuring-visual-pigment-regeneration-to-track-stargardt-progression',
@@ -195,7 +195,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects - Phds - Creating-an-atlas-of-the-macula', async () => {
     const description =
       'User asking about research - explore - projects - phds - creating-an-atlas-of-the-macula.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects - Phds - Creating-an-atlas-of-the-macula',
@@ -232,7 +232,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects - Phds - Developing-eye-drops-can-reach-back-eye', async () => {
     const description =
       'User asking about research - explore - projects - phds - developing-eye-drops-can-reach-back-eye.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects - Phds - Developing-eye-drops-can-reach-back-eye',
@@ -269,7 +269,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects - Phds - Developing-new-anti-complement-drugs-for-dry-amd', async () => {
     const description =
       'User asking about research - explore - projects - phds - developing-new-anti-complement-drugs-for-dry-amd.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects - Phds - Developing-new-anti-complement-drugs-for-dry-amd',
@@ -307,7 +307,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects - Phds - Finding-new-test-early-amd', async () => {
     const description =
       'User asking about research - explore - projects - phds - finding-new-test-early-amd.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects - Phds - Finding-new-test-early-amd',
@@ -344,7 +344,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects - Phds - Gene-editing-for-stargardt-disease', async () => {
     const description =
       'User asking about research - explore - projects - phds - gene-editing-for-stargardt-disease.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects - Phds - Gene-editing-for-stargardt-disease',
@@ -381,7 +381,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects - Phds - Gene-editing-stargardt-disease', async () => {
     const description =
       'User asking about research - explore - projects - phds - gene-editing-stargardt-disease.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects - Phds - Gene-editing-stargardt-disease',
@@ -419,7 +419,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects - Phds - Improving-integration-stem-cell-transplants-retina', async () => {
     const description =
       'User asking about research - explore - projects - phds - improving-integration-stem-cell-transplants-retina.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects - Phds - Improving-integration-stem-cell-transplants-retina',
@@ -456,7 +456,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects - Phds - Investigating-a-possible-gene-therapy-for-dry-amd', async () => {
     const description =
       'User asking about research - explore - projects - phds - investigating-a-possible-gene-therapy-for-dry-amd.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects - Phds - Investigating-a-possible-gene-therapy-for-dry-amd',
@@ -493,7 +493,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects - Phds - Investigating-how-eye-doctors-discuss-amd-patients', async () => {
     const description =
       'User asking about research - explore - projects - phds - investigating-how-eye-doctors-discuss-amd-patients.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects - Phds - Investigating-how-eye-doctors-discuss-amd-patients',
@@ -530,7 +530,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects - Phds - Investigating-stargardt-disease-as-a-target-for-gene-repair', async () => {
     const description =
       'User asking about research - explore - projects - phds - investigating-stargardt-disease-as-a-target-for-gene-repair.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects - Phds - Investigating-stargardt-disease-as-a-target-for-gene-repair',
@@ -567,7 +567,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects - Phds - Mutations-cfi-gene-which-are-harmless-or-harmful', async () => {
     const description =
       'User asking about research - explore - projects - phds - mutations-cfi-gene-which-are-harmless-or-harmful.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects - Phds - Mutations-cfi-gene-which-are-harmless-or-harmful',
@@ -604,7 +604,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects - Phds - New-form-gene-editing-macular-dystrophies', async () => {
     const description =
       'User asking about research - explore - projects - phds - new-form-gene-editing-macular-dystrophies.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects - Phds - New-form-gene-editing-macular-dystrophies',
@@ -641,7 +641,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects - Phds - Real-life-costs-and-benefits-wearable-low-vision-aids', async () => {
     const description =
       'User asking about research - explore - projects - phds - real-life-costs-and-benefits-wearable-low-vision-aids.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects - Phds - Real-life-costs-and-benefits-wearable-low-vision-aids',
@@ -678,7 +678,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects - Phds - Stopping-build-toxic-waste-dry-amd', async () => {
     const description =
       'User asking about research - explore - projects - phds - stopping-build-toxic-waste-dry-amd.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects - Phds - Stopping-build-toxic-waste-dry-amd',
@@ -715,7 +715,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects - Phds - Understanding-photopsia-and-photophobia-in-stargardt-disease', async () => {
     const description =
       'User asking about research - explore - projects - phds - understanding-photopsia-and-photophobia-in-stargardt-disease.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects - Phds - Understanding-photopsia-and-photophobia-in-stargardt-disease',
@@ -752,7 +752,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects - Phds - Understanding-rpgr-gene-function-in-cone-photoreceptors', async () => {
     const description =
       'User asking about research - explore - projects - phds - understanding-rpgr-gene-function-in-cone-photoreceptors.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects - Phds - Understanding-rpgr-gene-function-in-cone-photoreceptors',
@@ -789,7 +789,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects - Phds - Wrong-place-wrong-time-protein-delivery-and-macular-disease', async () => {
     const description =
       'User asking about research - explore - projects - phds - wrong-place-wrong-time-protein-delivery-and-macular-disease.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects - Phds - Wrong-place-wrong-time-protein-delivery-and-macular-disease',
@@ -826,7 +826,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects - Research-grants - A-marvellous-new-approach-to-tackle-retinopathy', async () => {
     const description =
       'User asking about research - explore - projects - research-grants - a-marvellous-new-approach-to-tackle-retinopathy.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects - Research-grants - A-marvellous-new-approach-to-tackle-retinopathy',
@@ -863,7 +863,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects - Research-grants - Artificial-intelligence-amd', async () => {
     const description =
       'User asking about research - explore - projects - research-grants - artificial-intelligence-amd.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects - Research-grants - Artificial-intelligence-amd',
@@ -900,7 +900,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects - Research-grants - Creating-blood-test-detect-early-amd', async () => {
     const description =
       'User asking about research - explore - projects - research-grants - creating-blood-test-detect-early-amd.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects - Research-grants - Creating-blood-test-detect-early-amd',
@@ -937,7 +937,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects - Research-grants - Creating-wet-amd-drug-using-flower-compounds', async () => {
     const description =
       'User asking about research - explore - projects - research-grants - creating-wet-amd-drug-using-flower-compounds.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects - Research-grants - Creating-wet-amd-drug-using-flower-compounds',
@@ -975,7 +975,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects - Research-grants - Darkness-amd', async () => {
     const description =
       'User asking about research - explore - projects - research-grants - darkness-amd.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects - Research-grants - Darkness-amd',
@@ -1012,7 +1012,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects - Research-grants - Developing-an-eye-drop-to-treat-dry-age-related-macular-degeneration', async () => {
     const description =
       'User asking about research - explore - projects - research-grants - developing-an-eye-drop-to-treat-dry-age-related-macular-degeneration.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects - Research-grants - Developing-an-eye-drop-to-treat-dry-age-related-macular-degeneration',
@@ -1049,7 +1049,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects - Research-grants - Early-changes-amd', async () => {
     const description =
       'User asking about research - explore - projects - research-grants - early-changes-amd.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects - Research-grants - Early-changes-amd',
@@ -1086,7 +1086,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects - Research-grants - Finding-early-amd-changes-using-eye-scans', async () => {
     const description =
       'User asking about research - explore - projects - research-grants - finding-early-amd-changes-using-eye-scans.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects - Research-grants - Finding-early-amd-changes-using-eye-scans',
@@ -1123,7 +1123,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects - Research-grants - Folding-correction-for-stargardt-disease', async () => {
     const description =
       'User asking about research - explore - projects - research-grants - folding-correction-for-stargardt-disease.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects - Research-grants - Folding-correction-for-stargardt-disease',
@@ -1160,7 +1160,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects - Research-grants - Helping-keep-mitochondria-healthy-keep-macula-cells-alive', async () => {
     const description =
       'User asking about research - explore - projects - research-grants - helping-keep-mitochondria-healthy-keep-macula-cells-alive.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects - Research-grants - Helping-keep-mitochondria-healthy-keep-macula-cells-alive',
@@ -1197,7 +1197,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects - Research-grants - How-do-ageing-mitochondria-work-and-communicate-differently', async () => {
     const description =
       'User asking about research - explore - projects - research-grants - how-do-ageing-mitochondria-work-and-communicate-differently.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects - Research-grants - How-do-ageing-mitochondria-work-and-communicate-differently',
@@ -1234,7 +1234,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects - Research-grants - Implantable-eye-lens-macular-disease', async () => {
     const description =
       'User asking about research - explore - projects - research-grants - implantable-eye-lens-macular-disease.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects - Research-grants - Implantable-eye-lens-macular-disease',
@@ -1271,7 +1271,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects - Research-grants - Improving-support-services-teenagers-macular-disease', async () => {
     const description =
       'User asking about research - explore - projects - research-grants - improving-support-services-teenagers-macular-disease.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects - Research-grants - Improving-support-services-teenagers-macular-disease',
@@ -1308,7 +1308,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects - Research-grants - Investigating-early-onset-macular-degeneration', async () => {
     const description =
       'User asking about research - explore - projects - research-grants - investigating-early-onset-macular-degeneration.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects - Research-grants - Investigating-early-onset-macular-degeneration',
@@ -1346,7 +1346,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects - Research-grants - Investigating-factors-involved-rate-amd-progression', async () => {
     const description =
       'User asking about research - explore - projects - research-grants - investigating-factors-involved-rate-amd-progression.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects - Research-grants - Investigating-factors-involved-rate-amd-progression',
@@ -1384,7 +1384,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects - Research-grants - Maintaining-the-health-of-the-blood-vessels-in-the-macula', async () => {
     const description =
       'User asking about research - explore - projects - research-grants - maintaining-the-health-of-the-blood-vessels-in-the-macula.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects - Research-grants - Maintaining-the-health-of-the-blood-vessels-in-the-macula',
@@ -1421,7 +1421,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects - Research-grants - Manchester-eye-tissue-repository-genome-transcriptome-project', async () => {
     const description =
       'User asking about research - explore - projects - research-grants - manchester-eye-tissue-repository-genome-transcriptome-project.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects - Research-grants - Manchester-eye-tissue-repository-genome-transcriptome-project',
@@ -1458,7 +1458,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects - Research-grants - New-treatment-option-wet-amd', async () => {
     const description =
       'User asking about research - explore - projects - research-grants - new-treatment-option-wet-amd.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects - Research-grants - New-treatment-option-wet-amd',
@@ -1495,7 +1495,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects - Research-grants - Protecting-damaged-blood-vessels-back-eye', async () => {
     const description =
       'User asking about research - explore - projects - research-grants - protecting-damaged-blood-vessels-back-eye.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects - Research-grants - Protecting-damaged-blood-vessels-back-eye',
@@ -1532,7 +1532,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects - Research-grants - Shining-new-light-on-the-body-clock-and-retinopathy', async () => {
     const description =
       'User asking about research - explore - projects - research-grants - shining-new-light-on-the-body-clock-and-retinopathy.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects - Research-grants - Shining-new-light-on-the-body-clock-and-retinopathy',
@@ -1569,7 +1569,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects - Research-grants - Switching-off-the-genes-that-cause-best-disease', async () => {
     const description =
       'User asking about research - explore - projects - research-grants - switching-off-the-genes-that-cause-best-disease.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects - Research-grants - Switching-off-the-genes-that-cause-best-disease',
@@ -1606,7 +1606,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects - Research-grants - Testing-therapies-reduce-severity-visual-hallucinations', async () => {
     const description =
       'User asking about research - explore - projects - research-grants - testing-therapies-reduce-severity-visual-hallucinations.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects - Research-grants - Testing-therapies-reduce-severity-visual-hallucinations',
@@ -1643,7 +1643,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects - Research-grants - Turning-faulty-genes-treat-macular-dystrophy', async () => {
     const description =
       'User asking about research - explore - projects - research-grants - turning-faulty-genes-treat-macular-dystrophy.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects - Research-grants - Turning-faulty-genes-treat-macular-dystrophy',
@@ -1680,7 +1680,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects - Research-grants - Understanding-abca4-and-predicting-future', async () => {
     const description =
       'User asking about research - explore - projects - research-grants - understanding-abca4-and-predicting-future.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects - Research-grants - Understanding-abca4-and-predicting-future',
@@ -1717,7 +1717,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects - Research-grants - Understanding-new-stress-response-pathway-involved-amd', async () => {
     const description =
       'User asking about research - explore - projects - research-grants - understanding-new-stress-response-pathway-involved-amd.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects - Research-grants - Understanding-new-stress-response-pathway-involved-amd',
@@ -1754,7 +1754,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects - Research-grants - Using-artificial-intelligence-predict-amd-progression', async () => {
     const description =
       'User asking about research - explore - projects - research-grants - using-artificial-intelligence-predict-amd-progression.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects - Research-grants - Using-artificial-intelligence-predict-amd-progression',
@@ -1792,7 +1792,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects - Research-grants - Using-data-science-diagnose-amd-sooner-and-detect-change-over-ti', async () => {
     const description =
       'User asking about research - explore - projects - research-grants - using-data-science-diagnose-amd-sooner-and-detect-change-over-ti.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects - Research-grants - Using-data-science-diagnose-amd-sooner-and-detect-change-over-ti',
@@ -1830,7 +1830,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects - Research-grants - Using-technology-aid-functional-vision', async () => {
     const description =
       'User asking about research - explore - projects - research-grants - using-technology-aid-functional-vision.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects - Research-grants - Using-technology-aid-functional-vision',
@@ -1867,7 +1867,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects - Research-grants - Virtual-visually-impaired-rehabilitation-assistant', async () => {
     const description =
       'User asking about research - explore - projects - research-grants - virtual-visually-impaired-rehabilitation-assistant.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects - Research-grants - Virtual-visually-impaired-rehabilitation-assistant',
@@ -1904,7 +1904,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects - Seedcorn-projects - Combining-gene-editing-and-anti-inflammatory-therapy-to-treat-dry-amd', async () => {
     const description =
       'User asking about research - explore - projects - seedcorn-projects - combining-gene-editing-and-anti-inflammatory-therapy-to-treat-dry-amd.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects - Seedcorn-projects - Combining-gene-editing-and-anti-inflammatory-therapy-to-treat-dry-amd',
@@ -1942,7 +1942,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects - Seedcorn-projects - Creating-a-new-laboratory-macular-model', async () => {
     const description =
       'User asking about research - explore - projects - seedcorn-projects - creating-a-new-laboratory-macular-model.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects - Seedcorn-projects - Creating-a-new-laboratory-macular-model',
@@ -1979,7 +1979,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects - Seedcorn-projects - Developing-new-visual-tests-to-monitor-macular-disease', async () => {
     const description =
       'User asking about research - explore - projects - seedcorn-projects - developing-new-visual-tests-to-monitor-macular-disease.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects - Seedcorn-projects - Developing-new-visual-tests-to-monitor-macular-disease',
@@ -2016,7 +2016,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects - Seedcorn-projects - How-the-genetics-of-fat-metabolism-influence-amd-development', async () => {
     const description =
       'User asking about research - explore - projects - seedcorn-projects - how-the-genetics-of-fat-metabolism-influence-amd-development.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects - Seedcorn-projects - How-the-genetics-of-fat-metabolism-influence-amd-development',
@@ -2053,7 +2053,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects - Seedcorn-projects - Impact-misaligned-daily-light-cycles-development-diabetic-retino', async () => {
     const description =
       'User asking about research - explore - projects - seedcorn-projects - impact-misaligned-daily-light-cycles-development-diabetic-retino.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects - Seedcorn-projects - Impact-misaligned-daily-light-cycles-development-diabetic-retino',
@@ -2090,7 +2090,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects - Seedcorn-projects - Improving-reading-aids-for-those-with-macular-conditions', async () => {
     const description =
       'User asking about research - explore - projects - seedcorn-projects - improving-reading-aids-for-those-with-macular-conditions.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects - Seedcorn-projects - Improving-reading-aids-for-those-with-macular-conditions',
@@ -2127,7 +2127,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects - Seedcorn-projects - Improving-wet-amd-care-through-patient-experience', async () => {
     const description =
       'User asking about research - explore - projects - seedcorn-projects - improving-wet-amd-care-through-patient-experience.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects - Seedcorn-projects - Improving-wet-amd-care-through-patient-experience',
@@ -2164,7 +2164,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects - Seedcorn-projects - Investigating-the-genetic-roots-of-hydroxychloroquine-hcq-retinopathy', async () => {
     const description =
       'User asking about research - explore - projects - seedcorn-projects - investigating-the-genetic-roots-of-hydroxychloroquine-hcq-retinopathy.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects - Seedcorn-projects - Investigating-the-genetic-roots-of-hydroxychloroquine-hcq-retinopathy',
@@ -2201,7 +2201,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects - Seedcorn-projects - Investigating-the-genetics-of-cone-dystrophy', async () => {
     const description =
       'User asking about research - explore - projects - seedcorn-projects - investigating-the-genetics-of-cone-dystrophy.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects - Seedcorn-projects - Investigating-the-genetics-of-cone-dystrophy',
@@ -2238,7 +2238,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects - Seedcorn-projects - Looking-at-the-connection-between-proline-transport-and-macular-health', async () => {
     const description =
       'User asking about research - explore - projects - seedcorn-projects - looking-at-the-connection-between-proline-transport-and-macular-health.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects - Seedcorn-projects - Looking-at-the-connection-between-proline-transport-and-macular-health',
@@ -2275,7 +2275,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects - Seedcorn-projects - Multi-dimensional-imaging-in-early-amd', async () => {
     const description =
       'User asking about research - explore - projects - seedcorn-projects - multi-dimensional-imaging-in-early-amd.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects - Seedcorn-projects - Multi-dimensional-imaging-in-early-amd',
@@ -2312,7 +2312,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects - Seedcorn-projects - Role-protein-abcc5-diabetic-macular-oedema', async () => {
     const description =
       'User asking about research - explore - projects - seedcorn-projects - role-protein-abcc5-diabetic-macular-oedema.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects - Seedcorn-projects - Role-protein-abcc5-diabetic-macular-oedema',
@@ -2349,7 +2349,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects - Seedcorn-projects - Studying-retinal-ageing-in-a-rapidly-ageing-fish', async () => {
     const description =
       'User asking about research - explore - projects - seedcorn-projects - studying-retinal-ageing-in-a-rapidly-ageing-fish.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects - Seedcorn-projects - Studying-retinal-ageing-in-a-rapidly-ageing-fish',
@@ -2386,7 +2386,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects - Seedcorn-projects - The-zebrafishs-high-acuity-zone-as-a-novel-model-for-the-human-m', async () => {
     const description =
       'User asking about research - explore - projects - seedcorn-projects - the-zebrafishs-high-acuity-zone-as-a-novel-model-for-the-human-m.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects - Seedcorn-projects - The-zebrafishs-high-acuity-zone-as-a-novel-model-for-the-human-m',
@@ -2423,7 +2423,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects - Seedcorn-projects - Using-gene-therapy-to-investigate-the-pathways-involved-in-amd-progression', async () => {
     const description =
       'User asking about research - explore - projects - seedcorn-projects - using-gene-therapy-to-investigate-the-pathways-involved-in-amd-progression.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects - Seedcorn-projects - Using-gene-therapy-to-investigate-the-pathways-involved-in-amd-progression',
@@ -2460,7 +2460,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore - Projects', async () => {
     const description =
       'User asking about research - explore - projects.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore - Projects',
@@ -2498,7 +2498,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Explore', async () => {
     const description =
       'User asking about research - explore.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Explore',
@@ -2535,7 +2535,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Features - Aspirin-risk', async () => {
     const description =
       'User asking about research - features - aspirin-risk.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Features - Aspirin-risk',
@@ -2572,7 +2572,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Features - Report-finds-lack-of-support-for-sight-loss-due-to-diabetes', async () => {
     const description =
       'User asking about research - features - report-finds-lack-of-support-for-sight-loss-due-to-diabetes.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Features - Report-finds-lack-of-support-for-sight-loss-due-to-diabetes',
@@ -2609,7 +2609,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Features - Report-reveals-burden-of-treatment-for-patients-with-wet-amd', async () => {
     const description =
       'User asking about research - features - report-reveals-burden-of-treatment-for-patients-with-wet-amd.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Features - Report-reveals-burden-of-treatment-for-patients-with-wet-amd',
@@ -2646,7 +2646,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Features - Virtual-eye', async () => {
     const description =
       'User asking about research - features - virtual-eye.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Features - Virtual-eye',
@@ -2683,7 +2683,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Features', async () => {
     const description =
       'User asking about research - features.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Features',
@@ -2720,7 +2720,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Get-involved - Foresight', async () => {
     const description =
       'User asking about research - get-involved - foresight.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Get-involved - Foresight',
@@ -2757,7 +2757,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Get-involved - Research-participant-database - Thank-you', async () => {
     const description =
       'User asking about research - get-involved - research-participant-database - thank-you.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Get-involved - Research-participant-database - Thank-you',
@@ -2794,7 +2794,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Get-involved - Research-participant-database', async () => {
     const description =
       'User asking about research - get-involved - research-participant-database.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Get-involved - Research-participant-database',
@@ -2831,7 +2831,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Get-involved - Share-your-experience', async () => {
     const description =
       'User asking about research - get-involved - share-your-experience.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Get-involved - Share-your-experience',
@@ -2868,7 +2868,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Get-involved - Take-part', async () => {
     const description =
       'User asking about research - get-involved - take-part.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Get-involved - Take-part',
@@ -2905,7 +2905,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Get-involved', async () => {
     const description =
       'User asking about research - get-involved.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Get-involved',
@@ -2942,7 +2942,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Macular-researchers - Grant-info - Research-committee-terms-reference', async () => {
     const description =
       'User asking about research - macular-researchers - grant-info - research-committee-terms-reference.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Macular-researchers - Grant-info - Research-committee-terms-reference',
@@ -2980,7 +2980,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Macular-researchers - Grant-info - Research-grant-terms-and-conditions', async () => {
     const description =
       'User asking about research - macular-researchers - grant-info - research-grant-terms-and-conditions.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Macular-researchers - Grant-info - Research-grant-terms-and-conditions',
@@ -3017,7 +3017,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Macular-researchers - Grant-info', async () => {
     const description =
       'User asking about research - macular-researchers - grant-info.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Macular-researchers - Grant-info',
@@ -3054,7 +3054,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Macular-researchers - Grant-programmes - Fellowships', async () => {
     const description =
       'User asking about research - macular-researchers - grant-programmes - fellowships.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Macular-researchers - Grant-programmes - Fellowships',
@@ -3091,7 +3091,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Macular-researchers - Grant-programmes - Research-grants-and-phd-studentships', async () => {
     const description =
       'User asking about research - macular-researchers - grant-programmes - research-grants-and-phd-studentships.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Macular-researchers - Grant-programmes - Research-grants-and-phd-studentships',
@@ -3128,7 +3128,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Macular-researchers - Grant-programmes - Seedcorn-grants', async () => {
     const description =
       'User asking about research - macular-researchers - grant-programmes - seedcorn-grants.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Macular-researchers - Grant-programmes - Seedcorn-grants',
@@ -3165,7 +3165,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Macular-researchers - Grant-programmes - Travel-grants', async () => {
     const description =
       'User asking about research - macular-researchers - grant-programmes - travel-grants.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Macular-researchers - Grant-programmes - Travel-grants',
@@ -3203,7 +3203,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Macular-researchers - Grant-programmes', async () => {
     const description =
       'User asking about research - macular-researchers - grant-programmes.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Macular-researchers - Grant-programmes',
@@ -3240,7 +3240,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Macular-researchers - Patient-public-involvement', async () => {
     const description =
       'User asking about research - macular-researchers - patient-public-involvement.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Macular-researchers - Patient-public-involvement',
@@ -3277,7 +3277,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Macular-researchers - Policies - Animals-in-research', async () => {
     const description =
       'User asking about research - macular-researchers - policies - animals-in-research.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Macular-researchers - Policies - Animals-in-research',
@@ -3314,7 +3314,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Macular-researchers - Policies - Committee-conflicts-of-interest-policy', async () => {
     const description =
       'User asking about research - macular-researchers - policies - committee-conflicts-of-interest-policy.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Macular-researchers - Policies - Committee-conflicts-of-interest-policy',
@@ -3351,7 +3351,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Macular-researchers - Policies - Research-committee-rotation-policy', async () => {
     const description =
       'User asking about research - macular-researchers - policies - research-committee-rotation-policy.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Macular-researchers - Policies - Research-committee-rotation-policy',
@@ -3388,7 +3388,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Macular-researchers - Policies - Stem-cell-statement', async () => {
     const description =
       'User asking about research - macular-researchers - policies - stem-cell-statement.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Macular-researchers - Policies - Stem-cell-statement',
@@ -3425,7 +3425,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Macular-researchers - Policies', async () => {
     const description =
       'User asking about research - macular-researchers - policies.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Macular-researchers - Policies',
@@ -3462,7 +3462,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Macular-researchers - Recruit-participants-your-study', async () => {
     const description =
       'User asking about research - macular-researchers - recruit-participants-your-study.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Macular-researchers - Recruit-participants-your-study',
@@ -3499,7 +3499,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Macular-researchers', async () => {
     const description =
       'User asking about research - macular-researchers.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Macular-researchers',
@@ -3536,7 +3536,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - News', async () => {
     const description =
       'User asking about research - news.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - News',
@@ -3573,7 +3573,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Now - Gene-therapy', async () => {
     const description =
       'User asking about research - now - gene-therapy.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Now - Gene-therapy',
@@ -3610,7 +3610,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Now - Nutrition', async () => {
     const description =
       'User asking about research - now - nutrition.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Now - Nutrition',
@@ -3647,7 +3647,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Now - Science-ageing', async () => {
     const description =
       'User asking about research - now - science-ageing.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Now - Science-ageing',
@@ -3684,7 +3684,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Now - Stem-cell-therapy', async () => {
     const description =
       'User asking about research - now - stem-cell-therapy.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Now - Stem-cell-therapy',
@@ -3721,7 +3721,7 @@ describe('Generated Tests - Research', () => {
   it('should answer questions about Research - Now', async () => {
     const description =
       'User asking about research - now.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Research - Now',

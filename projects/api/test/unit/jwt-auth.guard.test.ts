@@ -9,7 +9,7 @@
  */
 
 import { generateKeyPairSync } from 'node:crypto';
-import { describe, it, expect, vi, beforeAll } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 // ── JWKS mock (hoisted before any imports that trigger jwks-rsa) ──────────────
 // publicKey is populated in beforeAll; the mock closure captures the variable.
@@ -27,14 +27,14 @@ vi.mock('jwks-rsa', () => ({
 }));
 
 // ── Imports (after mock is set up) ────────────────────────────────────────────
+import { OPTIONAL_AUTH_KEY } from '@/modules/auth/auth.constants';
+import { JwtAuthGuard } from '@/modules/auth/guards/jwt-auth.guard';
+import { PermissionsGuard } from '@/modules/auth/guards/permissions.guard';
+import type { AuthUser } from '@/modules/auth/interfaces/auth-user.interface';
+import { JwtStrategy } from '@/modules/auth/strategies/jwt.strategy';
 import { ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import * as jwt from 'jsonwebtoken';
-import { JwtStrategy } from '@/modules/auth/strategies/jwt.strategy';
-import { JwtAuthGuard } from '@/modules/auth/guards/jwt-auth.guard';
-import { PermissionsGuard } from '@/modules/auth/guards/permissions.guard';
-import { OPTIONAL_AUTH_KEY, PERMISSIONS_KEY } from '@/modules/auth/auth.constants';
-import type { AuthUser } from '@/modules/auth/interfaces/auth-user.interface';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -45,7 +45,7 @@ const mockConfig = {
   zitadel: {
     jwksUri: 'https://zitadel.example.com/oauth/v2/keys',
     issuer: 'https://zitadel.example.com',
-    audience: 'macular-society-api',
+    audience: 'rag-project-api',
     enabled: true,
   },
 };

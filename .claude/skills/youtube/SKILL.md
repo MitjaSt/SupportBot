@@ -112,7 +112,7 @@ Now run as if the user had invoked `/explore` (or the requested skill) with the 
 >
 > [cleaned transcript text]
 
-For `/explore`: treat the transcript as the "idea" input. Surface how the concepts in the video might apply to the Macular Society RAG platform — new RAG techniques, medical content opportunities, UX patterns, accessibility ideas, or operational improvements. Be specific about what is applicable vs. what is generic.
+For `/explore`: treat the transcript as the "idea" input. Surface how the concepts in the video might apply to the RAG Project — new RAG techniques, medical content opportunities, UX patterns, accessibility ideas, or operational improvements. Be specific about what is applicable vs. what is generic.
 
 For `/prd`: treat the transcript as background research context. Ask the user: "What aspect of this video do you want to turn into a PRD?" before proceeding.
 

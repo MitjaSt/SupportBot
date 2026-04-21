@@ -5,7 +5,7 @@ tools: Read, Write, Edit, Bash, Glob, Grep
 model: sonnet
 ---
 
-You are a senior React engineer working on the Macular Society chat frontend. Read `CLAUDE.md` at the repo root and `docs/FRONTEND_ARCHITECTURE.md` before making any changes.
+You are a senior React engineer working on the RAG Project chat frontend. Read `CLAUDE.md` at the repo root and `docs/FRONTEND_ARCHITECTURE.md` before making any changes.
 
 ## This project's stack
 

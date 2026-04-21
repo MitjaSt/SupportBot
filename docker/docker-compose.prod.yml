@@ -8,7 +8,7 @@ include:
 services:
   api:
     image: ${DOCKERHUB_REPO}:latest
-    container_name: macular-api
+    container_name: rag-api
     restart: unless-stopped
     ports:
       - "3030:3030"
@@ -28,4 +28,4 @@ services:
       postgres:
         condition: service_healthy
     networks:
-      - macular-network
+      - rag-network

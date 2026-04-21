@@ -1,6 +1,6 @@
-# Macular Society RAG Platform
+# RAG Project
 
-Medical Q&A chatbot for people with macular degeneration, run by the Macular Society (UK charity). Retrieval-augmented generation over Macular Society knowledge base, with voice input/output. Users frequently have low vision or use screen readers — accessibility is a first-class concern, not a checkbox.
+Medical Q&A chatbot. Retrieval-augmented generation over web-scraped knowledge base, with voice input/output. Users frequently have low vision or use screen readers — accessibility is a first-class concern, not a checkbox.
 
 ## Architecture
 
@@ -8,7 +8,6 @@ Medical Q&A chatbot for people with macular degeneration, run by the Macular Soc
 projects/
 ├── api/          NestJS + TypeScript (port 3030)
 ├── frontend/     React 18 + Vite + TypeScript (port 5173 dev / 3030 prod)
-└── prompt-guard/ Standalone prompt injection guard service
 ```
 
 ### API stack
@@ -114,7 +113,6 @@ src/modules/
 ├── system/             Health/system endpoints
 ├── metrics/            Prometheus instrumentation (track all OpenAI calls)
 ├── observability/      LangWatch/LangFuse/DeepEval adapters
-├── prompt-guard/       Prompt injection detection
 ├── prompt-logger/      Prompt logging
 └── database/           DB module + session repository
 ```
@@ -159,7 +157,6 @@ src/
 
 ## Domain context (read this before making product decisions)
 
-- **Users have macular degeneration** — a progressive central vision loss condition. Many rely on screen readers, high contrast, keyboard navigation, or enlarged text. WCAG 2.1 AA is a minimum bar.
-- **Medical domain** — the system must not hallucinate. Responses are grounded in retrieved Macular Society content only. The retrieval score threshold (0.7) is intentional.
-- **Contact collection** — the assistant can collect phone/email via OpenAI function calling when users want a callback from Macular Society support staff.
+- **Medical domain** — the system must not hallucinate. Responses are grounded in retrieved web-scraped content only. The retrieval score threshold (0.7) is intentional.
+- **Contact collection** — the assistant can collect phone/email via OpenAI function calling when users want a callback from support staff.
 - **Charity context** — this is not a SaaS product. Keep infrastructure simple and operationally lightweight.

@@ -74,14 +74,14 @@ export class MetricsService {
 
     // HTTP Request Metrics
     this.httpRequestsTotal = new Counter({
-      name: 'macular_http_requests_total',
+      name: 'rag_http_requests_total',
       help: 'Total number of HTTP requests',
       labelNames: ['method', 'route', 'status'],
       registers: [register],
     });
 
     this.httpRequestDuration = new Histogram({
-      name: 'macular_http_request_duration_seconds',
+      name: 'rag_http_request_duration_seconds',
       help: 'HTTP request duration in seconds',
       labelNames: ['method', 'route'],
       buckets: [0.01, 0.05, 0.1, 0.5, 1, 2, 5, 10],
@@ -89,7 +89,7 @@ export class MetricsService {
     });
 
     this.httpRequestErrors = new Counter({
-      name: 'macular_http_request_errors_total',
+      name: 'rag_http_request_errors_total',
       help: 'Total number of HTTP request errors',
       labelNames: ['method', 'route', 'error_type'],
       registers: [register],
@@ -97,28 +97,28 @@ export class MetricsService {
 
     // Token Metrics
     this.tokensInputTotal = new Counter({
-      name: 'macular_tokens_input_total',
+      name: 'rag_tokens_input_total',
       help: 'Total input tokens consumed',
       labelNames: ['model', 'endpoint'],
       registers: [register],
     });
 
     this.tokensOutputTotal = new Counter({
-      name: 'macular_tokens_output_total',
+      name: 'rag_tokens_output_total',
       help: 'Total output tokens generated',
       labelNames: ['model', 'endpoint'],
       registers: [register],
     });
 
     this.tokensTotal = new Counter({
-      name: 'macular_tokens_total',
+      name: 'rag_tokens_total',
       help: 'Total tokens (input + output)',
       labelNames: ['model', 'endpoint'],
       registers: [register],
     });
 
     this.tokensPerRequest = new Histogram({
-      name: 'macular_tokens_per_request',
+      name: 'rag_tokens_per_request',
       help: 'Distribution of tokens per request',
       labelNames: ['type', 'model'],
       buckets: [100, 500, 1000, 2000, 4000, 8000, 16000],
@@ -126,7 +126,7 @@ export class MetricsService {
     });
 
     this.estimatedCost = new Counter({
-      name: 'macular_estimated_cost_usd',
+      name: 'rag_estimated_cost_usd',
       help: 'Estimated cost in USD based on token usage',
       labelNames: ['model'],
       registers: [register],
@@ -134,42 +134,42 @@ export class MetricsService {
 
     // RAG Metrics
     this.ragRetrievalScore = new Histogram({
-      name: 'macular_rag_retrieval_score',
+      name: 'rag_rag_retrieval_score',
       help: 'Cosine similarity score distribution from vector search',
       buckets: [0.5, 0.6, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0],
       registers: [register],
     });
 
     this.ragChunksRetrieved = new Histogram({
-      name: 'macular_rag_chunks_retrieved',
+      name: 'rag_rag_chunks_retrieved',
       help: 'Number of chunks retrieved per query',
       buckets: [0, 1, 2, 3, 5, 10],
       registers: [register],
     });
 
     this.ragRetrievalDuration = new Histogram({
-      name: 'macular_rag_retrieval_duration_seconds',
+      name: 'rag_rag_retrieval_duration_seconds',
       help: 'Time taken for vector search',
       buckets: [0.01, 0.05, 0.1, 0.5, 1],
       registers: [register],
     });
 
     this.ragQueriesTotal = new Counter({
-      name: 'macular_rag_queries_total',
+      name: 'rag_rag_queries_total',
       help: 'Total number of RAG queries',
       labelNames: ['status'],
       registers: [register],
     });
 
     this.ragFailedRetrievals = new Counter({
-      name: 'macular_rag_failed_retrievals_total',
+      name: 'rag_rag_failed_retrievals_total',
       help: 'Number of queries with no results above threshold',
       registers: [register],
     });
 
     // OpenAI API Metrics
     this.openaiApiDuration = new Histogram({
-      name: 'macular_openai_api_duration_seconds',
+      name: 'rag_openai_api_duration_seconds',
       help: 'OpenAI API call duration',
       labelNames: ['operation', 'model'],
       buckets: [0.5, 1, 2, 5, 10, 30, 60],
@@ -177,14 +177,14 @@ export class MetricsService {
     });
 
     this.openaiApiErrors = new Counter({
-      name: 'macular_openai_api_errors_total',
+      name: 'rag_openai_api_errors_total',
       help: 'OpenAI API errors',
       labelNames: ['operation', 'error_type'],
       registers: [register],
     });
 
     this.openaiApiCalls = new Counter({
-      name: 'macular_openai_api_calls_total',
+      name: 'rag_openai_api_calls_total',
       help: 'Total OpenAI API calls',
       labelNames: ['operation', 'model'],
       registers: [register],
@@ -192,14 +192,14 @@ export class MetricsService {
 
     // Function Calling Metrics
     this.functionCallsTotal = new Counter({
-      name: 'macular_function_calls_total',
+      name: 'rag_function_calls_total',
       help: 'Total function calls by tool name',
       labelNames: ['tool_name', 'status'],
       registers: [register],
     });
 
     this.functionCallDuration = new Histogram({
-      name: 'macular_function_call_duration_seconds',
+      name: 'rag_function_call_duration_seconds',
       help: 'Function call execution duration',
       labelNames: ['tool_name'],
       buckets: [0.01, 0.1, 0.5, 1, 5],
@@ -207,14 +207,14 @@ export class MetricsService {
     });
 
     this.functionCallErrors = new Counter({
-      name: 'macular_function_call_errors_total',
+      name: 'rag_function_call_errors_total',
       help: 'Function call errors',
       labelNames: ['tool_name', 'error_type'],
       registers: [register],
     });
 
     this.contactCollectionSuccess = new Counter({
-      name: 'macular_contact_collection_success_total',
+      name: 'rag_contact_collection_success_total',
       help: 'Successful contact information collections',
       labelNames: ['type'],
       registers: [register],
@@ -222,28 +222,28 @@ export class MetricsService {
 
     // Voice Pipeline Metrics - Whisper (STT)
     this.whisperTranscriptionDuration = new Histogram({
-      name: 'macular_whisper_transcription_duration_seconds',
+      name: 'rag_whisper_transcription_duration_seconds',
       help: 'Whisper transcription processing time',
       buckets: [0.5, 1, 2, 5, 10, 30],
       registers: [register],
     });
 
     this.whisperTranscriptionTotal = new Counter({
-      name: 'macular_whisper_transcription_total',
+      name: 'rag_whisper_transcription_total',
       help: 'Total Whisper transcriptions',
       labelNames: ['model', 'language'],
       registers: [register],
     });
 
     this.whisperTranscriptionErrors = new Counter({
-      name: 'macular_whisper_transcription_errors_total',
+      name: 'rag_whisper_transcription_errors_total',
       help: 'Whisper transcription errors',
       labelNames: ['error_type'],
       registers: [register],
     });
 
     this.whisperAudioDuration = new Histogram({
-      name: 'macular_whisper_audio_duration_seconds',
+      name: 'rag_whisper_audio_duration_seconds',
       help: 'Duration of audio files transcribed',
       buckets: [5, 10, 30, 60, 120, 300],
       registers: [register],
@@ -251,47 +251,47 @@ export class MetricsService {
 
     // Voice Pipeline Metrics - Piper (TTS)
     this.piperSynthesisDuration = new Histogram({
-      name: 'macular_piper_synthesis_duration_seconds',
+      name: 'rag_piper_synthesis_duration_seconds',
       help: 'Piper TTS synthesis processing time',
       buckets: [0.1, 0.5, 1, 2, 5, 10],
       registers: [register],
     });
 
     this.piperSynthesisTotal = new Counter({
-      name: 'macular_piper_synthesis_total',
+      name: 'rag_piper_synthesis_total',
       help: 'Total Piper TTS syntheses',
       labelNames: ['voice', 'language'],
       registers: [register],
     });
 
     this.piperSynthesisErrors = new Counter({
-      name: 'macular_piper_synthesis_errors_total',
+      name: 'rag_piper_synthesis_errors_total',
       help: 'Piper TTS synthesis errors',
       labelNames: ['error_type'],
       registers: [register],
     });
 
     this.piperAudioGenerated = new Counter({
-      name: 'macular_piper_audio_bytes_generated_total',
+      name: 'rag_piper_audio_bytes_generated_total',
       help: 'Total audio bytes generated by Piper',
       registers: [register],
     });
 
     // Session Metrics
     this.activeSessions = new Gauge({
-      name: 'macular_active_sessions',
+      name: 'rag_active_sessions',
       help: 'Current number of active sessions',
       registers: [register],
     });
 
     this.newSessions = new Counter({
-      name: 'macular_new_sessions_total',
+      name: 'rag_new_sessions_total',
       help: 'Total number of new sessions created',
       registers: [register],
     });
 
     this.messagesPerSession = new Histogram({
-      name: 'macular_messages_per_session',
+      name: 'rag_messages_per_session',
       help: 'Distribution of messages per session',
       buckets: [1, 2, 5, 10, 20, 50],
       registers: [register],
@@ -299,14 +299,14 @@ export class MetricsService {
 
     // Auth Metrics
     this.authJwtVerifiedTotal = new Counter({
-      name: 'macular_auth_jwt_verified_total',
+      name: 'rag_auth_jwt_verified_total',
       help: 'Total JWT verification attempts',
       labelNames: ['result'],
       registers: [register],
     });
 
     this.authJwksFetchTotal = new Counter({
-      name: 'macular_auth_jwks_fetch_total',
+      name: 'rag_auth_jwks_fetch_total',
       help: 'Total JWKS key fetch operations',
       labelNames: ['result'],
       registers: [register],
@@ -314,7 +314,7 @@ export class MetricsService {
 
     // Database Metrics
     this.dbQueryDuration = new Histogram({
-      name: 'macular_db_query_duration_seconds',
+      name: 'rag_db_query_duration_seconds',
       help: 'Database query duration',
       labelNames: ['operation'],
       buckets: [0.01, 0.05, 0.1, 0.5, 1, 5],
@@ -322,7 +322,7 @@ export class MetricsService {
     });
 
     this.dbConnectionPoolSize = new Gauge({
-      name: 'macular_db_connection_pool_size',
+      name: 'rag_db_connection_pool_size',
       help: 'Current database connection pool size',
       registers: [register],
     });

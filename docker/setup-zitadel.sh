@@ -14,19 +14,19 @@
 set -euo pipefail
 
 ZITADEL_BASE="${ZITADEL_BASE:-http://localhost:8080}"
-ADMIN_LOGIN="${ADMIN_LOGIN:-admin@macularsociety.localhost}"
+ADMIN_LOGIN="${ADMIN_LOGIN:-admin@ragproject.localhost}"
 
 # Auto-extract the setup-sa PAT from Docker init logs if not provided explicitly.
 # Zitadel prints the machine user PAT as a bare base64url string during first-instance init.
 if [[ -z "${ZITADEL_PAT:-}" ]]; then
-	echo "ZITADEL_PAT not set — attempting to extract from macular-zitadel init logs..."
-	ZITADEL_PAT=$(docker logs macular-zitadel 2>&1 |
+	echo "ZITADEL_PAT not set — attempting to extract from rag-zitadel init logs..."
+	ZITADEL_PAT=$(docker logs rag-zitadel 2>&1 |
 		grep -E '^[A-Za-z0-9_-]{40,}$' |
 		head -1)
 	if [[ -z "$ZITADEL_PAT" ]]; then
 		echo ""
 		echo "Could not auto-extract PAT. Run this to find it manually:"
-		echo "  docker logs macular-zitadel 2>&1 | grep -E '^[A-Za-z0-9_-]{40,}$'"
+		echo "  docker logs rag-zitadel 2>&1 | grep -E '^[A-Za-z0-9_-]{40,}$'"
 		echo "Then re-run: ZITADEL_PAT=<token> ./docker/setup-zitadel.sh"
 		exit 1
 	fi
@@ -104,7 +104,7 @@ info "Connected to $ZITADEL_BASE"
 
 info "Creating project..."
 PROJECT=$(api_or_conflict POST "management/v1/projects" -d '{
-  "name": "Macular Society",
+  "name": "RAG Project",
   "projectRoleAssertion": true,
   "projectRoleCheck": false
 }')
@@ -112,7 +112,7 @@ PROJECT=$(api_or_conflict POST "management/v1/projects" -d '{
 if [[ -z "$PROJECT" ]]; then
 	warn "Project already exists — looking up existing ID..."
 	PROJECT=$(api POST "management/v1/projects/_search" -d '{
-    "queries": [{"nameQuery": {"name": "Macular Society", "method": "TEXT_QUERY_METHOD_EQUALS"}}]
+    "queries": [{"nameQuery": {"name": "RAG Project", "method": "TEXT_QUERY_METHOD_EQUALS"}}]
   }')
 	PROJECT_ID=$(printf '%s' "$PROJECT" | jq -r '.result[0].id')
 	info "Reusing existing project — ID: $PROJECT_ID"
@@ -175,7 +175,7 @@ if [[ -z "$WEB_APP" ]]; then
     "queries": [{"nameQuery": {"name": "Frontend", "method": "TEXT_QUERY_METHOD_EQUALS"}}]
   }')
 	WEB_APP_ID=$(printf '%s' "$EXISTING" | jq -r '.result[0].id')
-	api DELETE "management/v1/projects/$PROJECT_ID/apps/$WEB_APP_ID" > /dev/null
+	api DELETE "management/v1/projects/$PROJECT_ID/apps/$WEB_APP_ID" >/dev/null
 	info "Deleted existing Frontend app (ID: $WEB_APP_ID) — recreating..."
 	WEB_APP=$(api POST "management/v1/projects/$PROJECT_ID/apps/oidc" -d '{
     "name": "Frontend",
@@ -244,7 +244,7 @@ grant_or_update() {
 	if [[ -z "$result" ]]; then
 		# 409 — grant already exists; look up the grant ID from Zitadel's Postgres.
 		local grant_id
-		grant_id=$(docker exec macular-postgres psql -U macular -d zitadel_dev -t -A -c \
+		grant_id=$(docker exec rag-postgres psql -U rag_user -d zitadel_dev -t -A -c \
 			"SELECT id FROM projections.user_grants5 WHERE user_id = '$user_id' AND project_id = '$project_id' LIMIT 1" 2>/dev/null)
 		if [[ -z "$grant_id" || "$grant_id" == "null" ]]; then
 			warn "Could not find existing grant ID for user $user_id — skipping update"

@@ -3,7 +3,7 @@ services:
     build:
       context: ./piper
       dockerfile: Dockerfile
-    container_name: macular-piper
+    container_name: rag-piper
     restart: unless-stopped
     ports:
       - "3050:8001"
@@ -13,8 +13,8 @@ services:
       timeout: 10s
       retries: 3
     networks:
-      - macular-network
+      - rag-network
 
 networks:
-  macular-network:
+  rag-network:
     external: true

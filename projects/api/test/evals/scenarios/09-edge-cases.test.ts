@@ -1,13 +1,13 @@
 import scenario from '@langwatch/scenario';
-import { describe, it, expect } from 'vitest';
-import { MacularRAGAgent } from '../../helpers/agent-adapter';
-import { saveSimulationResult } from '../../helpers/result-saver';
+import { describe, expect, it } from 'vitest';
+import { RAGAgent } from '../../helpers/agent-adapter';
 import { SCENARIO_SET_ID } from '../../helpers/constants';
+import { saveSimulationResult } from '../../helpers/result-saver';
 
 describe('Edge Cases and Out-of-Scope', () => {
   it('should handle out-of-scope diabetes questions', async () => {
     const description = 'Someone asking about diabetes management unrelated to eyes.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Out of Scope Diabetes',
@@ -37,7 +37,7 @@ describe('Edge Cases and Out-of-Scope', () => {
   it('should handle an urgent medical situation', async () => {
     const description =
       'Someone describing sudden severe vision loss requiring urgent care.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Urgent Medical Situation',
@@ -71,7 +71,7 @@ describe('Edge Cases and Out-of-Scope', () => {
 
   it('should handle nutrition and supplement questions', async () => {
     const description = 'Someone asking about vitamins and supplements for AMD.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Nutrition Supplements',

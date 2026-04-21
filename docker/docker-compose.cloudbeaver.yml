@@ -1,15 +1,15 @@
 services:
   cloudbeaver:
     image: dbeaver/cloudbeaver:latest
-    container_name: macular-cloudbeaver
+    container_name: rag-cloudbeaver
     restart: unless-stopped
     ports:
       - "8978:8978"
     volumes:
       - ./storage/cloudbeaver:/opt/cloudbeaver/workspace
     networks:
-      - macular-network
+      - rag-network
 
 networks:
-  macular-network:
+  rag-network:
     external: true

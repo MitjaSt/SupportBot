@@ -295,7 +295,7 @@ export function ChatView() {
           >
             <Box sx={{ textAlign: 'center' }}>
               <Typography variant="h5" gutterBottom>
-                Macular Society Assistant
+                RAG Project Assistant
               </Typography>
               <Typography variant="body2">
                 Ask questions about macular disease, treatments, and support services.

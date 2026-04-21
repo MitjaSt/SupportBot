@@ -9,7 +9,7 @@ import { MetricsService } from './metrics.service';
       defaultMetrics: {
         enabled: true,
         config: {
-          prefix: 'macular_',
+          prefix: 'rag_',
         },
       },
     }),

@@ -58,11 +58,11 @@ export class LangwatchAdapter implements ObservabilityAdapter {
     // Must be called before getLangWatchTracer() so the global provider has the exporter configured.
     const { shutdown } = setupObservability({
       langwatch: { apiKey: config.langwatch.apiKey },
-      serviceName: 'macular-society-api',
+      serviceName: 'rag-project-api',
     });
     this.shutdownFn = shutdown;
 
-    this.tracer = getLangWatchTracer('macular-society-api');
+    this.tracer = getLangWatchTracer('rag-project-api');
     this.client = new LangWatch({ apiKey: config.langwatch.apiKey });
   }
 

@@ -78,9 +78,9 @@ async function main() {
   const client = new Client({
     host:     process.env.POSTGRES_HOST     ?? 'localhost',
     port:     parseInt(process.env.POSTGRES_PORT ?? '5432', 10),
-    database: process.env.POSTGRES_DATABASE ?? 'macular_society',
-    user:     process.env.POSTGRES_USER     ?? 'macular',
-    password: process.env.POSTGRES_PASSWORD ?? 'macular_dev',
+    database: process.env.POSTGRES_DATABASE ?? 'rag_project',
+    user:     process.env.POSTGRES_USER     ?? 'rag_user',
+    password: process.env.POSTGRES_PASSWORD ?? 'rag_user_password',
   });
 
   await client.connect();

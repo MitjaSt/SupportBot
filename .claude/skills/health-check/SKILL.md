@@ -5,7 +5,7 @@ description: Checks the status of all services in the local dev stack — Postgr
 
 # Health Check
 
-Checks every service the Macular Society platform depends on and validates environment configuration. Run this at the start of a dev session or when things are unexpectedly broken — the root cause is often a service that isn't running.
+Checks every service the RAG Project depends on and validates environment configuration. Run this at the start of a dev session or when things are unexpectedly broken — the root cause is often a service that isn't running.
 
 ## Usage
 

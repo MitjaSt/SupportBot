@@ -5,7 +5,7 @@ import { mkdir, readdir, readFile, writeFile } from 'fs/promises';
 import OpenAI from 'openai';
 import { join } from 'path';
 
-const SUMMARIZATION_PROMPT = `You are building a knowledge base for the Macular Society.
+const SUMMARIZATION_PROMPT = `You are building a knowledge base for the RAG Project.
 Convert the following source text into a concise knowledge base entry.
 
 Rules:

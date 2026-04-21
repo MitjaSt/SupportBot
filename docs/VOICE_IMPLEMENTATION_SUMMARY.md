@@ -2,7 +2,7 @@
 
 ## What Was Implemented
 
-A complete voice interaction system for the Macular Society RAG application, enabling:
+A complete voice interaction system for the RAG Project application, enabling:
 - **Voice input**: Users can ask questions using their microphone
 - **Voice output**: Responses are automatically spoken aloud
 

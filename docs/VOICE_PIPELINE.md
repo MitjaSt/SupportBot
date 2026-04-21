@@ -1,6 +1,6 @@
 # Voice Pipeline
 
-This document describes the complete voice interaction pipeline implemented in the Macular Society RAG application.
+This document describes the complete voice interaction pipeline implemented in the RAG Project RAG application.
 
 ## Overview
 

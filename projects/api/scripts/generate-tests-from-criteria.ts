@@ -1,6 +1,6 @@
-import { readdir, readFile, writeFile, mkdir } from 'fs/promises';
-import { join } from 'path';
 import { existsSync } from 'fs';
+import { mkdir, readdir, readFile, writeFile } from 'fs/promises';
+import { join } from 'path';
 
 interface Question {
   id: string;
@@ -61,7 +61,7 @@ function generateTestFile(group: TopicGroup, index: number): string {
   it('should answer questions about ${cleanName}', async () => {
     const description =
       'User asking about ${cleanName.toLowerCase()}.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: '${cleanName}',
@@ -94,7 +94,7 @@ ${judgeCriteria.map((c) => `            '${c}',`).join('\n')}
 
   const testFileContent = `import scenario from '@langwatch/scenario';
 import { describe, expect, it } from 'vitest';
-import { MacularRAGAgent } from '../helpers/agent-adapter';
+import { RAGAgent } from '../helpers/agent-adapter';
 import { SCENARIO_SET_ID } from '../helpers/constants';
 import { saveSimulationResult } from '../helpers/result-saver';
 

@@ -1,13 +1,13 @@
 import scenario from '@langwatch/scenario';
 import { describe, expect, it } from 'vitest';
-import { MacularRAGAgent } from '../../helpers/agent-adapter';
+import { RAGAgent } from '../../helpers/agent-adapter';
 import { SCENARIO_SET_ID } from '../../helpers/constants';
 import { saveSimulationResult } from '../../helpers/result-saver';
 
 describe('Treatments and Procedures', () => {
   it('should handle anxiety about eye injections', async () => {
     const description = 'Someone anxious about having their first eye injection.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Injection Pain Concerns',
@@ -36,7 +36,7 @@ describe('Treatments and Procedures', () => {
 
   it('should advise on post-injection complications', async () => {
     const description = 'Someone experiencing pain after an eye injection seeking advice.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Post Injection Complications',

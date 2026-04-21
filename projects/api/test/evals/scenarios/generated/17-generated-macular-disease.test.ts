@@ -1,6 +1,6 @@
 import scenario from '@langwatch/scenario';
 import { describe, expect, it } from 'vitest';
-import { MacularRAGAgent } from '../../../helpers/agent-adapter';
+import { RAGAgent } from '../../../helpers/agent-adapter';
 import { SCENARIO_SET_ID } from '../../../helpers/constants';
 import { saveSimulationResult } from '../../../helpers/result-saver';
 
@@ -9,7 +9,7 @@ describe('Generated Tests - Macular Disease', () => {
   it('should answer questions about Macular-disease - Focus', async () => {
     const description =
       'User asking about macular-disease - focus.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Macular-disease - Focus',
@@ -46,7 +46,7 @@ describe('Generated Tests - Macular Disease', () => {
   it('should answer questions about Macular-disease - Macula', async () => {
     const description =
       'User asking about macular-disease - macula.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Macular-disease - Macula',
@@ -83,7 +83,7 @@ describe('Generated Tests - Macular Disease', () => {
   it('should answer questions about Macular-disease - Macular-conditions - Bestrophinopathies', async () => {
     const description =
       'User asking about macular-disease - macular-conditions - bestrophinopathies.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Macular-disease - Macular-conditions - Bestrophinopathies',
@@ -120,7 +120,7 @@ describe('Generated Tests - Macular Disease', () => {
   it('should answer questions about Macular-disease - Macular-conditions - Bulls-eye-maculopathy', async () => {
     const description =
       'User asking about macular-disease - macular-conditions - bulls-eye-maculopathy.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Macular-disease - Macular-conditions - Bulls-eye-maculopathy',
@@ -157,7 +157,7 @@ describe('Generated Tests - Macular Disease', () => {
   it('should answer questions about Macular-disease - Macular-conditions - Central-serous-retinopathy', async () => {
     const description =
       'User asking about macular-disease - macular-conditions - central-serous-retinopathy.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Macular-disease - Macular-conditions - Central-serous-retinopathy',
@@ -194,7 +194,7 @@ describe('Generated Tests - Macular Disease', () => {
   it('should answer questions about Macular-disease - Macular-conditions - Charles-bonnet-syndrome', async () => {
     const description =
       'User asking about macular-disease - macular-conditions - charles-bonnet-syndrome.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Macular-disease - Macular-conditions - Charles-bonnet-syndrome',
@@ -231,7 +231,7 @@ describe('Generated Tests - Macular Disease', () => {
   it('should answer questions about Macular-disease - Macular-conditions - Cone-dystrophy', async () => {
     const description =
       'User asking about macular-disease - macular-conditions - cone-dystrophy.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Macular-disease - Macular-conditions - Cone-dystrophy',
@@ -268,7 +268,7 @@ describe('Generated Tests - Macular Disease', () => {
   it('should answer questions about Macular-disease - Macular-conditions - Diabetic-macular-oedema', async () => {
     const description =
       'User asking about macular-disease - macular-conditions - diabetic-macular-oedema.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Macular-disease - Macular-conditions - Diabetic-macular-oedema',
@@ -305,7 +305,7 @@ describe('Generated Tests - Macular Disease', () => {
   it('should answer questions about Macular-disease - Macular-conditions - Doyne-honeycomb-dystrophy', async () => {
     const description =
       'User asking about macular-disease - macular-conditions - doyne-honeycomb-dystrophy.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Macular-disease - Macular-conditions - Doyne-honeycomb-dystrophy',
@@ -342,7 +342,7 @@ describe('Generated Tests - Macular Disease', () => {
   it('should answer questions about Macular-disease - Macular-conditions - Dry-age-related-macular-degeneration - Geographic-atrophy', async () => {
     const description =
       'User asking about macular-disease - macular-conditions - dry-age-related-macular-degeneration - geographic-atrophy.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Macular-disease - Macular-conditions - Dry-age-related-macular-degeneration - Geographic-atrophy',
@@ -379,7 +379,7 @@ describe('Generated Tests - Macular Disease', () => {
   it('should answer questions about Macular-disease - Macular-conditions - Dry-age-related-macular-degeneration', async () => {
     const description =
       'User asking about macular-disease - macular-conditions - dry-age-related-macular-degeneration.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Macular-disease - Macular-conditions - Dry-age-related-macular-degeneration',
@@ -416,7 +416,7 @@ describe('Generated Tests - Macular Disease', () => {
   it('should answer questions about Macular-disease - Macular-conditions - Dry-early-amd', async () => {
     const description =
       'User asking about macular-disease - macular-conditions - dry-early-amd.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Macular-disease - Macular-conditions - Dry-early-amd',
@@ -454,7 +454,7 @@ describe('Generated Tests - Macular Disease', () => {
   it('should answer questions about Macular-disease - Macular-conditions - Mac-tel', async () => {
     const description =
       'User asking about macular-disease - macular-conditions - mac-tel.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Macular-disease - Macular-conditions - Mac-tel',
@@ -491,7 +491,7 @@ describe('Generated Tests - Macular Disease', () => {
   it('should answer questions about Macular-disease - Macular-conditions - Macular-degeneration', async () => {
     const description =
       'User asking about macular-disease - macular-conditions - macular-degeneration.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Macular-disease - Macular-conditions - Macular-degeneration',
@@ -529,7 +529,7 @@ describe('Generated Tests - Macular Disease', () => {
   it('should answer questions about Macular-disease - Macular-conditions - Macular-hole', async () => {
     const description =
       'User asking about macular-disease - macular-conditions - macular-hole.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Macular-disease - Macular-conditions - Macular-hole',
@@ -566,7 +566,7 @@ describe('Generated Tests - Macular Disease', () => {
   it('should answer questions about Macular-disease - Macular-conditions - Macular-oedema', async () => {
     const description =
       'User asking about macular-disease - macular-conditions - macular-oedema.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Macular-disease - Macular-conditions - Macular-oedema',
@@ -603,7 +603,7 @@ describe('Generated Tests - Macular Disease', () => {
   it('should answer questions about Macular-disease - Macular-conditions - Myopic-macular-degeneration', async () => {
     const description =
       'User asking about macular-disease - macular-conditions - myopic-macular-degeneration.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Macular-disease - Macular-conditions - Myopic-macular-degeneration',
@@ -640,7 +640,7 @@ describe('Generated Tests - Macular Disease', () => {
   it('should answer questions about Macular-disease - Macular-conditions - Pattern-dystrophy', async () => {
     const description =
       'User asking about macular-disease - macular-conditions - pattern-dystrophy.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Macular-disease - Macular-conditions - Pattern-dystrophy',
@@ -671,7 +671,7 @@ describe('Generated Tests - Macular Disease', () => {
   it('should answer questions about Macular-disease - Macular-conditions - Punctate-inner-choroidopathy', async () => {
     const description =
       'User asking about macular-disease - macular-conditions - punctate-inner-choroidopathy.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Macular-disease - Macular-conditions - Punctate-inner-choroidopathy',
@@ -708,7 +708,7 @@ describe('Generated Tests - Macular Disease', () => {
   it('should answer questions about Macular-disease - Macular-conditions - Pxe', async () => {
     const description =
       'User asking about macular-disease - macular-conditions - pxe.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Macular-disease - Macular-conditions - Pxe',
@@ -745,7 +745,7 @@ describe('Generated Tests - Macular Disease', () => {
   it('should answer questions about Macular-disease - Macular-conditions - Retinal-vein-occlusion', async () => {
     const description =
       'User asking about macular-disease - macular-conditions - retinal-vein-occlusion.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Macular-disease - Macular-conditions - Retinal-vein-occlusion',
@@ -783,7 +783,7 @@ describe('Generated Tests - Macular Disease', () => {
   it('should answer questions about Macular-disease - Macular-conditions - Sorsby-fundus-dystrophy', async () => {
     const description =
       'User asking about macular-disease - macular-conditions - sorsby-fundus-dystrophy.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Macular-disease - Macular-conditions - Sorsby-fundus-dystrophy',
@@ -820,7 +820,7 @@ describe('Generated Tests - Macular Disease', () => {
   it('should answer questions about Macular-disease - Macular-conditions - Stargardt-disease', async () => {
     const description =
       'User asking about macular-disease - macular-conditions - stargardt-disease.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Macular-disease - Macular-conditions - Stargardt-disease',
@@ -858,7 +858,7 @@ describe('Generated Tests - Macular Disease', () => {
   it('should answer questions about Macular-disease - Macular-conditions - Wet-age-related-macular-degeneration', async () => {
     const description =
       'User asking about macular-disease - macular-conditions - wet-age-related-macular-degeneration.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Macular-disease - Macular-conditions - Wet-age-related-macular-degeneration',
@@ -896,7 +896,7 @@ describe('Generated Tests - Macular Disease', () => {
   it('should answer questions about Macular-disease - Macular-conditions', async () => {
     const description =
       'User asking about macular-disease - macular-conditions.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Macular-disease - Macular-conditions',

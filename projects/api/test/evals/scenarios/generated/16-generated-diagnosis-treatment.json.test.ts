@@ -1,6 +1,6 @@
 import scenario from '@langwatch/scenario';
 import { describe, expect, it } from 'vitest';
-import { MacularRAGAgent } from '../../../helpers/agent-adapter';
+import { RAGAgent } from '../../../helpers/agent-adapter';
 import { SCENARIO_SET_ID } from '../../../helpers/constants';
 import { saveSimulationResult } from '../../../helpers/result-saver';
 
@@ -9,7 +9,7 @@ describe('Generated Tests - Diagnosis Treatment.json', () => {
   it('should answer questions about Diagnosis-treatment', async () => {
     const description =
       'User asking about diagnosis-treatment.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Diagnosis-treatment',

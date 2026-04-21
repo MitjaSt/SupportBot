@@ -1,13 +1,13 @@
 import scenario from '@langwatch/scenario';
-import { describe, it, expect } from 'vitest';
-import { MacularRAGAgent } from '../../helpers/agent-adapter';
-import { saveSimulationResult } from '../../helpers/result-saver';
+import { describe, expect, it } from 'vitest';
+import { RAGAgent } from '../../helpers/agent-adapter';
 import { SCENARIO_SET_ID } from '../../helpers/constants';
+import { saveSimulationResult } from '../../helpers/result-saver';
 
 describe('Support Services', () => {
   it('should handle a request for callback', async () => {
     const description = 'Someone wanting to speak with a real person for support.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Request Callback',
@@ -36,7 +36,7 @@ describe('Support Services', () => {
 
   it('should provide counselling service information', async () => {
     const description = 'Someone asking about counselling support.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Counselling Service',
@@ -49,7 +49,7 @@ describe('Support Services', () => {
         }),
         scenario.judgeAgent({
           criteria: [
-            'Agent mentions the Macular Society counselling service',
+            'Agent mentions the counselling service',
             "Agent explains it's free and confidential",
             'Agent provides information on how to access it',
           ],
@@ -66,7 +66,7 @@ describe('Support Services', () => {
   it('should provide support group information', async () => {
     const description =
       'Someone wanting to connect with others who have macular disease.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Support Groups',

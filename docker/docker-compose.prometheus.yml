@@ -1,7 +1,7 @@
 services:
   prometheus:
     image: prom/prometheus:latest
-    container_name: macular-prometheus
+    container_name: rag-prometheus
     restart: unless-stopped
     ports:
       - "3060:9090"
@@ -20,11 +20,11 @@ services:
       timeout: 10s
       retries: 3
     networks:
-      - macular-network
+      - rag-network
 
 volumes:
   prometheus_data:
 
 networks:
-  macular-network:
+  rag-network:
     external: true

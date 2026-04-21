@@ -137,7 +137,7 @@ Transcribe audio file
 **Service won't start:**
 ```bash
 # Check logs
-docker logs macular-whisper
+docker logs rag-whisper
 
 # Rebuild if needed
 docker-compose build whisper

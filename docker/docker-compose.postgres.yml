@@ -1,27 +1,27 @@
 services:
   postgres:
     image: pgvector/pgvector:pg16
-    container_name: macular-postgres
+    container_name: rag-postgres
     restart: unless-stopped
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_USER: macular
-      POSTGRES_PASSWORD: macular_dev
-      POSTGRES_DB: macular_society
+      POSTGRES_USER: rag_user
+      POSTGRES_PASSWORD: rag_user_password
+      POSTGRES_DB: rag_project
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U macular -d macular_society"]
+      test: ["CMD-SHELL", "pg_isready -U rag_user -d rag_project"]
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
-      - macular-network
+      - rag-network
 
 volumes:
   postgres_data:
 
 networks:
-  macular-network:
+  rag-network:
     external: true

@@ -13,9 +13,9 @@ export default defineConfig({
   dbCredentials: {
     host: process.env.POSTGRES_HOST || 'localhost',
     port: parseInt(process.env.POSTGRES_PORT || '5432', 10),
-    user: process.env.POSTGRES_USER || 'macular',
-    password: process.env.POSTGRES_PASSWORD || 'macular_dev',
-    database: process.env.POSTGRES_DATABASE || 'macular_society',
+    user: process.env.POSTGRES_USER || 'rag_user',
+    password: process.env.POSTGRES_PASSWORD || 'rag_user_password',
+    database: process.env.POSTGRES_DATABASE || 'rag_project',
     ssl: false,
   },
 });

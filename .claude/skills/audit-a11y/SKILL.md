@@ -1,11 +1,11 @@
 ---
 name: audit-a11y
-description: Accessibility audit for the Macular Society frontend. Runs automated axe-core checks, searches for known MUI accessibility pitfalls, and produces a severity-rated report. Critical for this project — users have macular degeneration and rely on assistive technology.
+description: Accessibility audit for the RAG Project frontend. Runs automated axe-core checks, searches for known MUI accessibility pitfalls, and produces a severity-rated report. Critical for this project — users have macular degeneration and rely on assistive technology.
 ---
 
 # Audit Accessibility
 
-Runs a multi-layer accessibility audit on the Macular Society chat frontend. The users of this product have macular degeneration — many use screen readers, keyboard navigation, high contrast mode, or browser zoom. This audit catches issues before they harm real users.
+Runs a multi-layer accessibility audit on the RAG Project chat frontend. The users of this product have macular degeneration — many use screen readers, keyboard navigation, high contrast mode, or browser zoom. This audit catches issues before they harm real users.
 
 ## Usage
 
@@ -124,7 +124,7 @@ Check that:
 ### Step 6: Produce the report
 
 ```markdown
-## Accessibility Audit — Macular Society Frontend
+## Accessibility Audit — RAG Project Frontend
 **Date:** [today]
 **Standard:** WCAG 2.1 AA
 **Method:** Automated (axe-core) + static analysis

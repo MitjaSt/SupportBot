@@ -139,7 +139,7 @@ db-migrate: ## Run Drizzle migrations (automatically applies FTS column after)
 
 db-fts: ## Apply full-text search column + GIN index (run once after db-migrate on a fresh DB)
 	@echo "$(BLUE)Applying full-text search generated column and GIN index...$(NC)"
-	@docker exec macular-postgres psql -U macular -d macular_society -c "\
+	@docker exec rag-postgres psql -U rag_user -d rag_project -c "\
 		ALTER TABLE vectors ADD COLUMN IF NOT EXISTS search_text tsvector \
 		  GENERATED ALWAYS AS (to_tsvector('english', coalesce(title, '') || ' ' || text)) STORED; \
 		CREATE INDEX IF NOT EXISTS vectors_search_text_idx ON vectors USING GIN (search_text);"

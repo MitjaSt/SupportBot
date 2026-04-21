@@ -1,6 +1,6 @@
-# Macular Society RAG API - TypeScript/NestJS
+# RAG Project API - TypeScript/NestJS
 
-TypeScript implementation of the Macular Society RAG pipeline using NestJS.
+TypeScript implementation of the RAG Project pipeline using NestJS.
 
 ## Quick Start
 
@@ -30,7 +30,7 @@ npm run start:dev
 # RAG query with session
 POST /query
 {
-  "query": "What is macular degeneration?",
+  "query": "What is XYZ?",
   "sessionId": "optional-session-id"
 }
 

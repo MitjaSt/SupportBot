@@ -102,18 +102,15 @@ export class ConfigService {
     const postgres: PostgresConfig = {
       host: getOptional('POSTGRES_HOST', 'localhost'),
       port: getInt('POSTGRES_PORT', 5432),
-      database: getOptional('POSTGRES_DATABASE', 'macular_society'),
-      user: getOptional('POSTGRES_USER', 'macular'),
-      password: getOptional('POSTGRES_PASSWORD', 'macular_dev'),
+      database: getOptional('POSTGRES_DATABASE', 'rag_project'),
+      user: getOptional('POSTGRES_USER', 'rag_user'),
+      password: getOptional('POSTGRES_PASSWORD', 'rag_user_password'),
       sessionExpiryHours: getInt('POSTGRES_SESSION_EXPIRY_HOURS', 24),
     };
 
     const scraping: ScrapingConfig = {
       maxConcurrent: getInt('MAX_CONCURRENT_SCRAPES', 5),
-      sitemapUrl: getOptional(
-        'SITEMAP_URL',
-        'https://www.macularsociety.org/sitemap.xml',
-      ),
+      sitemapUrl: getRequired('SITEMAP_URL'),
     };
 
     const langfuse: LangfuseConfig = {
@@ -157,7 +154,7 @@ export class ConfigService {
       enabled: getBool('AUTH_ENABLED', false),
       jwksUri: getOptional('ZITADEL_JWKS_URI', ''),
       issuer: getOptional('ZITADEL_ISSUER', ''),
-      audience: getOptional('ZITADEL_AUDIENCE', 'macular-society-api'),
+      audience: getOptional('ZITADEL_AUDIENCE', 'rag-project-api'),
     };
 
     return {

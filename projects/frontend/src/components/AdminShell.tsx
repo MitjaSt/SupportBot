@@ -44,7 +44,7 @@ export function AdminShell() {
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <Toolbar>
         <Typography variant="subtitle2" fontWeight={600} color="text.secondary" noWrap>
-          Macular Society
+          RAG Project
         </Typography>
       </Toolbar>
       <Divider />

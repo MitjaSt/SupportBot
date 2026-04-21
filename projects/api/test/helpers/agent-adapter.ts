@@ -1,9 +1,9 @@
 import { ChatMessages } from '@/constants/chat-messages';
 import {
-  AgentAdapter,
-  AgentRole,
-  type AgentInput,
-  type AgentReturnTypes,
+    AgentAdapter,
+    AgentRole,
+    type AgentInput,
+    type AgentReturnTypes,
 } from '@langwatch/scenario';
 import { randomUUID } from 'crypto';
 import { API_BASE_URL } from './constants';
@@ -31,7 +31,7 @@ export interface RagInteraction {
   sources: Array<{ text: string; source: string; score: number }>;
 }
 
-export class MacularRAGAgent extends AgentAdapter {
+export class RAGAgent extends AgentAdapter {
   role = AgentRole.AGENT;
   interactions: RagInteraction[] = [];
   private sessionId: string = randomUUID();

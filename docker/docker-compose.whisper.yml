@@ -3,7 +3,7 @@ services:
     build:
       context: ./whisper
       dockerfile: Dockerfile
-    container_name: macular-whisper
+    container_name: rag-whisper
     restart: unless-stopped
     ports:
       - "3040:8000"
@@ -17,7 +17,7 @@ services:
       timeout: 10s
       retries: 3
     networks:
-      - macular-network
+      - rag-network
     # Uncomment for GPU support
     # deploy:
     #   resources:
@@ -28,5 +28,5 @@ services:
     #           capabilities: [gpu]
 
 networks:
-  macular-network:
+  rag-network:
     external: true

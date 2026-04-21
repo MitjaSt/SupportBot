@@ -1,7 +1,7 @@
 services:
   grafana:
     image: grafana/grafana:latest
-    container_name: macular-grafana
+    container_name: rag-grafana
     restart: unless-stopped
     ports:
       - "3070:3000"
@@ -21,7 +21,7 @@ services:
       timeout: 10s
       retries: 3
     networks:
-      - macular-network
+      - rag-network
     depends_on:
       - prometheus
 
@@ -29,5 +29,5 @@ volumes:
   grafana_data:
 
 networks:
-  macular-network:
+  rag-network:
     external: true

@@ -28,7 +28,7 @@ Specialist personas Claude can act as (or be asked to act as) for specific kinds
 | `accessibility-auditor` | Reviewing frontend components for WCAG compliance and screen reader support |
 | `react-specialist` | Frontend implementation — React, MUI, TanStack Query, streaming patterns |
 | `pr-reviewer` | Reviewing a PR and writing the GitHub description |
-| `product-engineer` | Evaluating whether a feature actually serves the users (people with macular degeneration) |
+| `product-engineer` | Evaluating whether a feature actually serves the users
 | `devils-advocate` | Stress-testing an architecture proposal or technical decision before committing |
 
 **To invoke one:** just ask — "use the accessibility-auditor on this component" or "run this through the devils-advocate". Claude will also invoke them proactively when the task matches.

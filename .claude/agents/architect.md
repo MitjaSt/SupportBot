@@ -111,7 +111,7 @@ For significant architectural decisions, create ADRs:
 # ADR-004: PostgreSQL + pgvector for Vector Storage
 
 ## Context
-Need to store and query 1536-dimensional embeddings for semantic search over Macular Society knowledge base.
+Need to store and query 1536-dimensional embeddings for semantic search over the RAG Project knowledge base.
 
 ## Decision
 Use PostgreSQL with the pgvector extension and cosine similarity (<=> operator) via raw SQL in Drizzle.
@@ -184,7 +184,7 @@ Watch for these architectural anti-patterns:
 
 ## Project-Specific Architecture
 
-This is a **RAG (Retrieval-Augmented Generation) system** for medical Q&A about macular degeneration, run by the Macular Society (UK charity). Read `CLAUDE.md` for the authoritative current stack. Summary:
+This is a **RAG (Retrieval-Augmented Generation) system** for medical Q&A about macular degeneration (UK charity context). Read `CLAUDE.md` for the authoritative current stack. Summary:
 
 ### Current Architecture
 - **Frontend**: React 18 + Vite + TypeScript + MUI v5 + TanStack Query v5 (port 5173 dev / 3030 prod)
@@ -213,7 +213,7 @@ User Query → Embed (OpenAI) → pgvector cosine search (threshold 0.7, top-K c
 
 ### Domain Constraints
 - Users have macular degeneration (vision loss) — accessibility is non-negotiable (WCAG 2.1 AA)
-- Medical domain — no hallucinations; responses grounded in retrieved Macular Society content only
+- Medical domain — no hallucinations; responses grounded in retrieved knowledge base content only
 - Charity context — keep infrastructure operationally simple
 
 **Remember**: RAG systems balance retrieval quality vs generation quality. Monitor both similarity scores and response accuracy. Before proposing architectural changes, check `docs/adr/` for existing decisions.

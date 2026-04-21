@@ -1,13 +1,13 @@
 import scenario from '@langwatch/scenario';
-import { describe, it, expect } from 'vitest';
-import { MacularRAGAgent } from '../../helpers/agent-adapter';
-import { saveSimulationResult } from '../../helpers/result-saver';
+import { describe, expect, it } from 'vitest';
+import { RAGAgent } from '../../helpers/agent-adapter';
 import { SCENARIO_SET_ID } from '../../helpers/constants';
+import { saveSimulationResult } from '../../helpers/result-saver';
 
 describe('Benefits and Financial Support', () => {
   it('should inform about Attendance Allowance', async () => {
     const description = 'An elderly person asking about financial help available.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Attendance Allowance',
@@ -36,7 +36,7 @@ describe('Benefits and Financial Support', () => {
 
   it('should inform about PIP for working-age adults', async () => {
     const description = 'A working-age adult asking about disability benefits.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'PIP Working Age',

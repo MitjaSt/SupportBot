@@ -118,7 +118,7 @@ describe('LangWatch - Ragas Faithfulness Evaluations', () => {
     });
 
     const experiment = await langwatch.experiments.init(
-      'macular-society-ragas-faithfulness',
+      'rag-project-ragas-faithfulness',
     );
 
     await experiment.run(DATASET, async ({ item, index }) => {

@@ -49,7 +49,7 @@ export function RequireAuth() {
         }}
       >
         <Typography variant="h5" component="h1">
-          Macular Society Admin
+          RAG Project Admin
         </Typography>
         <Typography color="text.secondary">
           Sign in to access the admin panel.

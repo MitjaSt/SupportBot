@@ -5,10 +5,10 @@ datasources:
     type: postgres
     access: proxy
     url: postgres:5432
-    database: macular_society
-    user: macular
+    database: rag_project
+    user: rag_user
     secureJsonData:
-      password: macular_dev
+      password: rag_user_password
     jsonData:
       sslmode: "disable"
       maxOpenConns: 10

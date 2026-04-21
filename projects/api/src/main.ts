@@ -10,6 +10,7 @@ import { AppModule } from './app.module';
 import { checkEnv } from './check-env';
 import { AllExceptionsFilter } from './filters/all-exceptions.filter';
 import { SessionRateLimitInterceptor } from './interceptors/session-rate-limit.interceptor';
+import { CoralogixLoggerService } from './modules/logging/coralogix-logger.service';
 import rateLimit from '@fastify/rate-limit';
 
 async function bootstrap() {
@@ -17,10 +18,8 @@ async function bootstrap() {
   // Allow up to 50 MB bodies (audio uploads).
   const adapter = new FastifyAdapter({ bodyLimit: 50 * 1024 * 1024 });
 
-  const app = await NestFactory.create<NestFastifyApplication>(
-    AppModule,
-    adapter,
-  );
+  const logger = new CoralogixLoggerService();
+  const app = await NestFactory.create<NestFastifyApplication>(AppModule, adapter, { logger });
 
   // Register binary content-type parsers for audio uploads.
   // The voice route reads request.body as a Buffer — no multipart plugin needed.
@@ -91,6 +90,10 @@ async function bootstrap() {
   await app.listen(port, '0.0.0.0');
 
   console.warn(`➡️   Server running on:  http://localhost:${port}`);
+
+  // Flush any buffered Coralogix log entries before the process exits.
+  process.on('SIGTERM', () => logger.shutdown().finally(() => process.exit(0)));
+  process.on('SIGINT', () => logger.shutdown().finally(() => process.exit(0)));
 }
 
 bootstrap().catch(async (err) => {

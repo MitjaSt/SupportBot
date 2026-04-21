@@ -1,14 +1,14 @@
 import scenario from '@langwatch/scenario';
-import { describe, it, expect } from 'vitest';
-import { MacularRAGAgent } from '../../helpers/agent-adapter';
-import { saveSimulationResult } from '../../helpers/result-saver';
+import { describe, expect, it } from 'vitest';
+import { RAGAgent } from '../../helpers/agent-adapter';
 import { SCENARIO_SET_ID } from '../../helpers/constants';
+import { saveSimulationResult } from '../../helpers/result-saver';
 
 describe('Medical Conditions - Other', () => {
   it('should explain Charles Bonnet syndrome', async () => {
     const description =
       "Someone experiencing visual hallucinations after sight loss, worried they're going mad.";
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Charles Bonnet Syndrome',
@@ -37,7 +37,7 @@ describe('Medical Conditions - Other', () => {
 
   it('should provide information about Stargardt disease', async () => {
     const description = 'A young person or parent asking about Stargardt disease.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Stargardt Disease',
@@ -66,7 +66,7 @@ describe('Medical Conditions - Other', () => {
 
   it('should explain diabetic macular oedema', async () => {
     const description = 'A diabetic patient asking about macular oedema and treatment.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Diabetic Macular Oedema',

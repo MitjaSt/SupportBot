@@ -201,8 +201,7 @@ export class CriteriaGenerationService {
     (
       f.startsWith('macular-disease') ||
       f.startsWith('research') ||
-      f.startsWith('diagnosis-treatment') ||
-      f.startsWith('become-member')
+      f.startsWith('diagnosis-treatment')
     ));
 
     // Filter out files that already have generated criteria (skip already processed)

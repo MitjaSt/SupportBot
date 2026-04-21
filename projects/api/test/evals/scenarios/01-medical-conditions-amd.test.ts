@@ -1,6 +1,6 @@
 import scenario from '@langwatch/scenario';
 import { describe, expect, it } from 'vitest';
-import { MacularRAGAgent } from '../../helpers/agent-adapter';
+import { RAGAgent } from '../../helpers/agent-adapter';
 import { SCENARIO_SET_ID } from '../../helpers/constants';
 import { saveSimulationResult } from '../../helpers/result-saver';
 
@@ -8,7 +8,7 @@ describe('Medical Conditions - AMD', () => {
   it('should provide accurate information about dry AMD', async () => {
     const description =
       'An elderly person recently diagnosed with dry AMD wants to understand what it is and treatment options.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Dry AMD Information',
@@ -39,7 +39,7 @@ describe('Medical Conditions - AMD', () => {
   it('should explain wet AMD treatments correctly', async () => {
     const description =
       'A family member wants to learn about wet AMD treatments, especially anti-VEGF injections.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Wet AMD Treatment',
@@ -69,7 +69,7 @@ describe('Medical Conditions - AMD', () => {
   it('should provide information about geographic atrophy', async () => {
     const description =
       'Someone asking about geographic atrophy and whether new treatments are available.';
-    const agent = new MacularRAGAgent();
+    const agent = new RAGAgent();
 
     const result = await scenario.run({
       name: 'Geographic Atrophy',

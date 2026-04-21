@@ -105,7 +105,7 @@ Client (browser / test runner)
 interface ZitadelJwtPayload {
   sub: string;           // Zitadel user ID
   iss: string;           // https://zitadel:8080
-  aud: string[];         // ["macular-society-api"]
+  aud: string[];         // ["rag-project-api"]
   exp: number;
   permissions: string[]; // injected by Zitadel Action
 }
@@ -147,7 +147,7 @@ New env vars:
 |----------|---------|-------|
 | `ZITADEL_JWKS_URI` | `http://localhost:8080/oauth/v2/keys` | JWKS endpoint |
 | `ZITADEL_ISSUER` | `http://localhost:8080` | Token `iss` must match |
-| `ZITADEL_AUDIENCE` | `macular-society-api` | Token `aud` must include this |
+| `ZITADEL_AUDIENCE` | `rag-project-api` | Token `aud` must include this |
 
 These join `ConfigService`. No new npm packages required beyond `@nestjs/passport passport passport-jwt jwks-rsa`.
 

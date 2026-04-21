@@ -102,7 +102,7 @@
             "type": "prometheus",
             "uid": "Prometheus"
           },
-          "expr": "rate(macular_rag_queries_total[5m])",
+          "expr": "rate(rag_rag_queries_total[5m])",
           "legendFormat": "{{status}}",
           "refId": "A"
         }
@@ -168,7 +168,7 @@
             "type": "prometheus",
             "uid": "Prometheus"
           },
-          "expr": "histogram_quantile(0.95, rate(macular_rag_retrieval_duration_seconds_bucket[5m]))",
+          "expr": "histogram_quantile(0.95, rate(rag_rag_retrieval_duration_seconds_bucket[5m]))",
           "legendFormat": "p95 Retrieval Duration",
           "refId": "A"
         }
@@ -259,7 +259,7 @@
             "type": "prometheus",
             "uid": "Prometheus"
           },
-          "expr": "histogram_quantile(0.50, sum(rate(macular_rag_retrieval_score_bucket[5m])) by (le))",
+          "expr": "histogram_quantile(0.50, sum(rate(rag_rag_retrieval_score_bucket[5m])) by (le))",
           "legendFormat": "Median Score",
           "refId": "A"
         },
@@ -268,7 +268,7 @@
             "type": "prometheus",
             "uid": "Prometheus"
           },
-          "expr": "histogram_quantile(0.75, sum(rate(macular_rag_retrieval_score_bucket[5m])) by (le))",
+          "expr": "histogram_quantile(0.75, sum(rate(rag_rag_retrieval_score_bucket[5m])) by (le))",
           "legendFormat": "p75 Score",
           "refId": "B"
         }
@@ -358,7 +358,7 @@
             "type": "prometheus",
             "uid": "Prometheus"
           },
-          "expr": "histogram_quantile(0.50, sum(rate(macular_rag_chunks_retrieved_bucket[5m])) by (le))",
+          "expr": "histogram_quantile(0.50, sum(rate(rag_rag_chunks_retrieved_bucket[5m])) by (le))",
           "legendFormat": "Median Chunks",
           "refId": "A"
         }
@@ -448,7 +448,7 @@
             "type": "prometheus",
             "uid": "Prometheus"
           },
-          "expr": "rate(macular_tokens_input_total[5m])",
+          "expr": "rate(rag_tokens_input_total[5m])",
           "legendFormat": "Input - {{model}}",
           "refId": "A"
         },
@@ -457,7 +457,7 @@
             "type": "prometheus",
             "uid": "Prometheus"
           },
-          "expr": "rate(macular_tokens_output_total[5m])",
+          "expr": "rate(rag_tokens_output_total[5m])",
           "legendFormat": "Output - {{model}}",
           "refId": "B"
         }
@@ -523,7 +523,7 @@
             "type": "prometheus",
             "uid": "Prometheus"
           },
-          "expr": "sum(increase(macular_estimated_cost_usd[1h]))",
+          "expr": "sum(increase(rag_estimated_cost_usd[1h]))",
           "legendFormat": "Estimated Cost (1h)",
           "refId": "A"
         }
@@ -614,7 +614,7 @@
             "type": "prometheus",
             "uid": "Prometheus"
           },
-          "expr": "histogram_quantile(0.95, rate(macular_whisper_transcription_duration_seconds_bucket[5m]))",
+          "expr": "histogram_quantile(0.95, rate(rag_whisper_transcription_duration_seconds_bucket[5m]))",
           "legendFormat": "Whisper p95",
           "refId": "A"
         },
@@ -623,7 +623,7 @@
             "type": "prometheus",
             "uid": "Prometheus"
           },
-          "expr": "histogram_quantile(0.50, rate(macular_whisper_transcription_duration_seconds_bucket[5m]))",
+          "expr": "histogram_quantile(0.50, rate(rag_whisper_transcription_duration_seconds_bucket[5m]))",
           "legendFormat": "Whisper p50",
           "refId": "B"
         }
@@ -714,7 +714,7 @@
             "type": "prometheus",
             "uid": "Prometheus"
           },
-          "expr": "histogram_quantile(0.95, rate(macular_piper_synthesis_duration_seconds_bucket[5m]))",
+          "expr": "histogram_quantile(0.95, rate(rag_piper_synthesis_duration_seconds_bucket[5m]))",
           "legendFormat": "Piper p95",
           "refId": "A"
         },
@@ -723,7 +723,7 @@
             "type": "prometheus",
             "uid": "Prometheus"
           },
-          "expr": "histogram_quantile(0.50, rate(macular_piper_synthesis_duration_seconds_bucket[5m]))",
+          "expr": "histogram_quantile(0.50, rate(rag_piper_synthesis_duration_seconds_bucket[5m]))",
           "legendFormat": "Piper p50",
           "refId": "B"
         }
@@ -811,7 +811,7 @@
             "type": "prometheus",
             "uid": "Prometheus"
           },
-          "expr": "rate(macular_whisper_transcription_total[5m])",
+          "expr": "rate(rag_whisper_transcription_total[5m])",
           "legendFormat": "Whisper - {{language}}",
           "refId": "A"
         },
@@ -820,7 +820,7 @@
             "type": "prometheus",
             "uid": "Prometheus"
           },
-          "expr": "rate(macular_whisper_transcription_errors_total[5m])",
+          "expr": "rate(rag_whisper_transcription_errors_total[5m])",
           "legendFormat": "Whisper Errors - {{error_type}}",
           "refId": "B"
         }
@@ -908,7 +908,7 @@
             "type": "prometheus",
             "uid": "Prometheus"
           },
-          "expr": "rate(macular_piper_synthesis_total[5m])",
+          "expr": "rate(rag_piper_synthesis_total[5m])",
           "legendFormat": "Piper - {{voice}}",
           "refId": "A"
         },
@@ -917,7 +917,7 @@
             "type": "prometheus",
             "uid": "Prometheus"
           },
-          "expr": "rate(macular_piper_synthesis_errors_total[5m])",
+          "expr": "rate(rag_piper_synthesis_errors_total[5m])",
           "legendFormat": "Piper Errors - {{error_type}}",
           "refId": "B"
         }
@@ -1008,7 +1008,7 @@
             "type": "prometheus",
             "uid": "Prometheus"
           },
-          "expr": "histogram_quantile(0.95, rate(macular_openai_api_duration_seconds_bucket[5m]))",
+          "expr": "histogram_quantile(0.95, rate(rag_openai_api_duration_seconds_bucket[5m]))",
           "legendFormat": "OpenAI p95 - {{operation}}",
           "refId": "A"
         }
@@ -1096,7 +1096,7 @@
             "type": "prometheus",
             "uid": "Prometheus"
           },
-          "expr": "rate(macular_openai_api_errors_total[5m])",
+          "expr": "rate(rag_openai_api_errors_total[5m])",
           "legendFormat": "{{operation}} - {{error_type}}",
           "refId": "A"
         }
@@ -1118,8 +1118,8 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "Macular Society - RAG & Voice Monitoring",
-  "uid": "macular-rag-monitoring",
+  "title": "RAG & Voice Monitoring",
+  "uid": "rag-monitoring",
   "version": 0,
   "weekStart": ""
 }

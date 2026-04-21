@@ -1,7 +1,7 @@
 {
-  "name": "macular-society-api",
+  "name": "rag-project-api",
   "version": "1.0.0",
-  "description": "RAG API for Macular Society - TypeScript/NestJS implementation",
+  "description": "RAG Project - TypeScript/NestJS implementation",
   "main": "dist/main.js",
   "scripts": {
     "build": "nest build",

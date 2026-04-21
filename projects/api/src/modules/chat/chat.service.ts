@@ -1,15 +1,14 @@
-import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@/config/config.service';
+import { Injectable } from '@nestjs/common';
+import type { AuthUser } from '../auth/interfaces/auth-user.interface';
 import {
   SessionRepository,
-  type Session,
-  type Message,
   type CollectionState,
+  type Message,
+  type Session,
 } from '../database/session.repository';
-import { RagService, RagResponse, ResponseMetadata, StreamEvent } from '../rag/rag.service';
-import { PromptGuardService } from '../prompt-guard/prompt-guard.service';
+import { RagResponse, RagService, ResponseMetadata, StreamEvent } from '../rag/rag.service';
 import { SuggestionsService } from './suggestions.service';
-import type { AuthUser } from '../auth/interfaces/auth-user.interface';
 
 function hasDebugAccess(user: AuthUser | null): boolean {
   return user?.permissions.includes('system:read') ?? false;
@@ -28,7 +27,6 @@ export class ChatService {
     private readonly sessions: SessionRepository,
     private readonly rag: RagService,
     private readonly config: ConfigService,
-    private readonly promptGuard: PromptGuardService,
     private readonly suggestions: SuggestionsService,
   ) {}
 
