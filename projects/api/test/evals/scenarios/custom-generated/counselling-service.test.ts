@@ -58,8 +58,8 @@ describe('Counselling Service', () => {
     expect(result.success).toBe(true);
   });
 
-  it('CF025 - caller already seeing a therapist who wants additional Macular Society counse...', async () => {
-    const description = 'You are simulating a caller already seeing a therapist who wants additional Macular Society counselling.';
+  it('CF025 - caller already seeing a therapist who wants additional counse...', async () => {
+    const description = 'You are simulating a caller already seeing a therapist who wants additional counselling.';
     const agent = new RAGAgent();
 
     const result = await scenario.run({
@@ -68,7 +68,7 @@ describe('Counselling Service', () => {
       agents: [
         agent,
         scenario.userSimulatorAgent({
-          systemPrompt: makeSimulatorPrompt(`You are simulating a caller already seeing a therapist who wants additional Macular Society counselling. Ask whether dual therapy can be allowed and whether one session only is possible. If declined, ask for best alternative support route.`),
+          systemPrompt: makeSimulatorPrompt(`You are simulating a caller already seeing a therapist who wants additional counselling. Ask whether dual therapy can be allowed and whether one session only is possible. If declined, ask for best alternative support route.`),
         }),
         scenario.judgeAgent({
           criteria: SHARED_CRITERIA,
@@ -202,8 +202,8 @@ describe('Counselling Service', () => {
     expect(result.success).toBe(true);
   });
 
-  it('CF076 - caller currently in private therapy who wants parallel Macular Society counse...', async () => {
-    const description = 'You are simulating a caller currently in private therapy who wants parallel Macular Society counselling.';
+  it('CF076 - caller currently in private therapy who wants parallel counse...', async () => {
+    const description = 'You are simulating a caller currently in private therapy who wants parallel counselling.';
     const agent = new RAGAgent();
 
     const result = await scenario.run({
@@ -212,7 +212,7 @@ describe('Counselling Service', () => {
       agents: [
         agent,
         scenario.userSimulatorAgent({
-          systemPrompt: makeSimulatorPrompt(`You are simulating a caller currently in private therapy who wants parallel Macular Society counselling. Ask for workaround options and one-off sessions. If unavailable, ask what alternative support should be used. Keep neutral tone.`),
+          systemPrompt: makeSimulatorPrompt(`You are simulating a caller currently in private therapy who wants parallel counselling. Ask for workaround options and one-off sessions. If unavailable, ask what alternative support should be used. Keep neutral tone.`),
         }),
         scenario.judgeAgent({
           criteria: SHARED_CRITERIA,

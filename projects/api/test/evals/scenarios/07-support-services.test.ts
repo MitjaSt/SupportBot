@@ -16,7 +16,7 @@ describe('Support Services', () => {
         agent,
         scenario.userSimulatorAgent({
           systemPrompt:
-            'You prefer speaking to a real person and want to request a callback from the Macular Society helpline.',
+            'You prefer speaking to a real person and want to request a callback from the helpline.',
         }),
         scenario.judgeAgent({
           criteria: [

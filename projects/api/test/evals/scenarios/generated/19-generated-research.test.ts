@@ -20,7 +20,7 @@ describe('Generated Tests - Research', () => {
           systemPrompt:
             `You are someone seeking information about research - explore - achievements.
             Ask the following questions naturally in conversation:
-            - What is the primary goal of the Macular Society?
+            - What is the primary goal?
             - How does the MD_evReader app assist individuals with macular degeneration?
             - What is the purpose of the Manchester Eye Tissue Repository (METR)?`,
         }),
@@ -57,8 +57,8 @@ describe('Generated Tests - Research', () => {
           systemPrompt:
             `You are someone seeking information about research - explore - finding-cure.
             Ask the following questions naturally in conversation:
-            - What is the main goal of the Macular Society?
-            - How does the Macular Society involve patients in their research efforts?
+            - What is the main goal?
+            - How does the involve patients in their research efforts?
             - What is the purpose of the Action Against AMD initiative?`,
         }),
         scenario.judgeAgent({
@@ -95,7 +95,7 @@ describe('Generated Tests - Research', () => {
             `You are someone seeking information about research - explore - improving-life.
             Ask the following questions naturally in conversation:
             - What is the eccentric viewing technique?
-            - How does the Macular Society support individuals with macular disease?
+            - How does the support individuals with macular disease?
             - What kind of support do the local groups provide?`,
         }),
         scenario.judgeAgent({
@@ -2471,7 +2471,7 @@ describe('Generated Tests - Research', () => {
           systemPrompt:
             `You are someone seeking information about research - explore - projects.
             Ask the following questions naturally in conversation:
-            - What types of funding does the Macular Society provide for research?
+            - What types of funding is provided for research?
             - What is the focus of the research on Stargardt Disease at Cardiff University?
             - How does the research on Age-related Macular Degeneration (AMD) aim to identify early changes?`,
         }),
@@ -2509,8 +2509,8 @@ describe('Generated Tests - Research', () => {
           systemPrompt:
             `You are someone seeking information about research - explore.
             Ask the following questions naturally in conversation:
-            - What is the main goal of the Macular Society's 2020-2030 Research Strategy?
-            - How much has the Macular Society invested in research projects since 1987?
+            - What is the main goal of the 2020-2030 Research Strategy?
+            - How much has been invested in research projects since 1987?
             - What is the eccentric viewing technique mentioned in the text?`,
         }),
         scenario.judgeAgent({
@@ -2694,7 +2694,7 @@ describe('Generated Tests - Research', () => {
           systemPrompt:
             `You are someone seeking information about research - features.
             Ask the following questions naturally in conversation:
-            - What is the purpose of developing a 'virtual eye' according to the Macular Society?
+            - What is the purpose of developing a 'virtual eye' according to the company?
             - Is there a confirmed link between aspirin use and age-related macular degeneration (AMD)?
             - What issues do patients with diabetic macular oedema (DMO) face according to the 2021 survey?`,
         }),
@@ -2769,7 +2769,7 @@ describe('Generated Tests - Research', () => {
             `You are someone seeking information about research - get-involved - research-participant-database - thank-you.
             Ask the following questions naturally in conversation:
             - Why is patient participation important in research trials for macular disease?
-            - What role does the Macular Society play in research for macular disease?
+            - What role does the company play in research for macular disease?
             - How can individuals stay informed about the latest research developments in macular disease?`,
         }),
         scenario.judgeAgent({
@@ -2953,7 +2953,7 @@ describe('Generated Tests - Research', () => {
           systemPrompt:
             `You are someone seeking information about research - macular-researchers - grant-info - research-committee-terms-reference.
             Ask the following questions naturally in conversation:
-            - What is the role of the Research Committee of the Macular Society?
+            - What is the role of the Research Committee?
             - How long can a member serve on the Research Committee before they must rotate off?
             - What measures are in place to prevent conflicts of interest within the Research Committee?`,
         }),
@@ -2991,8 +2991,8 @@ describe('Generated Tests - Research', () => {
           systemPrompt:
             `You are someone seeking information about research - macular-researchers - grant-info - research-grant-terms-and-conditions.
             Ask the following questions naturally in conversation:
-            - What is the main goal of the Macular Society?
-            - What type of information does the Macular Society provide about their research?
+            - What is the main goal of the project?
+            - What type of information does the project provide about their research?
             - How can individuals stay informed about advancements in macular disease research and treatments?`,
         }),
         scenario.judgeAgent({
@@ -3028,9 +3028,9 @@ describe('Generated Tests - Research', () => {
           systemPrompt:
             `You are someone seeking information about research - macular-researchers - grant-info.
             Ask the following questions naturally in conversation:
-            - What types of research projects does the Macular Society fund?
-            - What are some of the conditions that the Macular Society's research grants focus on?
-            - How are research grant applications evaluated by the Macular Society?`,
+            - What types of research projects are funded?
+            - What are some of the conditions that the research grants focus on?
+            - How are research grant applications evaluated?`,
         }),
         scenario.judgeAgent({
           criteria: [
@@ -3065,8 +3065,8 @@ describe('Generated Tests - Research', () => {
           systemPrompt:
             `You are someone seeking information about research - macular-researchers - grant-programmes - fellowships.
             Ask the following questions naturally in conversation:
-            - What is the purpose of the fellowship program introduced by the Macular Society?
-            - Who are the key partners involved in the Macular Society's fellowship program?
+            - What is the purpose of the fellowship program introduced by the company?
+            - Who are the key partners involved in the fellowship program?
             - How does the Daphne Jackson Trust support researchers in the fellowship program?`,
         }),
         scenario.judgeAgent({
@@ -3102,9 +3102,9 @@ describe('Generated Tests - Research', () => {
           systemPrompt:
             `You are someone seeking information about research - macular-researchers - grant-programmes - research-grants-and-phd-studentships.
             Ask the following questions naturally in conversation:
-            - What types of research projects does the Macular Society fund?
-            - How much funding is available for research grants from the Macular Society?
-            - What is the maximum funding available for PhD studentships from the Macular Society?`,
+            - What types of research projects are funded?
+            - How much funding is available for research grants from the company?
+            - What is the maximum funding available for PhD studentships?`,
         }),
         scenario.judgeAgent({
           criteria: [
@@ -3176,8 +3176,8 @@ describe('Generated Tests - Research', () => {
           systemPrompt:
             `You are someone seeking information about research - macular-researchers - grant-programmes - travel-grants.
             Ask the following questions naturally in conversation:
-            - What is the purpose of the travel grants offered by the Macular Society?
-            - Who is eligible to apply for the Macular Society travel grants?
+            - What is the purpose of the travel grants offered?
+            - Who is eligible to apply for the travel grants?
             - Are applications from companies or industry eligible for the travel grants?`,
         }),
         scenario.judgeAgent({
@@ -3214,7 +3214,7 @@ describe('Generated Tests - Research', () => {
           systemPrompt:
             `You are someone seeking information about research - macular-researchers - grant-programmes.
             Ask the following questions naturally in conversation:
-            - What is the maximum funding amount available for Research Grants from the Macular Society?
+            - What is the maximum funding amount available for Research Grants?
             - When do applications for PhD Studentships reopen?
             - What expenses do the PhD Studentships cover?`,
         }),
@@ -3251,9 +3251,9 @@ describe('Generated Tests - Research', () => {
           systemPrompt:
             `You are someone seeking information about research - macular-researchers - patient-public-involvement.
             Ask the following questions naturally in conversation:
-            - How does the Macular Society facilitate connections between researchers and patient representatives?
+            - How does the company facilitate connections between researchers and patient representatives?
             - What kind of guidance does the Health Research Authority provide regarding patient involvement in research?
-            - In what ways does the Macular Society support research aimed at beating macular disease?`,
+            - In what ways does the support research aimed at beating macular disease?`,
         }),
         scenario.judgeAgent({
           criteria: [
@@ -3288,9 +3288,9 @@ describe('Generated Tests - Research', () => {
           systemPrompt:
             `You are someone seeking information about research - macular-researchers - policies - animals-in-research.
             Ask the following questions naturally in conversation:
-            - What are the '3 Rs' principle mentioned by the Macular Society?
-            - Why does the Macular Society support the use of animals in research?
-            - What ethical standards must research funded by the Macular Society comply with?`,
+            - What are the '3 Rs' principle mentioned?
+            - Why does the support the use of animals in research?
+            - What ethical standards must research funded by the comply with?`,
         }),
         scenario.judgeAgent({
           criteria: [
@@ -3325,7 +3325,7 @@ describe('Generated Tests - Research', () => {
           systemPrompt:
             `You are someone seeking information about research - macular-researchers - policies - committee-conflicts-of-interest-policy.
             Ask the following questions naturally in conversation:
-            - What is the purpose of the Macular Society's Committee Conflicts of Interest Policy?
+            - What is the purpose of the Committee Conflicts of Interest Policy?
             - What must members of the Research Committee do if they have a conflict of interest?
             - How often is the Conflicts of Interest Policy reviewed?`,
         }),
@@ -3362,7 +3362,7 @@ describe('Generated Tests - Research', () => {
           systemPrompt:
             `You are someone seeking information about research - macular-researchers - policies - research-committee-rotation-policy.
             Ask the following questions naturally in conversation:
-            - What is the purpose of the rotation policy for the Macular Society's Research Committee?
+            - What is the purpose of the rotation policy for the Research Committee?
             - How many trustees are allowed to serve on the Research Committee at the same time?
             - How can individuals stay updated on research and treatments related to macular disease?`,
         }),
@@ -3399,9 +3399,9 @@ describe('Generated Tests - Research', () => {
           systemPrompt:
             `You are someone seeking information about research - macular-researchers - policies - stem-cell-statement.
             Ask the following questions naturally in conversation:
-            - What types of stem cells does the Macular Society support for treating macular conditions?
+            - What types of stem cells does the support for treating macular conditions?
             - How is stem cell research regulated in the UK?
-            - What role does the Macular Society play in stem cell research for macular disease?`,
+            - What role does the company play in stem cell research for macular disease?`,
         }),
         scenario.judgeAgent({
           criteria: [
@@ -3436,9 +3436,9 @@ describe('Generated Tests - Research', () => {
           systemPrompt:
             `You are someone seeking information about research - macular-researchers - policies.
             Ask the following questions naturally in conversation:
-            - What is the role of the Macular Society in supporting research for macular disease?
-            - How does the Macular Society collaborate with researchers?
-            - What kind of updates does the Macular Society provide regarding macular disease?`,
+            - What is the role in supporting research for macular disease?
+            - How does the company collaborate with researchers?
+            - What kind of updates does the company provide regarding macular disease?`,
         }),
         scenario.judgeAgent({
           criteria: [
@@ -3473,9 +3473,9 @@ describe('Generated Tests - Research', () => {
           systemPrompt:
             `You are someone seeking information about research - macular-researchers - recruit-participants-your-study.
             Ask the following questions naturally in conversation:
-            - How does the Macular Society assist in patient recruitment for clinical studies?
-            - What methods does the Macular Society use to promote volunteer opportunities for research?
-            - How many people in the UK participate in research annually, according to the Macular Society?`,
+            - How does the company assist in patient recruitment for clinical studies?
+            - What methods are used to promote volunteer opportunities for research?
+            - How many people in the UK participate in research annually?`,
         }),
         scenario.judgeAgent({
           criteria: [
@@ -3511,8 +3511,8 @@ describe('Generated Tests - Research', () => {
             `You are someone seeking information about research - macular-researchers.
             Ask the following questions naturally in conversation:
             - Why is research into macular disease considered underfunded in the UK?
-            - How does the Macular Society support research into macular conditions?
-            - What role do patients play in the Macular Society's research efforts?`,
+            - How is research supported for macular conditions?
+            - What role do patients play in the research efforts?`,
         }),
         scenario.judgeAgent({
           criteria: [

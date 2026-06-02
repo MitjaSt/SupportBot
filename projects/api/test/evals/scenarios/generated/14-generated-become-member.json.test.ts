@@ -22,7 +22,7 @@ describe('Generated Tests - Become Member.json', () => {
             Ask the following questions naturally in conversation:
             - What is the cost of annual membership after the free trial period?
             - Who is eligible for the free six-month membership trial?
-            - Can previous members of the Macular Society access the free trial?`,
+            - Can previous members access the free trial?`,
         }),
         scenario.judgeAgent({
           criteria: [

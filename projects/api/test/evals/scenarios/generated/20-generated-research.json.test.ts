@@ -20,7 +20,7 @@ describe('Generated Tests - Research.json', () => {
           systemPrompt:
             `You are someone seeking information about research.
             Ask the following questions naturally in conversation:
-            - What is the main goal of the Macular Society?
+            - What is the main goal of the services?
             - What types of innovative treatments are currently being researched for macular disease?
             - Why is patient participation important in medical research for macular disease?`,
         }),

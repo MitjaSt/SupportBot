@@ -20,9 +20,9 @@ describe('Generated Tests - Become Member', () => {
           systemPrompt:
             `You are someone seeking information about become-member - thank-you.
             Ask the following questions naturally in conversation:
-            - What kind of support does the Macular Society offer to its members?
-            - How can members manage their sight loss according to the Macular Society?
-            - What resources are available to members in the dedicated members' area on the Macular Society website?`,
+            - What kind of support is offered to its members?
+            - How can members manage their sight loss according to the company?
+            - What resources are available to members in the dedicated members' area on the website?`,
         }),
         scenario.judgeAgent({
           criteria: [

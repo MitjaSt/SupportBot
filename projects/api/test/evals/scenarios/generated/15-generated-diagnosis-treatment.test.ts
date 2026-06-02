@@ -168,9 +168,9 @@ describe('Generated Tests - Diagnosis Treatment', () => {
           systemPrompt:
             `You are someone seeking information about diagnosis-treatment - how - genetic-testing.
             Ask the following questions naturally in conversation:
-            - What kind of support does the Macular Society offer for individuals with macular disease?
-            - How can I contact the Macular Society for support?
-            - What are the operating hours of the Macular Society Helpline?`,
+            - What kind of support is offered for individuals with macular disease?
+            - How can I contact them for support?
+            - What are the operating hours of the helpline?`,
         }),
         scenario.judgeAgent({
           criteria: [

@@ -82,7 +82,7 @@ const DATASET = [
   { input: 'What kind of guidance do you have for living at home?' },
   { input: 'Do you have anything about enjoying life out and about?' },
   { input: 'Hi, I’ve got macular disease. What support can you offer me?' },
-  { input: 'I’ve just been diagnosed with a macular condition. What can the Macular Society do to help?' },
+  { input: 'I’ve just been diagnosed with a macular condition. What can we do to help?' },
   { input: 'Do you support family members too?' },
   { input: 'I’m caring for my mum with central vision loss. What help is there for carers?' },
   { input: 'I’m feeling really low since my sight got worse. Do you have mental health support?' },

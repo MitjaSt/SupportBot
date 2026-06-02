@@ -2,6 +2,8 @@
 
 A retrieval-augmented generation (RAG) chatbot, built with NestJS, PostgreSQL/pgvector, and OpenAI.
 
+Read the project overview: [INTRODUCTION.md](INTRODUCTION.md)
+
 ## Prerequisites
 
 - Node.js (v18+)
